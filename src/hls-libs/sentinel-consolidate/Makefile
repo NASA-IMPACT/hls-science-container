@@ -1,9 +1,9 @@
-TGT = consolidate
-OBJ = 	consolidate.o \
-	s2r.o \
-	hdfutility.o \
-	util.o \
-	hls_hdfeos.o
+TGT = sentinel-consolidate
+OBJ = consolidate.o \
+		  s2r.o \
+		  hdfutility.o \
+		  util.o \
+		  hls_hdfeos.o
 
 $(TGT): $(OBJ)
 	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZIPLIB) -L$(JPEGLIB) -L$(PROJLIB)  $(GCTPLINK) $(HDFLINK)
@@ -24,8 +24,8 @@ hls_hdfeos.o: ${SRC_DIR}/hls_hdfeos.c
 	$(CC) $(CFLAGS) -c  ${SRC_DIR}/hls_hdfeos.c -I$(HDFINC) -I$(SRC_DIR)
 
 install:
-	install -m 755 $(TGT) /usr/bin
+	install -d ${PREFIX}/bin
+	install -m 755 $(TGT) ${PREFIX}/bin
 
 clean:
 	rm -f *.o
-

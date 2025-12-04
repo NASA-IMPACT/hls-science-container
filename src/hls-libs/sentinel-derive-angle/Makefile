@@ -3,7 +3,7 @@ OBJ = derive_s2ang.o \
 	s2mapinfo.o \
 	s2detfoo.o \
 	s2ang.o \
-	s2r.o\
+	s2r.o \
 	pnpoly.o \
 	util.o \
 	hdfutility.o \
@@ -40,8 +40,8 @@ hls_hdfeos.o: ${SRC_DIR}/hls_hdfeos.c
 	$(CC) $(CFLAGS) -c  ${SRC_DIR}/hls_hdfeos.c -I$(HDFINC) -I$(SRC_DIR)
 
 install:
-	install -m 755 $(TGT) /usr/bin
+	install -d ${PREFIX}/bin
+	install -m 755 $(TGT) ${PREFIX}/bin
 
 clean:
-	rm -f *.o
-
+	rm -f *.o $(TGT)

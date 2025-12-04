@@ -1,6 +1,7 @@
-PREFIX 	= ${HLS_LIBS_PREFIX}
+PREFIX = ${HLS_LIBS_PREFIX}
 
-SUBDIRS = sentinel-add-fmask-sds
+SUBDIRS = sentinel-add-fmask-sds \
+			  landsat-add-fmask-sds
 
 .PHONY: all $(SUBDIRS) clean
 

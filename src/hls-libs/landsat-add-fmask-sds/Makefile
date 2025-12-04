@@ -1,10 +1,10 @@
-TGT = addFmaskSDS
-OBJ = 	addFmaskSDS.o \
-	dilation.o \
-	lsat.o \
-	lsatmeta.o \
-	util.o \
-	hdfutility.o
+TGT = landsat-add-fmask-sds
+OBJ = addFmaskSDS.o \
+		  dilation.o \
+		  lsat.o \
+		  lsatmeta.o \
+		  util.o \
+		  hdfutility.o
 
 $(TGT): $(OBJ)
 	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZIPLIB) -L$(JPEGLIB) -L$(PROJLIB) $(GCTPLINK) $(HDFLINK)
@@ -28,7 +28,8 @@ hdfutility.o: ${SRC_DIR}/hdfutility.c
 	$(CC) $(CFLAGS) -c  ${SRC_DIR}/hdfutility.c -I$(HDFINC) -I$(SRC_DIR)
 
 install:
-	install -m 755 $(TGT) ${PREFIX}
-clean:
-	rm -f *.o
+	install -d ${PREFIX}/bin
+	install -m 755 $(TGT) ${PREFIX}/bin
 
+clean:
+	rm -f *.o $(TGT)

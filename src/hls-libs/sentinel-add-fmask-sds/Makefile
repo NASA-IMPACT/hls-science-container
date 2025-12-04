@@ -6,7 +6,7 @@ OBJ = addFmaskSDS.o \
 	hdfutility.o \
 	hls_hdfeos.o \
 	dilation.o \
-	
+
 $(TGT): $(OBJ)
 	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIBLIB) -L$(SZIPLIB) -L$(JPEGLIB) -L$(PROJLIB) $(GCTPLINK) $(HDFLINK)
 
@@ -33,8 +33,7 @@ dilation.o: dilation.c
 
 install:
 	install -d ${PREFIX}/bin
-	install -m 755 $(TGT) ${PREFIX}/bin/
+	install -m 755 $(TGT) ${PREFIX}/bin
 
 clean:
-	rm -f *.o
-
+	rm -f *.o $(TGT)

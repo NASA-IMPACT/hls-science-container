@@ -1,5 +1,5 @@
 TGT = twohdf2one
-OBJ = 	twohdf2one.o \
+OBJ = twohdf2one.o \
 	hls_projection.o \
 	s2r.o \
 	util.o \
@@ -24,8 +24,8 @@ hdfutility.o: ${SRC_DIR}/hdfutility.c
 	$(CC) $(CFLAGS) -c  ${SRC_DIR}/hdfutility.c -I$(HDFINC) -I$(SRC_DIR)
 
 install:
-	install -m 755 $(TGT) /usr/bin
+	install -d ${PREFIX}/bin
+	install -m 755 $(TGT) ${PREFIX}/bin
 
 clean:
-	rm -f *.o
-
+	rm -f *.o $(TGT)

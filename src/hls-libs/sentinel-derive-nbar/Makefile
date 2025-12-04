@@ -3,14 +3,14 @@
 ### a header file is included which requires cubic_conv defintion.
 
 TGT = derive_s2nbar		# Directory names begins with capital L; avoid replicate.
-OBJ = 	derive_s2nbar.o\
+OBJ = derive_s2nbar.o \
 	s2at30m.o \
 	s2ang.o \
-	hls_projection.o\
+	hls_projection.o \
 	mean_solarzen.o \
 	local_solar.o \
 	rtls.o \
-	hdfutility.o\
+	hdfutility.o \
 	util.o \
 	cubic_conv.o \
 	cfactor.o
@@ -52,7 +52,8 @@ cfactor.o: ${SRC_DIR}/cfactor.c
 	$(CC) $(CFLAGS) -c  ${SRC_DIR}/cfactor.c -I$(GCTPINC) -I$(HDFINC) -I$(SRC_DIR)
 
 install:
-	install -m 755 $(TGT) /usr/bin
+	install -d ${PREFIX}/bin
+	install -m 755 $(TGT) ${PREFIX}/bin
 
 clean:
-	rm -f *.o
+	rm -f *.o $(TGT)
