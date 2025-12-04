@@ -20,6 +20,10 @@ static char *S2_ref_fillval = "-9999";
 static char *S2_ref_scale_factor = "0.0001";
 static char *S2_ref_add_offset = "0.0";
 
+static char *S2_ang_fillval = "40000";
+static char *S2_ang_scale_factor = "0.01";
+static char *S2_ang_add_offset = "0.0";
+
 #define ACMASK_NAME "ACmask"
 #define FMASK_NAME "Fmask"
 
