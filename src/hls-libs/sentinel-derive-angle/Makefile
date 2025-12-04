@@ -1,4 +1,4 @@
-TGT = derive_s2ang
+TGT = sentinel-derive-angle
 OBJ = derive_s2ang.o \
 	s2mapinfo.o \
 	s2detfoo.o \

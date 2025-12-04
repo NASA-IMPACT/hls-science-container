@@ -1,4 +1,4 @@
-TGT = create_s2at30m
+TGT = sentinel-create-s2at30m
 OBJ = create_s2at30m.o \
 	hls_projection.o \
 	s2r.o \

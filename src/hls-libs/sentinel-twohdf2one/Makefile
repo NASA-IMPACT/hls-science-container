@@ -1,4 +1,4 @@
-TGT = twohdf2one
+TGT = sentinel-twohdf2one
 OBJ = twohdf2one.o \
 	hls_projection.o \
 	s2r.o \

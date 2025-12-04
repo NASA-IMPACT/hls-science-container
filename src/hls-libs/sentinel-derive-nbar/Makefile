@@ -1,8 +1,8 @@
 ### The file dependency of my code is crazy:
 ### cubic_conv is not needed in this code, but just because
-### a header file is included which requires cubic_conv defintion.
+### a header file is included which requires cubic_conv definition.
 
-TGT = derive_s2nbar		# Directory names begins with capital L; avoid replicate.
+TGT = sentinel-derive-nbar
 OBJ = derive_s2nbar.o \
 	s2at30m.o \
 	s2ang.o \

@@ -1,4 +1,4 @@
-TGT = consolidate_s2ang
+TGT = sentinel-consolidate-angle
 OBJ = consolidate_s2ang.o \
 	s2detfoo.o \
 	s2ang.o \

@@ -102,7 +102,8 @@ RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
     pixi shell-hook -e default -s bash >> /app/entrypoint.sh && \
     echo "export ESPA_PREFIX=${ESPA_PREFIX}" >> /app/entrypoint.sh && \
     echo "export LASRC_PREFIX=${LASRC_PREFIX}" >> /app/entrypoint.sh && \
-    echo 'export PATH=${ESPA_PREFIX}/bin:${LASRC_PREFIX}/bin:${PATH}' >> /app/entrypoint.sh && \
+    echo "export HLS_LIBS_PREFIX=${HLS_LIBS_PREFIX}" >> /app/entrypoint.sh && \
+    echo 'export PATH=${ESPA_PREFIX}/bin:${LASRC_PREFIX}/bin:${HLS_LIBS_PREFIX}/bin:${PATH}' >> /app/entrypoint.sh && \
     echo 'exec "$@"' >> /app/entrypoint.sh
 
 # TODO: upstream patch espa-product-formatter to include `-std=gnu90`

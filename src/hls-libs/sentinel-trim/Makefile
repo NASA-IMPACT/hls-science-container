@@ -1,7 +1,4 @@
-# Note: before run make, do in the shell:
-# source $HOME/code/share/makeenv/makeenv.sh
-
-TGT = s2trim
+TGT = sentinel-trim
 OBJ = s2trim.o \
 	hls_projection.o \
 	s2r.o \
