@@ -1,0 +1,13 @@
+diff --git a/make.config b/make.config
+index 57d4638..2a21379 100644
+--- a/make.config
++++ b/make.config
+@@ -58,7 +58,7 @@ endif
+ 
+ 
+ # Place the extra options identified above into one variable to be used
+-EXTRA_OPTIONS = $(debug_option) $(optimization_options) $(static_option) $(threading_options) $(profiling_options)
++EXTRA_OPTIONS = $(debug_option) $(optimization_options) $(static_option) $(threading_options) $(profiling_options) -std=gnu90
+ 
+ # Add help target
+ .PHONY: help

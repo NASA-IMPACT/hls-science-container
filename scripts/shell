@@ -5,7 +5,7 @@ set -e
 CONTAINER_NAME=${CONTAINER_NAME:-hls-atmospheric-correction}
 
 docker build \
-    -f Dockerfile.conda \
+    -f Dockerfile \
     -t "${CONTAINER_NAME}":latest .
 
 docker run \
