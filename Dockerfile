@@ -11,7 +11,14 @@ RUN apt update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY pixi.toml pixi.lock /app/
-RUN --mount=type=cache,target=/root/.cache/rattler/cache,sharing=private pixi install --locked
+# FIXME: can we install in a detached prefix to make mounting /app easier?
+# e.g.,
+# pixi config set --global detached-environments "/opt/pixi/envs" && \
+#
+# The trouble is now the PREFIX is unpredictable. We can find it via CONDA_PREFIX, but
+# we'd need to set the INC/LIB paths in a script
+RUN --mount=type=cache,target=/root/.cache/rattler/cache,sharing=private \
+    pixi install --locked
 
 ENV PREFIX=/app/.pixi/envs/default
 
@@ -89,10 +96,10 @@ ENV ZLIBINC=$ZLIB_PREFIX/include \
     HDFEOS_GCTPLIB=$HDFEOS_PREFIX/lib \
     GCTPINC=$HDFEOS_PREFIX/include \
     GCTPLIB=$HDFEOS_PREFIX/lib \
-    PROJ4_INC=$PROJ4_PREFIX/include \
-    PROJ4_LIB=$PROJ4_PREFIX/lib \
-    PROJINC={PROJ4_INC} \
-    PROJLIB={PROJ4_LIB} \
+    PROJ4_INC=${PROJ4_PREFIX}/include \
+    PROJ4_LIB=${PROJ4_PREFIX}/lib \
+    PROJINC=${PROJ4_PREFIX}/include \
+    PROJLIB=${PROJ4_PREFIX}/lib \
     GDAL_INC=$GDAL_PREFIX/include \
     GDAL_LIB=$GDAL_PREFIX/lib \
     ESPALIB=${ESPA_PREFIX}/lib \
@@ -137,7 +144,24 @@ RUN cd /tmp/hls-libs && \
     make install && \
     cd /tmp && rm -rf /tmp/hls-libs/
 
-# FIXME: include ``espa-python-library`` in pixi sources and install
+# FIXME: install AWS CLI v2
+
+# FIXME: install from Conda or PyPI
+# click==7.1.2
+# rio-cogeo==1.1.10 --no-binary rasterio --user
+# ... or just let the Git sources below resolve them
+
+# FIXME: install the Git sources below:
+# git+https://github.com/NASA-IMPACT/hls-thumbnails@v1.3
+# git+https://github.com/NASA-IMPACT/hls-metadata@v2.7
+# git+https://github.com/NASA-IMPACT/hls-manifest@v2.1
+# git+https://github.com/NASA-IMPACT/hls-browse_imagery@v1.7
+# git+https://github.com/NASA-IMPACT/libxml2-python3
+# git+https://github.com/NASA-IMPACT/hls-hdf_to_cog@v2.1
+# git+https://github.com/NASA-IMPACT/hls-utilities@v1.11.1
+# ^^^ need to relax NumPy and probably rasterio
+# git+https://github.com/NASA-IMPACT/hls-cmr_stac@v1.7
+# git+https://github.com/NASA-IMPACT/hls-vi@v1.17
 
 # -----
 
