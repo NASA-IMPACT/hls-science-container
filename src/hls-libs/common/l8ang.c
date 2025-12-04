@@ -81,9 +81,9 @@ int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz)
 			cp = strchr(cp+1, ','); 
 			zone = atoi(cp+1);	  /* Read after 7th comma */
 			if (strstr(line, "North"))
-				sprintf(l8ang->numhem, "%dN", zone);
+				sprintf(l8ang->zonehem, "%dN", zone);
 			else
-				sprintf(l8ang->numhem, "%dS", zone);
+				sprintf(l8ang->zonehem, "%dS", zone);
 
 			break;
 		}
@@ -373,7 +373,7 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		 */
 		char header[500];
 		sprintf(header, "%s.hdr", l8ang->fname);
-		read_envi_utm_header(header, l8ang->numhem, &l8ang->ulx, &l8ang->uly);
+		read_envi_utm_header(header, l8ang->zonehem, &l8ang->ulx, &l8ang->uly);
 	}
 	else if (access_mode == DFACC_CREATE) {
 		char *dimnames[] = {"YDim_Grid", "XDim_Grid"};
@@ -555,7 +555,7 @@ int close_l8ang(l8ang_t *l8ang)
 			/* Add an ENVI header */
 			char fname_hdr[500];
 			sprintf(fname_hdr, "%s.hdr", l8ang->fname);
-			add_envi_utm_header(l8ang->numhem, 
+			add_envi_utm_header(l8ang->zonehem,
 						l8ang->ulx, 
 						l8ang->uly, 
 						l8ang->nrow, 

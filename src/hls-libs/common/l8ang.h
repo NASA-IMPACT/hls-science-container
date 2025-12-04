@@ -31,7 +31,7 @@ typedef struct {
 	intn access_mode;
 	double ulx;
 	double uly;	
-	char numhem[20]; 	/* UTM zone number and hemisphere spec */
+	char zonehem[20]; 	/* UTM zone number and hemisphere spec */
 	int nrow;
 	int ncol;
 	char l1tsceneid[200];	/* The L1T scene ID for an S2 tile */

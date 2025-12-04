@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 	s2rout.ncol[0] = s2rin.ncol[0];
 	s2rout.ulx = s2rin.ulx;
 	s2rout.uly = s2rin.uly;
-	strcpy(s2rout.numhem, s2rin.numhem);
+	strcpy(s2rout.zonehem, s2rin.zonehem);
 	ret = open_s2r(&s2rout, DFACC_CREATE);
 	if (ret != 0) {
 		Error("Error in open_s2r");
@@ -155,7 +155,7 @@ int copyref_addmask(s2r_t *s2in, char *fname_fmask, char *fname_aeroQA, s2r_t *s
 	char message[MSGLEN];
 
 	/* Needed for map projection */
-	strcpy(s2out->numhem, s2in->numhem);
+	strcpy(s2out->zonehem, s2in->zonehem);
 	s2out->ulx = s2in->ulx;
 	s2out->uly = s2in->uly;
 
