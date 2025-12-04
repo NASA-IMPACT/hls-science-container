@@ -10,7 +10,6 @@ RUN apt update && \
         && \
     rm -rf /var/lib/apt/lists/*
 
-# FIXME: productionize https://pixi.sh/latest/deployment/container/
 COPY pixi.toml pixi.lock /app/
 RUN --mount=type=cache,target=/root/.cache/rattler/cache,sharing=private pixi install --locked
 
@@ -38,7 +37,7 @@ ENV ZLIB_PREFIX=${PREFIX} \
     GDAL_PREFIX=${PREFIX} \
     ESPA_PREFIX=/opt/espa \
     LASRC_PREFIX=/opt/lasrc \
-    HLS_PREFIX=/opt/hls
+    HLS_LIBS_PREFIX=/opt/hls
 
 ENV ZLIBINC=$ZLIB_PREFIX/include \
     ZLIBLIB=$ZLIB_PREFIX/lib \
@@ -88,8 +87,12 @@ ENV ZLIBINC=$ZLIB_PREFIX/include \
     HDFEOS5_LIB=$HDFEOS5_PREFIX/lib \
     HDFEOS_GCTPINC=$HDFEOS_PREFIX/include \
     HDFEOS_GCTPLIB=$HDFEOS_PREFIX/lib \
+    GCTPINC=$HDFEOS_PREFIX/include \
+    GCTPLIB=$HDFEOS_PREFIX/lib \
     PROJ4_INC=$PROJ4_PREFIX/include \
     PROJ4_LIB=$PROJ4_PREFIX/lib \
+    PROJINC={PROJ4_INC} \
+    PROJLIB={PROJ4_LIB} \
     GDAL_INC=$GDAL_PREFIX/include \
     GDAL_LIB=$GDAL_PREFIX/lib \
     ESPALIB=${ESPA_PREFIX}/lib \
@@ -120,8 +123,25 @@ RUN REPO_NAME=espa-surface-reflectance && \
     make -j4 ENABLE_THREADING=yes && \
     PREFIX=${LASRC_PREFIX} make install && \
     cd /tmp && rm -rf /tmp/*
- 
+
+COPY src/hls-libs /tmp/hls-libs
+RUN cd /tmp/hls-libs && \
+    . /app/entrypoint.sh && \
+    GCTPLINK="-lGctp -lm" \
+        HDFLINK="-lmfhdf -ldf -lm" \
+        SRC_DIR=/tmp/hls-libs/common \
+        CC="gcc" \
+        CFLAGS="-std=gnu90" \
+        make && \
+    make install && \
+    cd /tmp && rm -rf /tmp/hls-libs/
+
+# FIXME: include ``espa-python-library`` in pixi sources and install
+
+# -----
+
 # FIXME: uncomment to "productionize" pixi build
+# "Productionize" pixi install: https://pixi.sh/latest/deployment/container/
 # FROM --platform=${PLATFORM} debian:bookworm-slim AS prod
 # 
 # WORKDIR /app

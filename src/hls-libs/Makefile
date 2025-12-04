@@ -1,21 +1,24 @@
-# Define the list of subdirectories that contain Makefiles
-#
-SUBDIRS = sentinel-add-fmask-sds \
-		  landsat-add-fmask-sds
+PREFIX 	= ${HLS_LIBS_PREFIX}
 
-MAKE = make
+SUBDIRS = sentinel-add-fmask-sds
 
 .PHONY: all $(SUBDIRS) clean
 
 all: $(SUBDIRS)
-    @echo "--- All subdirectories built successfully ---"
+	@echo "--- All subdirectories built successfully ---"
 
 $(SUBDIRS):
-    @echo "Entering directory '$@' to run make..."
-    $(MAKE) -C $@
+	@echo "Entering directory '$@' to run make..."
+	$(MAKE) -C $@
+
+install:
+	@echo "--- Installing all subdirectories ---"
+	for dir in $(SUBDIRS); do \
+		$(MAKE) -C $$dir install; \
+	done
 
 clean:
-    @echo "--- Cleaning all subdirectories ---"
-    for dir in $(SUBDIRS); do \
-        $(MAKE) -C $$dir clean; \
-    done
+	@echo "--- Cleaning all subdirectories ---"
+	for dir in $(SUBDIRS); do \
+		$(MAKE) -C $$dir clean; \
+	done
