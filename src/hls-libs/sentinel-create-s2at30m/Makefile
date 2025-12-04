@@ -7,7 +7,7 @@ OBJ = 	create_s2at30m.o \
 	hdfutility.o
 
 $(TGT): $(OBJ)
-	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZLIB) -L$(JPGLIB) -L$(PROJLIB) $(GCTPLINK) $(HDFLINK)
+	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZIPLIB) -L$(JPEGLIB) -L$(PROJLIB) $(GCTPLINK) $(HDFLINK)
 
 create_s2at30m.o: create_s2at30m.c
 	$(CC) $(CFLAGS) -c create_s2at30m.c -I$(HDFINC) -I$(GCTPINC) -I$(SRC_DIR)

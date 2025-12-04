@@ -10,9 +10,9 @@ OBJ = 	s2trim.o \
 	hls_hdfeos.o
 	
 $(TGT): $(OBJ)
-	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZLIB) -L$(JPGLIB) -L$(PROJLIB)  $(GCTPLINK) $(HDFLINK) 
+	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZIPLIB) -L$(JPEGLIB) -L$(PROJLIB)  $(GCTPLINK) $(HDFLINK)
 
-s2trim.o: s2trim.c 
+s2trim.o: s2trim.c
 	$(CC) $(CFLAGS) -c s2trim.c -I$(HDFINC) -I$(GCTPINC) -I$(SRC_DIR)
 
 hls_projection.o: ${SRC_DIR}/hls_projection.c

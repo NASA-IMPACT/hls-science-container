@@ -10,9 +10,9 @@ OBJ = 	consolidate_s2ang.o \
 
 	
 $(TGT): $(OBJ)
-	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(HDFLIB) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZLIB) -L$(JPGLIB) -L$(PROJLIB) $(GCTPLINK) $(HDFLINK)
+	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(HDFLIB) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZIPLIB) -L$(JPEGLIB) -L$(PROJLIB) $(GCTPLINK) $(HDFLINK)
 
-consolidate_s2ang.o: consolidate_s2ang.c 
+consolidate_s2ang.o: consolidate_s2ang.c
 	$(CC) $(CFLAGS) -c consolidate_s2ang.c -I$(HDFINC) -I$(GCTPINC) -I$(SRC_DIR)
 
 s2detfoo.o: ${SRC_DIR}/s2detfoo.c
@@ -33,7 +33,7 @@ hdfutility.o: ${SRC_DIR}/hdfutility.c
 hls_hdfeos.o: ${SRC_DIR}/hls_hdfeos.c
 	$(CC) $(CFLAGS) -c ${SRC_DIR}/hls_hdfeos.c -I$(HDFINC) -I$(SRC_DIR)
 
-util.o: ${SRC_DIR}/util.c 
+util.o: ${SRC_DIR}/util.c
 	$(CC) $(CFLAGS) -c ${SRC_DIR}/util.c -I$(HDFINC) -I$(SRC_DIR)
 
 install:

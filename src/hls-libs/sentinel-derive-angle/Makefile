@@ -10,7 +10,7 @@ OBJ = derive_s2ang.o \
 	hls_hdfeos.o
 
 $(TGT): $(OBJ)
-	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(HDFLIB) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZLIB) -L$(JPGLIB) -L$(PROJLIB) $(GCTPLINK) $(HDFLINK)
+	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(HDFLIB) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZIPLIB) -L$(JPEGLIB) -L$(PROJLIB) $(GCTPLINK) $(HDFLINK)
 
 derive_s2ang.o: derive_s2ang.c
 	$(CC) $(CFLAGS) -c derive_s2ang.c -I$(HDFINC) -I$(GCTPINC) -I$(SRC_DIR)

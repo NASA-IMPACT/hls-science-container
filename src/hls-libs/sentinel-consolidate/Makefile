@@ -6,7 +6,7 @@ OBJ = 	consolidate.o \
 	hls_hdfeos.o
 
 $(TGT): $(OBJ)
-	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZLIB) -L$(JPGLIB) -L$(PROJLIB)  $(GCTPLINK) $(HDFLINK)
+	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZIPLIB) -L$(JPEGLIB) -L$(PROJLIB)  $(GCTPLINK) $(HDFLINK)
 
 consolidate.o: consolidate.c
 	$(CC) $(CFLAGS) -c consolidate.c -I$(HDFINC) -I$(GCTPINC) -I$(SRC_DIR)

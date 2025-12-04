@@ -10,7 +10,7 @@ OBJ = addFmaskSDS.o \
 $(TGT): $(OBJ)
 	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIBLIB) -L$(SZIPLIB) -L$(JPEGLIB) -L$(PROJLIB) $(GCTPLINK) $(HDFLINK)
 
-addFmaskSDS.o: addFmaskSDS.c 
+addFmaskSDS.o: addFmaskSDS.c
 	$(CC) $(CFLAGS) -c addFmaskSDS.c -I$(HDFINC) -I$(GCTPINC) -I$(SRC_DIR)
 
 hls_projection.o: ${SRC_DIR}/hls_projection.c

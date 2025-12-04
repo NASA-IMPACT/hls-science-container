@@ -2,7 +2,7 @@
 # source $HOME/code/share/makeenv/makeenv.sh
 
 # Because of the use of hls_hdfeos.h, additional file are included:
-# s2r.[hc]  
+# s2r.[hc]
 TGT = L8like # Directory names begins with capital L; avoid replicate.
 OBJ = 	L8like.o \
 	s2at30m.o \
@@ -12,10 +12,10 @@ OBJ = 	L8like.o \
 	hls_hdfeos.o
 
 $(TGT): $(OBJ)
-	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB)  -L$(HDFLIB) -L$(ZLIB) -L$(SZLIB) -L$(JPGLIB) -L$(PROJLIB) $(GCTPLINK) $(HDFLINK) 
+	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB)  -L$(HDFLIB) -L$(ZLIB) -L$(SZIPLIB) -L$(JPEGLIB) -L$(PROJLIB) $(GCTPLINK) $(HDFLINK)
 	
 
-L8like.o: L8like.c 
+L8like.o: L8like.c
 	$(CC) $(CFLAGS) -c L8like.c -I$(HDFINC) -I$(GCTPINC) -I$(SRC_DIR)
 
 s2at30m.o: ${SRC_DIR}/s2at30m.c
@@ -27,7 +27,7 @@ s2r.o: ${SRC_DIR}/s2r.c
 hdfutility.o: ${SRC_DIR}/hdfutility.c
 	$(CC) $(CFLAGS) -c  ${SRC_DIR}/hdfutility.c -I$(HDFINC) -I$(SRC_DIR)
 
-util.o: ${SRC_DIR}/util.c 
+util.o: ${SRC_DIR}/util.c
 	$(CC) $(CFLAGS) -c  ${SRC_DIR}/util.c -I$(HDFINC) -I$(SRC_DIR)
 
 hls_hdfeos.o: ${SRC_DIR}/hls_hdfeos.c
