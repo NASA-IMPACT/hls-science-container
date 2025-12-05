@@ -11,6 +11,11 @@ RUN apt update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY pixi.toml pixi.lock /app/
+
+
+# FIXME: build espa-product-formatter and espa-surface-reflectance via rattler-build
+# https://pixi.sh/v0.43.0/build/advanced_cpp/#testing-if-everything-works
+
 # FIXME: can we install in a detached prefix to make mounting /app easier?
 # e.g.,
 # pixi config set --global detached-environments "/opt/pixi/envs" && \
@@ -18,6 +23,7 @@ COPY pixi.toml pixi.lock /app/
 # The trouble is now the PREFIX is unpredictable. We can find it via CONDA_PREFIX, but
 # we'd need to set the INC/LIB paths in a script
 RUN --mount=type=cache,target=/root/.cache/rattler/cache,sharing=private \
+#    pixi self-update && \
     pixi install --locked
 
 ENV PREFIX=/app/.pixi/envs/default
@@ -149,6 +155,7 @@ RUN cd /tmp/hls-libs && \
 # FIXME: install from Conda or PyPI
 # click==7.1.2
 # rio-cogeo==1.1.10 --no-binary rasterio --user
+# git+https://github.com/NASA-IMPACT/libxml2-python3
 # ... or just let the Git sources below resolve them
 
 # FIXME: install the Git sources below:
@@ -156,7 +163,6 @@ RUN cd /tmp/hls-libs && \
 # git+https://github.com/NASA-IMPACT/hls-metadata@v2.7
 # git+https://github.com/NASA-IMPACT/hls-manifest@v2.1
 # git+https://github.com/NASA-IMPACT/hls-browse_imagery@v1.7
-# git+https://github.com/NASA-IMPACT/libxml2-python3
 # git+https://github.com/NASA-IMPACT/hls-hdf_to_cog@v2.1
 # git+https://github.com/NASA-IMPACT/hls-utilities@v1.11.1
 # ^^^ need to relax NumPy and probably rasterio
