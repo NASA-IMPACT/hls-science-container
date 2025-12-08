@@ -1,11 +1,11 @@
 [workspace]
-channels = ["conda-forge"]
-name = "lasrc"
-platforms = ["linux-64"]
+name = "hls-atmospheric-correction"
 version = "0.1.0"
+platforms = ["linux-64"]
+channels = ["conda-forge"]
 preview = ["pixi-build"]
-
-[tasks]
 
 [dependencies]
 espa-product-formatter = { path = "packages/espa-product-formatter" }
+espa-surface-reflectance = { path = "packages/espa-surface-reflectance" }
+hls-libs = { path = "packages/hls-libs" }
