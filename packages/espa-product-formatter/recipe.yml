@@ -83,6 +83,10 @@ build:
     make -j${CPU_COUNT}
     make install
 
+    cp $RECIPE_DIR/activate.sh $PREFIX/etc/conda/activate.d/espa-product-formatter.sh
+    cp $RECIPE_DIR/deactivate.sh $PREFIX/etc/conda/deactivate.d/espa-product-formatter.sh
+
+
 tests:
   - package_contents:
       include:
