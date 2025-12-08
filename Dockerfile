@@ -138,7 +138,7 @@ RUN REPO_NAME=espa-surface-reflectance && \
     PREFIX=${LASRC_PREFIX} make install && \
     cd /tmp && rm -rf /tmp/*
 
-COPY src/hls-libs /tmp/hls-libs
+COPY packages/hls-libs /tmp/hls-libs
 RUN cd /tmp/hls-libs && \
     . /app/entrypoint.sh && \
     GCTPLINK="-lGctp -lm" \
