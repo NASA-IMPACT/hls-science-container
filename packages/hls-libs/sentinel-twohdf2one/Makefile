@@ -9,19 +9,19 @@ $(TGT): $(OBJ)
 	$(CC) $(CFLAGS) -o $(TGT) $(OBJ) -L$(GCTPLIB) -L$(HDFLIB) -L$(ZLIB) -L$(SZIPLIB) -L$(JPEGLIB) -L$(PROJLIB)  $(GCTPLINK) $(HDFLINK) -g
 
 twohdf2one.o: twohdf2one.c
-	$(CC) $(CFLAGS) -c twohdf2one.c -I$(HDFINC) -I$(GCTPINC) -I$(SRC_DIR)
+	$(CC) $(CFLAGS) -c twohdf2one.c -I$(HDFINC) -I$(GCTPINC) -I$(COMMON_DIR)
 
-hls_projection.o: ${SRC_DIR}/hls_projection.c
-	$(CC) $(CFLAGS) -c ${SRC_DIR}/hls_projection.c -I$(HDFINC) -I$(GCTPINC) -I$(SRC_DIR)
+hls_projection.o: ${COMMON_DIR}/hls_projection.c
+	$(CC) $(CFLAGS) -c ${COMMON_DIR}/hls_projection.c -I$(HDFINC) -I$(GCTPINC) -I$(COMMON_DIR)
 
-s2r.o: ${SRC_DIR}/s2r.c
-	$(CC) $(CFLAGS) -c ${SRC_DIR}/s2r.c -I$(HDFINC) -I$(GCTPINC) -I$(SRC_DIR)
+s2r.o: ${COMMON_DIR}/s2r.c
+	$(CC) $(CFLAGS) -c ${COMMON_DIR}/s2r.c -I$(HDFINC) -I$(GCTPINC) -I$(COMMON_DIR)
 
-util.o: ${SRC_DIR}/util.c
-	$(CC) $(CFLAGS) -c  ${SRC_DIR}/util.c -I$(HDFINC) -I$(SRC_DIR)
+util.o: ${COMMON_DIR}/util.c
+	$(CC) $(CFLAGS) -c  ${COMMON_DIR}/util.c -I$(HDFINC) -I$(COMMON_DIR)
 
-hdfutility.o: ${SRC_DIR}/hdfutility.c
-	$(CC) $(CFLAGS) -c  ${SRC_DIR}/hdfutility.c -I$(HDFINC) -I$(SRC_DIR)
+hdfutility.o: ${COMMON_DIR}/hdfutility.c
+	$(CC) $(CFLAGS) -c  ${COMMON_DIR}/hdfutility.c -I$(HDFINC) -I$(COMMON_DIR)
 
 install:
 	install -d ${PREFIX}/bin
