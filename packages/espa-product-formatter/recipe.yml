@@ -1,0 +1,95 @@
+package:
+  name: espa-product-formatter
+  version: 3.5.0
+
+source:
+  git: https://github.com/NASA-IMPACT/espa-product-formatter
+  branch: 3.5.0
+  patches:
+    - patches/espa-product-formatter-std-gnu90.patch
+
+requirements:
+  build:
+    - binutils
+    - git
+    - make
+    - gfortran
+    - gcc
+  host:
+    - geotiff
+    - jbig
+    - libtiff
+    - libpng
+    - hdf4
+    - hdf5
+    - hdfeos2
+    - hdfeos5
+    - netcdf4
+    - proj
+    - libaec
+    - libidn11
+    - liblzma
+    - liblzma-devel
+    - libfreetype
+    - libxml2
+    - libxml2-devel
+    - xz-tools  # FIXME: do we need?
+    - xz-gpl-tools  # FIXME: do we need?
+    - openmp
+  run:
+    # for obj_decompress program
+    - openjpeg
+    # for gdal_translate program
+    - gdal
+
+build:
+  number: 0
+  script : |
+    export TIFFINC="${PREFIX}/include"
+    export TIFFLIB="${PREFIX}/lib"
+    export GEOTIFF_INC="${PREFIX}/include"
+    export GEOTIFF_LIB="${PREFIX}/lib"
+    export HDFINC="${PREFIX}/include"
+    export HDFLIB="${PREFIX}/lib"
+    export HDF5INC="${PREFIX}/include"
+    export HDF5LIB="${PREFIX}/lib"
+    export HDFEOS_INC="${PREFIX}/include"
+    export HDFEOS_LIB="${PREFIX}/lib"
+    export HDFEOS_GCTPINC="${PREFIX}/include"
+    export HDFEOS_GCTPLIB="${PREFIX}/lib"
+    export HDFEOS5_LIB="${PREFIX}/lib"
+    export HDFEOS5_INC="${PREFIX}/include"
+    export NCDF4INC="${PREFIX}/include"
+    export NCDF4LIB="${PREFIX}/lib"
+    export JPEGINC="${PREFIX}/include"
+    export JPEGLIB="${PREFIX}/lib"
+    export XML2INC="${PREFIX}/include/libxml2"
+    export XML2LIB="${PREFIX}/lib"
+    export JBIGINC="${PREFIX}/include"
+    export JBIGLIB="${PREFIX}/lib"
+    export ZLIBINC="${PREFIX}/include"
+    export ZLIBLIB="${PREFIX}/lib"
+    export SZIPINC="${PREFIX}/include"
+    export SZIPLIB="${PREFIX}/lib"
+    export CURLINC="${PREFIX}/include"
+    export CURLLIB="${PREFIX}/lib"
+    export LZMAINC="${PREFIX}/include"
+    export LZMALIB="${PREFIX}/lib"
+    export IDNINC="${PREFIX}/include"
+    export IDNLIB="${PREFIX}/lib"
+    export ESPAINC="${PREFIX}/include"
+    export ESPALIB="${PREFIX}/lib"
+
+    make -j${CPU_COUNT}
+    make install
+
+tests:
+  - package_contents:
+      include:
+        - espa_common.h
+      lib:
+        - lib_espa_common.a
+      files:
+        exists:
+          - bin/convert_espa_to_hdf
+          - schema/espa_internal_metadata_v2_2.xsd
