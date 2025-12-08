@@ -50,3 +50,11 @@ build:
 
     make -j${CPU_COUNT} ENABLE_THREADING=yes all-lasrc
     make install-lasrc
+
+tests:
+  - package_contents:
+      files:
+        exists:
+          - bin/lasrc
+  - script:
+      - lasrc --help
