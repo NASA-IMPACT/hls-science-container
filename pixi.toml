@@ -9,3 +9,4 @@ preview = ["pixi-build"]
 espa-product-formatter = { path = "packages/espa-product-formatter" }
 espa-surface-reflectance = { path = "packages/espa-surface-reflectance" }
 hls-libs = { path = "packages/hls-libs" }
+awscli = "~=2"
