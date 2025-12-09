@@ -13,7 +13,9 @@ hls-libs = { path = "packages/hls-libs" }
 
 [pypi-dependencies]
 # Python packages, usually developed locally in this repo
-hls-utilities = { path = "packages/hls-utilities", editable = true }
+# hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", tag = "v1.11.1"}
+# ^^^^^ FIXME: this adds a conflict with numpy/rasterio/click/boto3
+hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", branch = "fix/relax-deps"}
 
 # hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", tag=  "v1.7"}
 # ^^^^^ FIXME: this adds a conflict with rasterio over click
