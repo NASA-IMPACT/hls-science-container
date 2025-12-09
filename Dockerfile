@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/root/.cache/rattler/cache,sharing=private \
 ENV PREFIX=/app/.pixi/envs/default
 
 RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
-    pixi shell-hook -e default -s bash >> /app/entrypoint.sh && \
+    pixi shell-hook --frozen -e default -s bash >> /app/entrypoint.sh && \
     echo 'exec "$@"' >> /app/entrypoint.sh
 
 # "Productionize" pixi install: https://pixi.sh/latest/deployment/container/
