@@ -1,12 +1,29 @@
 [workspace]
 name = "hls-atmospheric-correction"
 version = "0.1.0"
-platforms = ["linux-64"]
+platforms = ["linux-64", "osx-arm64"]
 channels = ["conda-forge"]
 preview = ["pixi-build"]
 
-[dependencies]
+[target.linux-64.dependencies]
+# C packages can only be compiled on Linux x86_64
 espa-product-formatter = { path = "packages/espa-product-formatter" }
 espa-surface-reflectance = { path = "packages/espa-surface-reflectance" }
 hls-libs = { path = "packages/hls-libs" }
+
+[pypi-dependencies]
+# Python packages, usually developed locally in this repo
+hls-utilities = { path = "packages/hls-utilities", editable = true }
+
+[dependencies]
+# Common requirements
 awscli = "~=2"
+
+
+[feature.dev.dependencies]
+ruff = "*"
+mypy = "*"
+pytest = "*"
+
+[environments]
+dev = ["dev"]
