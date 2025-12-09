@@ -30,7 +30,5 @@ WORKDIR /app
 COPY --from=build /app/.pixi/envs/default /app/.pixi/envs/default
 COPY --from=build --chmod=0755 /app/entrypoint.sh /app/entrypoint.sh
 
-ENV LD_LIBRARY_PATH="/app/.pixi/envs/default/lib"
-
 ENTRYPOINT [ "/app/entrypoint.sh" ]
 CMD [ "/bin/bash", "-c" ]
