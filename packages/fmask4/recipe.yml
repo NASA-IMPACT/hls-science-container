@@ -1,0 +1,23 @@
+package:
+  name: fmask4
+  version: "4.7"
+
+source:
+  url: https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install
+  sha256: 12aa4604d5f40d2cb045d42eaa472b1091abb05f8ab15cb0078103f7c79bd9a0
+  file_name: Fmask_Linux_mcr.install
+
+build:
+  number: 0
+  script: ./build.sh
+  dynamic_linking:
+    binary_relocation: False
+
+requirements:
+  build:
+    - curl
+    - bash
+    - unzip
+  run:
+    - libgcc
+    - libstdcxx
