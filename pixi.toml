@@ -10,6 +10,7 @@ preview = ["pixi-build"]
 espa-product-formatter = { path = "packages/espa-product-formatter" }
 espa-surface-reflectance = { path = "packages/espa-surface-reflectance" }
 hls-libs = { path = "packages/hls-libs" }
+fmask4 = { path = "packages/fmask4" }
 
 [pypi-dependencies]
 hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", branch = "fix/relax-deps"}
