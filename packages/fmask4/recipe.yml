@@ -16,7 +16,6 @@ build:
 requirements:
   build:
     - curl
-    - bash
     - unzip
     - wget
   run:
