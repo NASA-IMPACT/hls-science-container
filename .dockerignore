@@ -3,3 +3,4 @@
 **/.venv/
 data/
 **/tests/
+**/Fmask_*.install

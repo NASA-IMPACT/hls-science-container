@@ -1,3 +1,5 @@
+Fmask*install
+
 # Ignore intermediate compilation targets
 *.o
 *.a
