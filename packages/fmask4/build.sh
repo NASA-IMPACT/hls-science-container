@@ -8,6 +8,8 @@ INSTALLER_FILE="Fmask_Linux_mcr.install"
 chmod +x $INSTALLER_FILE
 ./$INSTALLER_FILE -destinationFolder ${INSTALL_DIR} -agreeToLicense yes -mode silent
 
+rm $INSTALLER_FILE
+
 cp ${RECIPE_DIR}/run_Fmask.sh ${PREFIX}/bin/
 chmod +x ${PREFIX}/bin/run_Fmask.sh
 
