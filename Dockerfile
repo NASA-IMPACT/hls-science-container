@@ -4,8 +4,8 @@ FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:bookworm-slim AS build
 
 WORKDIR /app
 
-RUN apt update && \
-    apt install -y --no-install-recommends \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
         git \
         ca-certificates \
         && \
