@@ -23,7 +23,7 @@ requirements:
 
 build:
   number: 0
-  script : |
+  script: |
     export HDFINC="${PREFIX}/include"
     export HDFLIB="${PREFIX}/lib"
     export HDF5INC="${PREFIX}/include"

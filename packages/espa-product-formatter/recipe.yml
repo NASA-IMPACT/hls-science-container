@@ -97,6 +97,8 @@ tests:
         exists:
           - bin/convert_espa_to_hdf
           - schema/espa_internal_metadata_v2_2.xsd
+  - script:
+      - convert_espa_to_hdf --help | grep "convert_espa_to_hdf version"
 
 about:
   homepage: https://github.com/NASA-IMPACT/espa-product-formatter

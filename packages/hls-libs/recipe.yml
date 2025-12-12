@@ -19,7 +19,7 @@ requirements:
 
 build:
   number: 0
-  script : |
+  script: |
     export HDFINC="${PREFIX}/include"
     export HDFLIB="${PREFIX}/lib"
     export GCTPINC="${PREFIX}/include"
@@ -51,6 +51,8 @@ tests:
         exists:
           - bin/sentinel-add-fmask-sds
           - bin/landsat-add-fmask-sds
+  - script:
+      - sentinel-add-fmask-sds --help | grep "fmask"
 
 about:
   summary: Utility programs for the HLS Landsat and Sentinel-2 pipelines.
