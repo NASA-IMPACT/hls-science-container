@@ -49,6 +49,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          docker-images: false
+
       - uses: prefix-dev/setup-pixi@v0.9.2
         with:
           frozen: true
@@ -85,6 +91,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          docker-images: false
 
       - uses: prefix-dev/setup-pixi@v0.9.2
         with:
