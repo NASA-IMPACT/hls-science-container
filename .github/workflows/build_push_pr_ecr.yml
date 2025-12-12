@@ -98,6 +98,10 @@ jobs:
           # This will now pull the brand new versions from S3
           RUST_BACKTRACE=full pixi update ${{ needs.analyze.outputs.build_order }}
 
+      - name: Test install
+        run: |
+          pixi install --locked
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -113,7 +117,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: hls-atmospheric-correction
-          IMAGE_TAG: ${{ github.sha }}
+          IMAGE_TAG: ${GITHUB_REF##*/}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
