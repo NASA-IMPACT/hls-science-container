@@ -54,7 +54,7 @@ tests:
           - bin/sentinel-add-fmask-sds
           - bin/landsat-add-fmask-sds
   - script:
-      - sentinel-add-fmask-sds --help | grep "fmask"
+      - sentinel-add-fmask-sds --help 2>&1 | grep "fmask"
 
 about:
   summary: Utility programs for the HLS Landsat and Sentinel-2 pipelines.
