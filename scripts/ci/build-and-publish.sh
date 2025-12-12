@@ -19,14 +19,15 @@ echo "Target: $SORTED_PACKAGES"
 
 # 1. Sync Local Mirror
 echo "⬇️ Syncing current channel from S3..."
-mkdir -p "$CHANNEL_DIR/linux-64"
-aws s3 sync "$CONDA_CHANNEL/linux-64" "$CHANNEL_DIR/linux-64" --delete || true
+# mkdir -p "$CHANNEL_DIR/linux-64"
+# aws s3 sync "$CONDA_CHANNEL/linux-64" "$CHANNEL_DIR/linux-64" --delete || true
 
 # 2. Build Loop
 for pkg_dir in $SORTED_PACKAGES; do
     echo "------------------------------------------------"
     echo "🛠️  Building: $pkg_dir"
     echo "------------------------------------------------"
+    mkdir -p "$CHANNEL_DIR/linux-64"
     
     # rattler-build is provided by the pixi dev environment
     rattler-build build \
@@ -35,17 +36,19 @@ for pkg_dir in $SORTED_PACKAGES; do
         -c "./$CHANNEL_DIR" \
         -c conda-forge \
         --experimental
-        
-    echo "📄 Indexing local channel..."
-    rattler-index fs "$CHANNEL_DIR"
+
+    rattler-build upload s3 --force --channel ${CONDA_CHANNEL} ${CHANNEL_DIR}/linux-64/*.conda
+    rattler-index s3 ${CONDA_CHANNEL}
+
+    rm -rf ${CHANNEL_DIR}
 done
 
-# 3. Upload
-echo "------------------------------------------------"
-echo "☁️  Uploading to S3..."
-echo "------------------------------------------------"
-# aws s3 sync "$CHANNEL_DIR/linux-64" "$CONDA_CHANNEL/linux-64"
-rattler-build upload s3 --force --channel ${CONDA_CHANNEL} ${CHANNEL_DIR}/linux-64/*.conda
-rattler-index s3 ${CONDA_CHANNEL}
+# # 3. Upload
+# echo "------------------------------------------------"
+# echo "☁️  Uploading to S3..."
+# echo "------------------------------------------------"
+# # aws s3 sync "$CHANNEL_DIR/linux-64" "$CONDA_CHANNEL/linux-64"
+# rattler-build upload s3 --force --channel ${CONDA_CHANNEL} ${CHANNEL_DIR}/linux-64/*.conda
+# rattler-index s3 ${CONDA_CHANNEL}
 
 echo "🎉 Done."

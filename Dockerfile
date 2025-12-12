@@ -13,8 +13,9 @@ RUN apt-get update && \
 
 COPY --parents pixi.toml pixi.lock packages /app/
 
-RUN --mount=type=cache,target=/root/.cache/rattler/cache,sharing=private \
-    pixi install --frozen
+# RUN --mount=type=cache,target=/root/.cache/rattler/cache,sharing=private \
+#     pixi install --frozen
+RUN pixi install --frozen
 
 ENV PREFIX=/app/.pixi/envs/default
 
