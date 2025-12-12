@@ -3,8 +3,8 @@ name = "hls-atmospheric-correction"
 version = "0.1.0"
 platforms = ["linux-64", "osx-arm64"]
 channels = [
+  "https://hls-conda-channels.s3.amazonaws.com/hls-atmospheric-correction",
   "conda-forge",
-  "https://hls-conda-channels.s3.amazonaws.com/hls-atmospheric-correction"
 ]
 preview = ["pixi-build"]
 

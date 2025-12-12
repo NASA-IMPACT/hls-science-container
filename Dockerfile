@@ -11,7 +11,7 @@ RUN apt-get update && \
         && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --parents pixi.toml pixi.lock packages /app/
+COPY --parents pixi.toml pixi.lock /app/
 
 # RUN --mount=type=cache,target=/root/.cache/rattler/cache,sharing=private \
 #     pixi install --frozen
