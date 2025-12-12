@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1.7-labs
 ARG PLATFORM=linux/amd64
-ARG ENVIRONMENT=default
-ARG CHANNEL_DIR=channel
 FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:bookworm-slim AS build
+
+ARG ENVIRONMENT=default
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ RUN apt-get update && \
 
 ENV PIXI_FROZEN=true
 
-COPY --parents pixi.toml pixi.lock ${CHANNEL_DIR} /app/
+COPY --parents pixi.toml pixi.lock /app/
 RUN --mount=type=cache,target=/root/.cache/rattler/cache,sharing=private \
     pixi install -e $ENVIRONMENT
 
