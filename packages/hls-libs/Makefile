@@ -1,5 +1,3 @@
-PREFIX = ${HLS_LIBS_PREFIX}
-
 SUBDIRS = landsat-add-fmask-sds \
 			  sentinel-add-fmask-sds \
 			  sentinel-consolidate \

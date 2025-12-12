@@ -1,0 +1,8 @@
+[package]
+name = "espa-surface-reflectance"
+
+[package.run-dependencies]
+espa-product-formatter = { path = "../espa-product-formatter" }
+
+[package.build]
+backend = { name = "pixi-build-rattler-build", version = "*" }

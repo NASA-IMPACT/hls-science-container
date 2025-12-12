@@ -11,7 +11,7 @@ docker build \
 docker run \
     -v "$(pwd)/pixi.toml":/app/pixi.toml \
     -v "$(pwd)/pixi.lock":/app/pixi.lock \
-    -v "$(pwd)/src":/app/src \
+    -v "$(pwd)/packages":/app/packages \
     -v "$(pwd)/data":/app/data \
     -e LASRC_AUX_DIR=/app/data/lasrc_aux/ \
     -v "${HOME}/.aws/:/root/.aws" \
