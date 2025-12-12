@@ -94,7 +94,7 @@ jobs:
           echo "Updating lockfile for: ${{ needs.analyze.outputs.build_order }}"
 
           # This will now pull the brand new versions from S3
-          RUST_BACKTRACE=1 pixi update ${{ needs.analyze.outputs.build_order }}
+          RUST_BACKTRACE=full pixi update ${{ needs.analyze.outputs.build_order }}
 
           if [[ -n $(git status -s pixi.lock) ]]; then
             git config --global user.name "GitHub Actions"
