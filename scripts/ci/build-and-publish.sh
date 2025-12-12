@@ -34,7 +34,7 @@ echo "------------------------------------------------"
 echo "☁️  Uploading to S3..."
 echo "------------------------------------------------"
 rattler-build upload s3 --force --channel ${CONDA_CHANNEL} ${CHANNEL_DIR}/**/*.conda
-rattler-index s3 ${CONDA_CHANNEL}
-rattler-index s3 --target-platform osx-arm64 ${CONDA_CHANNEL}
+rattler-index s3 --force ${CONDA_CHANNEL}
+rattler-index s3 --force --target-platform osx-arm64 ${CONDA_CHANNEL}
 
 echo "🎉 Done."
