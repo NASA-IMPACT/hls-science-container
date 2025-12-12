@@ -16,6 +16,8 @@ requirements:
     - hdfeos2
     - hdfeos5
     - liblzma-devel
+  run:
+    - espa-product-formatter
 
 build:
   number: 0
