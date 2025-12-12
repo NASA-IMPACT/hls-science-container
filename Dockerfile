@@ -1,5 +1,7 @@
 # syntax=docker/dockerfile:1.7-labs
 ARG PLATFORM=linux/amd64
+ARG ENVIRONMENT=default
+ARG CHANNEL_DIR=channel
 FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:bookworm-slim AS build
 
 WORKDIR /app
@@ -11,16 +13,14 @@ RUN apt-get update && \
         && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --parents pixi.toml pixi.lock /app/
+ENV PIXI_FROZEN=true
 
-# RUN --mount=type=cache,target=/root/.cache/rattler/cache,sharing=private \
-#     pixi install --frozen
-RUN pixi install --frozen
-
-ENV PREFIX=/app/.pixi/envs/default
+COPY --parents pixi.toml pixi.lock ${CHANNEL_DIR} /app/
+RUN --mount=type=cache,target=/root/.cache/rattler/cache,sharing=private \
+    pixi install -e $ENVIRONMENT
 
 RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
-    pixi shell-hook --frozen -e default -s bash >> /app/entrypoint.sh && \
+    pixi shell-hook -e $ENVIRONMENT -s bash >> /app/entrypoint.sh && \
     echo 'exec "$@"' >> /app/entrypoint.sh
 
 # "Productionize" pixi install: https://pixi.sh/latest/deployment/container/

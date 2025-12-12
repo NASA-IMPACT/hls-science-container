@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-CONDA_CHANNEL=${CONDA_CHANNEL:-s3://hls-conda-channels/hls-atmospheric-correction}
+CONDA_CHANNEL=${CONDA_CHANNEL:-s3://hls-conda-channels/hls-atmospheric-correction/local}
+
 CHANNEL_DIR="channel"
 PIXI_ENV="build"
 

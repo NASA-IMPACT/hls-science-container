@@ -370,7 +370,7 @@ def main():
     # --- 5. Output ---
     output_string = " ".join(final_build_order_dirs)
     has_changes = "true" if final_build_order_dirs else "false"
-    docker_changed_str = "true" if docker_changed else "false"
+    docker_changed_str = "true" if docker_changed or has_changes else "false"
 
     print(f"✅ Build Order: {output_string}", file=sys.stderr)
 

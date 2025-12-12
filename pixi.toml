@@ -3,7 +3,7 @@ name = "hls-atmospheric-correction"
 version = "0.1.0"
 platforms = ["linux-64", "osx-arm64"]
 channels = [
-  "https://hls-conda-channels.s3.amazonaws.com/hls-atmospheric-correction",
+  "https://hls-conda-channels.s3.amazonaws.com/hls-atmospheric-correction/main",
   "conda-forge",
 ]
 preview = ["pixi-build"]
@@ -51,5 +51,5 @@ determine-targets = "python scripts/ci/determine-targets.py"
 build-publish-packages = "bash scripts/ci/build-and-publish.sh"
 
 [environments]
-build = {features = ["build"], no-default-feature = true }
-dev = {features = ["dev"] }
+build = { features = ["build"], no-default-feature = true }
+dev = { features = ["dev"] }
