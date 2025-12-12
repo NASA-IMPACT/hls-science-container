@@ -44,6 +44,8 @@ done
 echo "------------------------------------------------"
 echo "☁️  Uploading to S3..."
 echo "------------------------------------------------"
-aws s3 sync "$CHANNEL_DIR/linux-64" "$CONDA_CHANNEL/linux-64"
+# aws s3 sync "$CHANNEL_DIR/linux-64" "$CONDA_CHANNEL/linux-64"
+rattler-build upload s3 --force --channel ${CONDA_CHANNEL} ${CHANNEL_DIR}/linux-64/*.conda
+rattler-index s3 ${CONDA_CHANNEL}
 
 echo "🎉 Done."
