@@ -97,3 +97,7 @@ tests:
         exists:
           - bin/convert_espa_to_hdf
           - schema/espa_internal_metadata_v2_2.xsd
+
+about:
+  homepage: https://github.com/NASA-IMPACT/espa-product-formatter
+  license: MIT

@@ -6,11 +6,10 @@ INSTALL_DIR="$PREFIX/bin/fmask4"
 
 INSTALLER_FILE="Fmask_Linux_mcr.install"
 
-wget -q -O ${INSTALLER_FILE} https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install
-
 chmod +x $INSTALLER_FILE
 ./$INSTALLER_FILE -destinationFolder ${INSTALL_DIR} -agreeToLicense yes -mode silent
 
+# cleanup giant install file to keep disk utilization down
 rm $INSTALLER_FILE
 
 cp ${RECIPE_DIR}/run_Fmask.sh ${PREFIX}/bin/

@@ -19,6 +19,7 @@ requirements:
     - liblzma-devel
   run:
     - python
+    - espa-product-formatter
 
 build:
   number: 0
@@ -57,4 +58,8 @@ tests:
         exists:
           - bin/lasrc
   - script:
-      - lasrc --help
+      - lasrc --help | grep "LaSRC (Land Surface Reflectance Code)"
+
+about:
+  homepage: https://github.com/NASA-IMPACT/espa-surface-reflectance
+  license: MIT

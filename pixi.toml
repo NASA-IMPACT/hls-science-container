@@ -2,15 +2,18 @@
 name = "hls-atmospheric-correction"
 version = "0.1.0"
 platforms = ["linux-64", "osx-arm64"]
-channels = ["conda-forge"]
+channels = [
+  "conda-forge",
+  "https://hls-conda-channels.s3.amazonaws.com/hls-atmospheric-correction"
+]
 preview = ["pixi-build"]
 
 [target.linux-64.dependencies]
 # C packages can only be compiled on Linux x86_64
-espa-product-formatter = { path = "packages/espa-product-formatter" }
-espa-surface-reflectance = { path = "packages/espa-surface-reflectance" }
-hls-libs = { path = "packages/hls-libs" }
-fmask4 = { path = "packages/fmask4" }
+espa-product-formatter = "*"
+espa-surface-reflectance = "*"
+hls-libs = "*"
+# fmask4 = { path = "packages/fmask4" }
 
 [pypi-dependencies]
 hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", branch = "fix/relax-deps"}
@@ -24,7 +27,7 @@ hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", branch =
 hls-vi = { git = "https://github.com/NASA-IMPACT/hls-vi", branch = "fix/relax-deps" }
 
 [dependencies]
-python = "*"
+python = ">=3.12,<4"
 awscli = "~=2"
 gdal = "*"
 libgdal-jp2openjpeg = "*"
@@ -36,5 +39,17 @@ ruff = "*"
 mypy = "*"
 pytest = "*"
 
+[feature.build.dependencies]
+# Package building & publishing
+pyyaml = "*"
+rattler-build = "*"
+rattler-index = "*"
+awscli = "*"
+
+[feature.build.tasks]
+determine-targets = "python scripts/ci/determine-targets.py"
+build-publish-packages = "bash scripts/ci/build-and-publish.sh"
+
 [environments]
-dev = ["dev"]
+build = {features = ["build"], no-default-feature = true }
+dev = {features = ["dev"] }

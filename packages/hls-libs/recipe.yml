@@ -51,3 +51,7 @@ tests:
         exists:
           - bin/sentinel-add-fmask-sds
           - bin/landsat-add-fmask-sds
+
+about:
+  summary: Utility programs for the HLS Landsat and Sentinel-2 pipelines.
+  license: MIT
