@@ -60,75 +60,16 @@ def get_changed_files(base_sha: str, head_sha: str = "HEAD") -> set[str]:
     return set(output.splitlines()) if output else set()
 
 
-def get_pixi_packages(pixi_path: Path) -> set[str]:
-    """
-    Parse pixi.toml to find allowed packages.
-
-    Scans:
-    - [dependencies], [host-dependencies], [build-dependencies]
-    - [feature.*.dependencies] (and host/build variants)
-    - [target.*.dependencies] (and host/build variants)
-
-    Parameters
-    ----------
-    pixi_path : Path
-        Path object pointing to the pixi.toml file.
-
-    Returns
-    -------
-    set[str]
-        A set of package names explicitly listed in the pixi configuration.
-    """
-    if not pixi_path.exists():
-        print(f"⚠️  pixi.toml not found at {pixi_path}", file=sys.stderr)
-        return set()
-
-    try:
-        with pixi_path.open("rb") as f:
-            data = tomllib.load(f)
-
-        pkgs = set()
-        dep_sections = ["dependencies", "host-dependencies", "build-dependencies"]
-
-        # 1. Check Root Dependencies
-        for section in dep_sections:
-            pkgs.update(data.get(section, {}).keys())
-
-        # 2. Check Feature Dependencies
-        # structure: [feature.name.dependencies]
-        features = data.get("feature", {})
-        for feature_data in features.values():
-            if isinstance(feature_data, dict):
-                for section in dep_sections:
-                    pkgs.update(feature_data.get(section, {}).keys())
-
-        # 3. Check Target Specific Dependencies
-        # structure: [target.platform.dependencies]
-        targets = data.get("target", {})
-        for target_data in targets.values():
-            if isinstance(target_data, dict):
-                for section in dep_sections:
-                    pkgs.update(target_data.get(section, {}).keys())
-
-        return pkgs
-
-    except Exception as e:
-        print(f"⚠️ Error parsing pixi.toml: {e}", file=sys.stderr)
-        return set()
-
-
 def get_dependency_graph(
-    packages_dir: Path, allowed_pkgs: set[str]
+    packages_dir: Path
 ) -> tuple[dict[str, set[str]], dict[str, str]]:
     """
-    Parse recipe.yml files to build a dependency graph, filtering by allowed packages.
+    Parse recipe.yml files to build a dependency graph
 
     Parameters
     ----------
     packages_dir : Path
         Path object pointing to the directory containing package subdirectories.
-    allowed_pkgs : set[str]
-        Set of package names that are allowed to be included (from pixi.toml).
 
     Returns
     -------
@@ -153,10 +94,6 @@ def get_dependency_graph(
                     data = yaml.safe_load(f)
 
                 pkg_name = data.get("package", {}).get("name")
-
-                # --- FILTER: Check if package is in pixi.toml ---
-                if not pkg_name or pkg_name not in allowed_pkgs:
-                    continue
 
                 dir_map[pkg_name] = d.name
 
@@ -308,11 +245,8 @@ def main():
     pixi_path = Path("pixi.toml")
     packages_dir = Path("packages")
 
-    # Get Allowed Packages from pixi.toml
-    allowed_pkgs = get_pixi_packages(pixi_path)
-
     # Build Graph (filtered by allowed_pkgs)
-    graph, dir_map = get_dependency_graph(packages_dir, allowed_pkgs)
+    graph, dir_map = get_dependency_graph(packages_dir)
 
     explicitly_changed_pkgs = set()
     docker_changed = False
