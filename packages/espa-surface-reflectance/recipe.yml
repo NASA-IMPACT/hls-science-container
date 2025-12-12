@@ -19,7 +19,6 @@ requirements:
     - liblzma-devel
   run:
     - python
-    - espa-product-formatter
 
 build:
   number: 0
