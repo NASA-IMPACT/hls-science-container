@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -e
+
+CONTAINER_NAME=${CONTAINER_NAME:-hls-atmospheric-correction}
+
+docker build \
+    -f Dockerfile \
+    -t "${CONTAINER_NAME}":latest .
+
+docker run \
+    -v "$(pwd)/pixi.toml":/app/pixi.toml \
+    -v "$(pwd)/pixi.lock":/app/pixi.lock \
+    -v "$(pwd)/src":/app/src \
+    -v "$(pwd)/data":/app/data \
+    -e LASRC_AUX_DIR=/app/data/lasrc_aux/ \
+    -v "${HOME}/.aws/:/root/.aws" \
+    -e "AWS_PROFILE=${AWS_PROFILE:-default}" \
+    -it "${CONTAINER_NAME}":latest \
+    /bin/bash

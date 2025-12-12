@@ -1,0 +1,6 @@
+#!/bin/bash
+
+pixi run ruff check
+pixi run ruff format --check
+
+pixi run mdformat --check ./**/*.md
