@@ -34,6 +34,7 @@ for pkg_dir in $SORTED_PACKAGES; do
         --recipe "packages/$pkg_dir/recipe.yml" \
         --output-dir "$CHANNEL_DIR" \
         -c "./$CHANNEL_DIR" \
+        -c "${CONDA_CHANNEL}" \
         -c conda-forge \
         --experimental
 
