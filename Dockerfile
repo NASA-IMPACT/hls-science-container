@@ -25,6 +25,11 @@ RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
 # "Productionize" pixi install: https://pixi.sh/latest/deployment/container/
 FROM --platform=${PLATFORM} debian:bookworm-slim AS prod
 
+# Enforce v1.0.0 for STAC specification within PySTAC
+ENV PYSTAC_STAC_VERSION_OVERRIDE=1.0.0
+# Allow GDAL to open MEM dataset with a datapointer (required for hls-hdf_to_cog)
+ENV GDAL_MEM_ENABLE_OPEN=YES
+
 WORKDIR /app
 
 COPY --from=build /app/.pixi/envs/default /app/.pixi/envs/default
