@@ -12,33 +12,14 @@ espa-surface-reflectance = { path = "packages/espa-surface-reflectance" }
 hls-libs = { path = "packages/hls-libs" }
 
 [pypi-dependencies]
-# Python packages, usually developed locally in this repo
-# hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", tag = "v1.11.1"}
-# ^^^^^ FIXME: this adds a conflict with numpy/rasterio/click/boto3
-hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", branch = "fix/relax-deps"}
-
-# hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", tag=  "v1.7"}
-# ^^^^^ FIXME: this adds a conflict with rasterio over click
 hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", branch = "fix/relax-deps"}
-
-# hls-cmr_stac = { git = "https://github.com/NASA-IMPACT/hls-cmr_stac", tag = "v1.7" }
-# ^^^^^ FIXME: this adds a conflict over rasterio
 hls-cmr_stac = { git = "https://github.com/NASA-IMPACT/hls-cmr_stac", branch = "fix/relax-deps" }
-
-hls-manifest = { git = "https://github.com/NASA-IMPACT/hls-manifest", tag = "v2.1" }
-
-# hls-hdf_to_cog = { git = "https://github.com/NASA-IMPACT/hls-hdf_to_cog", tag = "v2.1" }
-# ^^^^^ FIXME: this adds a conflict with rasterio over click
 hls-hdf_to_cog = { git = "https://github.com/NASA-IMPACT/hls-hdf_to_cog", branch = "fix/relax-deps" }
-
-# metadata-creator = { git = "https://github.com/NASA-IMPACT/hls-metadata", tag = "v2.7" }
-# ^^^^^ FIXME: this adds a conflict with rasterio over click
+hls-manifest = { git = "https://github.com/NASA-IMPACT/hls-manifest", tag = "v2.1" }
 metadata-creator = { git = "https://github.com/NASA-IMPACT/hls-metadata", branch = "fix/relax-deps" }
-
 hls-thumbnails = { git = "https://github.com/NASA-IMPACT/hls-thumbnails", tag=  "v1.3" }
-
-# hls-vi = { git = "https://github.com/NASA-IMPACT/hls-vi", tag = "v1.17" }
-# ^^^^^ FIXME: conflict with numpy between hls-vi <> gdal (needed for gdal-bin in espa-product-formatter)
+hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", branch = "fix/relax-deps"}
+# FIXME: create a sdist for hls-vi, include in release, and reference that here
 hls-vi = { git = "https://github.com/NASA-IMPACT/hls-vi", branch = "fix/relax-deps" }
 
 [dependencies]

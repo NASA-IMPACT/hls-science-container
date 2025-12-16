@@ -130,8 +130,8 @@ environments:
       - conda: packages/espa-surface-reflectance
       - conda: packages/hls-libs
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/a1/3c/e70f47afdaf9172f90e80615f923fbb09f7fb4e5ea89e2d95562ec7f95c2/boto3-1.42.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/8b/9a/da5e6cabf4da855d182fcdacf3573b69f30899e0e6c3e0d91ce6ad92ce74/botocore-1.42.5-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/83/dc/9c8bb4f834ab7ee4ef9ca385caa8309222adc58141aa26fe2a2b24e3678d/boto3-1.42.11-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/8e/6f/a50324c3fbd3385a7a047379dcb18ccb35de6f9712433f626be14d90ec22/botocore-1.42.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/09/40/9d521973cae7f7ef8b1f0d0e28a3db0f851c1f1dca45d4c2ed5360bb7246/dicttoxml-1.7.16-py3-none-any.whl
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -142,7 +142,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#751e75c057428aef6b4ace732c27b38d3a611dc5
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
-      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities?branch=fix%2Frelax-deps#b2850b457c030828db277fdb8131245ac500e7bd
+      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
       - pypi: git+https://github.com/NASA-IMPACT/hls-vi#917c1ee4b43862f448644ea26172ef762c86d54f
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bf/9c/8c95d856233c1f82500c2450b8c68576b4cf1c871db3afac5c34ff84e6fd/jsonschema-4.25.1-py3-none-any.whl
@@ -154,7 +154,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/cf/4e/35a80cae583a37cf15604b44240e45c05e04e86f9cfd766623149297e971/pydantic_core-2.41.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/bc/fa/4b35e76847250aff850e61adbc7fabde72a4ca584589d8762277984397ab/pystac-1.0.0rc2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2c/58/ca301544e1fa93ed4f80d724bf5b194f6e4b945841c5bfd555878eea9fcb/referencing-0.37.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/01/10/cccc7eb6757bdca9ef2f25bcc10eb50dbc05646570308690c7165f075d5d/rio_cogeo-7.0.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/4e/f8/fc54603209c05aadbf35c5f5a63d209e27ed37e0045c17c44d4b0a4689e1/rio_cogeo-7.0.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b7/de/f7192e12b21b9e9a68a6d0f249b4af3fdcdff8418be0767a627564afa1f1/rpds_py-0.30.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/fc/51/727abb13f44c1fcf6d145979e1535a35794db0f6e450a0cb46aa24732fe2/s3transfer-0.16.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f2/a2/83fc37e2a58090e3d2ff79175a95493c664bcd0b653dd75cb9134645a4e5/shapely-2.1.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
@@ -270,8 +270,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.3.1-h8359307_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/a1/3c/e70f47afdaf9172f90e80615f923fbb09f7fb4e5ea89e2d95562ec7f95c2/boto3-1.42.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/8b/9a/da5e6cabf4da855d182fcdacf3573b69f30899e0e6c3e0d91ce6ad92ce74/botocore-1.42.5-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/83/dc/9c8bb4f834ab7ee4ef9ca385caa8309222adc58141aa26fe2a2b24e3678d/boto3-1.42.11-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/8e/6f/a50324c3fbd3385a7a047379dcb18ccb35de6f9712433f626be14d90ec22/botocore-1.42.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/09/40/9d521973cae7f7ef8b1f0d0e28a3db0f851c1f1dca45d4c2ed5360bb7246/dicttoxml-1.7.16-py3-none-any.whl
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -282,7 +282,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#751e75c057428aef6b4ace732c27b38d3a611dc5
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
-      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities?branch=fix%2Frelax-deps#b2850b457c030828db277fdb8131245ac500e7bd
+      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
       - pypi: git+https://github.com/NASA-IMPACT/hls-vi#917c1ee4b43862f448644ea26172ef762c86d54f
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bf/9c/8c95d856233c1f82500c2450b8c68576b4cf1c871db3afac5c34ff84e6fd/jsonschema-4.25.1-py3-none-any.whl
@@ -294,7 +294,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/94/02/abfa0e0bda67faa65fef1c84971c7e45928e108fe24333c81f3bfe35d5f5/pydantic_core-2.41.5-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/bc/fa/4b35e76847250aff850e61adbc7fabde72a4ca584589d8762277984397ab/pystac-1.0.0rc2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2c/58/ca301544e1fa93ed4f80d724bf5b194f6e4b945841c5bfd555878eea9fcb/referencing-0.37.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/01/10/cccc7eb6757bdca9ef2f25bcc10eb50dbc05646570308690c7165f075d5d/rio_cogeo-7.0.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/4e/f8/fc54603209c05aadbf35c5f5a63d209e27ed37e0045c17c44d4b0a4689e1/rio_cogeo-7.0.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fd/32/55fb50ae104061dbc564ef15cc43c013dc4a9f4527a1f4d99baddf56fe5f/rpds_py-0.30.0-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/fc/51/727abb13f44c1fcf6d145979e1535a35794db0f6e450a0cb46aa24732fe2/s3transfer-0.16.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6d/ab/0bee5a830d209adcd3a01f2d4b70e587cdd9fd7380d5198c064091005af8/shapely-2.1.2-cp313-cp313-macosx_11_0_arm64.whl
@@ -446,8 +446,8 @@ environments:
       - conda: packages/espa-surface-reflectance
       - conda: packages/hls-libs
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/a1/3c/e70f47afdaf9172f90e80615f923fbb09f7fb4e5ea89e2d95562ec7f95c2/boto3-1.42.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/8b/9a/da5e6cabf4da855d182fcdacf3573b69f30899e0e6c3e0d91ce6ad92ce74/botocore-1.42.5-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/83/dc/9c8bb4f834ab7ee4ef9ca385caa8309222adc58141aa26fe2a2b24e3678d/boto3-1.42.11-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/8e/6f/a50324c3fbd3385a7a047379dcb18ccb35de6f9712433f626be14d90ec22/botocore-1.42.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/09/40/9d521973cae7f7ef8b1f0d0e28a3db0f851c1f1dca45d4c2ed5360bb7246/dicttoxml-1.7.16-py3-none-any.whl
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -458,7 +458,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#751e75c057428aef6b4ace732c27b38d3a611dc5
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
-      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities?branch=fix%2Frelax-deps#b2850b457c030828db277fdb8131245ac500e7bd
+      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
       - pypi: git+https://github.com/NASA-IMPACT/hls-vi#917c1ee4b43862f448644ea26172ef762c86d54f
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bf/9c/8c95d856233c1f82500c2450b8c68576b4cf1c871db3afac5c34ff84e6fd/jsonschema-4.25.1-py3-none-any.whl
@@ -470,7 +470,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/cf/4e/35a80cae583a37cf15604b44240e45c05e04e86f9cfd766623149297e971/pydantic_core-2.41.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/bc/fa/4b35e76847250aff850e61adbc7fabde72a4ca584589d8762277984397ab/pystac-1.0.0rc2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2c/58/ca301544e1fa93ed4f80d724bf5b194f6e4b945841c5bfd555878eea9fcb/referencing-0.37.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/01/10/cccc7eb6757bdca9ef2f25bcc10eb50dbc05646570308690c7165f075d5d/rio_cogeo-7.0.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/4e/f8/fc54603209c05aadbf35c5f5a63d209e27ed37e0045c17c44d4b0a4689e1/rio_cogeo-7.0.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/b7/de/f7192e12b21b9e9a68a6d0f249b4af3fdcdff8418be0767a627564afa1f1/rpds_py-0.30.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/fc/51/727abb13f44c1fcf6d145979e1535a35794db0f6e450a0cb46aa24732fe2/s3transfer-0.16.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/f2/a2/83fc37e2a58090e3d2ff79175a95493c664bcd0b653dd75cb9134645a4e5/shapely-2.1.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
@@ -599,8 +599,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.3.1-h8359307_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/a1/3c/e70f47afdaf9172f90e80615f923fbb09f7fb4e5ea89e2d95562ec7f95c2/boto3-1.42.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/8b/9a/da5e6cabf4da855d182fcdacf3573b69f30899e0e6c3e0d91ce6ad92ce74/botocore-1.42.5-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/83/dc/9c8bb4f834ab7ee4ef9ca385caa8309222adc58141aa26fe2a2b24e3678d/boto3-1.42.11-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/8e/6f/a50324c3fbd3385a7a047379dcb18ccb35de6f9712433f626be14d90ec22/botocore-1.42.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/09/40/9d521973cae7f7ef8b1f0d0e28a3db0f851c1f1dca45d4c2ed5360bb7246/dicttoxml-1.7.16-py3-none-any.whl
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -611,7 +611,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#751e75c057428aef6b4ace732c27b38d3a611dc5
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
-      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities?branch=fix%2Frelax-deps#b2850b457c030828db277fdb8131245ac500e7bd
+      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
       - pypi: git+https://github.com/NASA-IMPACT/hls-vi#917c1ee4b43862f448644ea26172ef762c86d54f
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/bf/9c/8c95d856233c1f82500c2450b8c68576b4cf1c871db3afac5c34ff84e6fd/jsonschema-4.25.1-py3-none-any.whl
@@ -623,7 +623,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/94/02/abfa0e0bda67faa65fef1c84971c7e45928e108fe24333c81f3bfe35d5f5/pydantic_core-2.41.5-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/bc/fa/4b35e76847250aff850e61adbc7fabde72a4ca584589d8762277984397ab/pystac-1.0.0rc2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2c/58/ca301544e1fa93ed4f80d724bf5b194f6e4b945841c5bfd555878eea9fcb/referencing-0.37.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/01/10/cccc7eb6757bdca9ef2f25bcc10eb50dbc05646570308690c7165f075d5d/rio_cogeo-7.0.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/4e/f8/fc54603209c05aadbf35c5f5a63d209e27ed37e0045c17c44d4b0a4689e1/rio_cogeo-7.0.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/fd/32/55fb50ae104061dbc564ef15cc43c013dc4a9f4527a1f4d99baddf56fe5f/rpds_py-0.30.0-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/fc/51/727abb13f44c1fcf6d145979e1535a35794db0f6e450a0cb46aa24732fe2/s3transfer-0.16.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6d/ab/0bee5a830d209adcd3a01f2d4b70e587cdd9fd7380d5198c064091005af8/shapely-2.1.2-cp313-cp313-macosx_11_0_arm64.whl
@@ -1104,20 +1104,20 @@ packages:
   purls: []
   size: 33602
   timestamp: 1733513285902
-- pypi: https://files.pythonhosted.org/packages/a1/3c/e70f47afdaf9172f90e80615f923fbb09f7fb4e5ea89e2d95562ec7f95c2/boto3-1.42.5-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/83/dc/9c8bb4f834ab7ee4ef9ca385caa8309222adc58141aa26fe2a2b24e3678d/boto3-1.42.11-py3-none-any.whl
   name: boto3
-  version: 1.42.5
-  sha256: 7d22cd102c77c37d552783308eeb01a088c0e3f6e707157dd6d1842b205ffce7
+  version: 1.42.11
+  sha256: 54939f7fc1b2777771c2a66ecc77025b2af86e567b5cf68d30dc3838205f0a4a
   requires_dist:
-  - botocore>=1.42.5,<1.43.0
+  - botocore>=1.42.11,<1.43.0
   - jmespath>=0.7.1,<2.0.0
   - s3transfer>=0.16.0,<0.17.0
   - botocore[crt]>=1.21.0,<2.0a0 ; extra == 'crt'
   requires_python: '>=3.9'
-- pypi: https://files.pythonhosted.org/packages/8b/9a/da5e6cabf4da855d182fcdacf3573b69f30899e0e6c3e0d91ce6ad92ce74/botocore-1.42.5-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/8e/6f/a50324c3fbd3385a7a047379dcb18ccb35de6f9712433f626be14d90ec22/botocore-1.42.11-py3-none-any.whl
   name: botocore
-  version: 1.42.5
-  sha256: 6aa487f1876c881e2143f6a186b7d8faaf042fc05e0ba7421d821f145356a0c9
+  version: 1.42.11
+  sha256: 73b0796870f16ccd44729c767ade20e8ed62b31b3aa2be07b35377338dcf6d7c
   requires_dist:
   - jmespath>=0.7.1,<2.0.0
   - python-dateutil>=2.1,<3.0.0
@@ -1623,7 +1623,7 @@ packages:
   - pillow
   - flake8 ; extra == 'test'
   - pytest ; extra == 'test'
-- pypi: git+https://github.com/NASA-IMPACT/hls-utilities?branch=fix%2Frelax-deps#b2850b457c030828db277fdb8131245ac500e7bd
+- pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
   name: hls-utilities
   version: 1.11.2
   requires_dist:
@@ -3711,10 +3711,10 @@ packages:
   - rpds-py>=0.7.0
   - typing-extensions>=4.4.0 ; python_full_version < '3.13'
   requires_python: '>=3.10'
-- pypi: https://files.pythonhosted.org/packages/01/10/cccc7eb6757bdca9ef2f25bcc10eb50dbc05646570308690c7165f075d5d/rio_cogeo-7.0.0-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/4e/f8/fc54603209c05aadbf35c5f5a63d209e27ed37e0045c17c44d4b0a4689e1/rio_cogeo-7.0.1-py3-none-any.whl
   name: rio-cogeo
-  version: 7.0.0
-  sha256: eac3e7b26ef8354ee299efbeea70202ccec257d41eaddc8f9ec9926d3ffb244b
+  version: 7.0.1
+  sha256: 10ca7a5d23e185db597438ebb51d1c2c30928e75c635800e834a5c14241134e2
   requires_dist:
   - click>=7.0
   - morecantile>=5.0,<8.0
