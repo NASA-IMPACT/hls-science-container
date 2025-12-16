@@ -1,12 +1,39 @@
 [workspace]
 name = "hls-atmospheric-correction"
 version = "0.1.0"
-platforms = ["linux-64"]
+platforms = ["linux-64", "osx-arm64"]
 channels = ["conda-forge"]
 preview = ["pixi-build"]
 
-[dependencies]
+[target.linux-64.dependencies]
+# C packages can only be compiled on Linux x86_64
 espa-product-formatter = { path = "packages/espa-product-formatter" }
 espa-surface-reflectance = { path = "packages/espa-surface-reflectance" }
 hls-libs = { path = "packages/hls-libs" }
+
+[pypi-dependencies]
+hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", branch = "fix/relax-deps"}
+hls-cmr_stac = { git = "https://github.com/NASA-IMPACT/hls-cmr_stac", branch = "fix/relax-deps" }
+hls-hdf_to_cog = { git = "https://github.com/NASA-IMPACT/hls-hdf_to_cog", branch = "fix/relax-deps" }
+hls-manifest = { git = "https://github.com/NASA-IMPACT/hls-manifest", tag = "v2.1" }
+metadata-creator = { git = "https://github.com/NASA-IMPACT/hls-metadata", branch = "fix/relax-deps" }
+hls-thumbnails = { git = "https://github.com/NASA-IMPACT/hls-thumbnails", tag=  "v1.3" }
+hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", branch = "fix/relax-deps"}
+# FIXME: create a sdist for hls-vi, include in release, and reference that here
+hls-vi = { git = "https://github.com/NASA-IMPACT/hls-vi", branch = "fix/relax-deps" }
+
+[dependencies]
+python = "*"
 awscli = "~=2"
+gdal = "*"
+libgdal-jp2openjpeg = "*"
+rasterio = "*"
+pyproj = ">=3.7.2,<4"
+
+[feature.dev.dependencies]
+ruff = "*"
+mypy = "*"
+pytest = "*"
+
+[environments]
+dev = ["dev"]

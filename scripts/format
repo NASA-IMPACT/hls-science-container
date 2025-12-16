@@ -1,8 +1,7 @@
 #!/bin/bash
 
-pixi run ruff check --fix
-pixi run ruff format
+pixi run --frozen -e dev ruff check --fix
+pixi run --frozen -e dev ruff format
 
-pixi run mdformat ./**/*.md
-
+# pixi run mdformat ./**/*.md
 # FIXME: mbake for Makefile formatting
