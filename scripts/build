@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+
+CONTAINER_NAME=${CONTAINER_NAME:-hls-atmospheric-correction}
+
+INSTALLER_FILE="Fmask_Linux_mcr.install"
+if [[ ! -f ${INSTALLER_FILE} ]]; then
+    echo "Downloading Fmask installer to ${INSTALLER_FILE}..."
+    wget -q -O ${INSTALLER_FILE} https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install
+fi
+
+docker build \
+    -f Dockerfile \
+    -t "${CONTAINER_NAME}":latest .

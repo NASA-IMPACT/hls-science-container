@@ -2,11 +2,10 @@
 
 set -e
 
-CONTAINER_NAME=${CONTAINER_NAME:-hls-atmospheric-correction}
+export CONTAINER_NAME=${CONTAINER_NAME:-hls-atmospheric-correction}
 
-docker build \
-    -f Dockerfile \
-    -t "${CONTAINER_NAME}":latest .
+BUILD="$(dirname $0)/build"
+${BUILD}
 
 docker run \
     -v "$(pwd)/pixi.toml":/app/pixi.toml \

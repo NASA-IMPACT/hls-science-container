@@ -2,15 +2,28 @@
 ARG PLATFORM=linux/amd64
 FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:bookworm-slim AS build
 
+ARG FMASK_INSTALLER=Fmask_Linux_mcr.install
+
 WORKDIR /app
 
 RUN apt update && \
     apt install -y --no-install-recommends \
-        git \
         ca-certificates \
+        curl \
+        git \
+        unzip \
         && \
     rm -rf /var/lib/apt/lists/*
 
+# ----- Install Fmask4
+# COPY ${FMASK_INSTALLER} /tmp/Fmask.install
+COPY Fmask_Linux_mcr.install /tmp/Fmask.install
+RUN mkdir -p /opt && \
+    chmod +x /tmp/Fmask.install && \
+    /tmp/Fmask.install -destinationFolder /opt/fmask -agreeToLicense yes -mode silent && \
+    rm /tmp/Fmask.install
+
+# ----- Install package dependencies
 COPY --parents pixi.toml pixi.lock packages /app/
 
 RUN --mount=type=cache,target=/root/.cache/rattler/cache,sharing=private \
@@ -32,8 +45,13 @@ ENV GDAL_MEM_ENABLE_OPEN=YES
 
 WORKDIR /app
 
+ENV FMASK_PREFIX=/opt/fmask
+
 COPY --from=build /app/.pixi/envs/default /app/.pixi/envs/default
 COPY --from=build --chmod=0755 /app/entrypoint.sh /app/entrypoint.sh
+
+COPY --from=build /opt/fmask ${FMASK_PREFIX}
+COPY packages/fmask4/run_Fmask.sh /app/.pixi/envs/default/bin
 
 ENTRYPOINT [ "/app/entrypoint.sh" ]
 CMD [ "/bin/bash", "-c" ]
