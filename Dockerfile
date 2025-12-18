@@ -16,8 +16,7 @@ RUN apt update && \
     rm -rf /var/lib/apt/lists/*
 
 # ----- Install Fmask4
-# COPY ${FMASK_INSTALLER} /tmp/Fmask.install
-COPY Fmask_Linux_mcr.install /tmp/Fmask.install
+COPY ${FMASK_INSTALLER} /tmp/Fmask.install
 RUN mkdir -p /opt && \
     chmod +x /tmp/Fmask.install && \
     /tmp/Fmask.install -destinationFolder /opt/fmask -agreeToLicense yes -mode silent && \

@@ -12,4 +12,5 @@ fi
 
 docker build \
     -f Dockerfile \
+    --build-arg FMASK_INSTALLER=${INSTALLER_FILE} \
     -t "${CONTAINER_NAME}":latest .
