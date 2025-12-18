@@ -2,7 +2,7 @@
 ARG PLATFORM=linux/amd64
 FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:bookworm-slim AS build
 
-ARG FMASK_INSTALLER
+ARG FMASK_INSTALLER=https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install
 
 WORKDIR /app
 
