@@ -32,7 +32,7 @@ jobs:
       - name: Build image
         run: |
           df -h .
-          docker build -t hls-atmospheric-correction .
+          scripts/build
           df -h .
 
       # FIXME: run the tests in the container...
