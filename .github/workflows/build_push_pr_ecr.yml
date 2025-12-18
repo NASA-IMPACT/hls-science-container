@@ -20,11 +20,14 @@ jobs:
       - name: Configure ECR details
         run: |
           IMAGE=hls-atmospheric-correction:${{ github.event.pull_request.number }}
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
 
-          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
-          echo "ECR_URI=::add-mask::$ECR_URI" >> $GITHUB_ENV
+          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-2.amazonaws.com
+          echo "::add-mask::${ECR_URI}"
+          echo "ECR_URI=$ECR_URI" >> $GITHUB_ENV
+
           ECR_TAG=${ECR_URI}/${IMAGE}
-          echo "ECR_TAG=::add-mask::$ECR_TAG" >> $GITHUB_ENV
+          echo "ECR_TAG=$ECR_TAG" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
