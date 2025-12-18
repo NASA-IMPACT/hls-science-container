@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -e
+
+CONTAINER_NAME=${CONTAINER_NAME:-hls-atmospheric-correction}
+
+FMASK_INSTALLER="https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install"
+
+docker build \
+    -f Dockerfile \
+    --build-arg FMASK_INSTALLER=${FMASK_INSTALLER} \
+    -t "${CONTAINER_NAME}":latest .

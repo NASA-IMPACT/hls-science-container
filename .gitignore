@@ -2,6 +2,9 @@
 *.o
 *.a
 
+# No package / installers
+**/Fmask*install
+
 # ===== Github default Python.gitignore below
 # Byte-compiled / optimized / DLL files
 __pycache__/
