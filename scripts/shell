@@ -4,7 +4,7 @@ set -e
 
 export CONTAINER_NAME=${CONTAINER_NAME:-hls-atmospheric-correction}
 
-BUILD="$(dirname $0)/build"
+BUILD=$(dirname "$0")/build
 ${BUILD}
 
 docker run \

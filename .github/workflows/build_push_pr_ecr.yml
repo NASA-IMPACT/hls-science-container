@@ -30,7 +30,10 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build image
-        run: scripts/build
+        run: |
+          df -h .
+          docker build -t hls-atmospheric-correction .
+          df -h .
 
       # FIXME: run the tests in the container...
       #    - that's really what matters for this project
