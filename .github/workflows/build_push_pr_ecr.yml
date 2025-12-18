@@ -16,7 +16,15 @@ jobs:
         uses: jlumbroso/free-disk-space@main
         with:
           large-packages: false  # takes too long for ~4.7GB
-          docker-images: true
+
+      - name: Configure ECR details
+        run: |
+          IMAGE=hls-atmospheric-correction:${{ github.event.pull_request.number }}
+
+          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          echo "ECR_URI=::add-mask::$ECR_URI" >> $GITHUB_ENV
+          ECR_TAG=${ECR_URI}/${IMAGE}
+          echo "ECR_TAG=::add-mask::$ECR_TAG" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
@@ -25,15 +33,25 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+      - name: Login to ECR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.ECR_URI }}
+          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Build image
-        run: |
-          df -h .
-          scripts/build
-          df -h .
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: ${{ env.ECR_TAG }}
+          cache-from: type=registry,ref=${{ env.ECR_TAG }}:cache
+          cache-to: type=registry,mode=max,image-manifest=true,oci-mediatypes=true,ref=${{ env.ECR_TAG }}:cache
 
       # FIXME: run the tests in the container...
       #    - that's really what matters for this project
@@ -47,12 +65,12 @@ jobs:
       #     scripts/lint
       #     scripts/typecheck
 
-      - name: Push to latest ECR
-        id: push-latest-ecr
-        uses: jwalton/gh-ecr-push@v1
+      - name: Build
+        uses: docker/build-push-action@v5
         with:
-          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: us-west-2
-          local-image: hls-atmospheric-correction
-          image: hls-atmospheric-correction:${{ github.event.pull_request.number }}
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.ECR_TAG }}
+          cache-from: type=registry,ref=${{ env.ECR_TAG }}:cache
+          cache-to: type=registry,mode=max,image-manifest=true,oci-mediatypes=true,ref=${{ env.ECR_TAG }}:cache
