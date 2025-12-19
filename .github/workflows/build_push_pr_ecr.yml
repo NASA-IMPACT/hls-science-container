@@ -7,6 +7,9 @@ on:
 env:
   AWS_REGION: us-west-2
   ECR_REPOSITORY: hls-atmospheric-correction
+  # Docker build args
+  BUILD_PLATFORM: linux/amd64
+  FMASK_INSTALLER: https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install
 
 jobs:
   build_push_to_ecr:
@@ -37,6 +40,16 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
+          tags: |
+            type=ref,event=pr,prefix=pr-
+            type=ref,event=branch
+            type=sha,prefix=sha-
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -46,6 +59,9 @@ jobs:
           context: .
           load: true  # Puts the image in 'docker images' for the next step
           target: prod
+          build-args: |
+            PLATFORM=${{ env.BUILD_PLATFORM }}
+            FMASK_INSTALLER=${{ env.FMASK_INSTALLER }}
           tags: ${{ env.ECR_REPOSITORY }}:local
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
 
@@ -63,6 +79,10 @@ jobs:
           context: .
           push: true
           target: prod
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:pr-${{ github.event.number }}
+          build-args: |
+            PLATFORM=${{ env.BUILD_PLATFORM }}
+            FMASK_INSTALLER=${{ env.FMASK_INSTALLER }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
           cache-to: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache,mode=max

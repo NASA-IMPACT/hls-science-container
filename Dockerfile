@@ -2,8 +2,6 @@
 ARG PLATFORM=linux/amd64
 FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:bookworm-slim AS build
 
-ARG FMASK_INSTALLER=https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install
-
 WORKDIR /app
 
 RUN apt update && \
@@ -17,6 +15,7 @@ RUN apt update && \
     rm -rf /var/lib/apt/lists/*
 
 # ----- Install Fmask4
+ARG FMASK_INSTALLER=https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install
 RUN wget -q -O /tmp/Fmask.install ${FMASK_INSTALLER} && \
     chmod +x /tmp/Fmask.install && \
     mkdir -p /opt && \

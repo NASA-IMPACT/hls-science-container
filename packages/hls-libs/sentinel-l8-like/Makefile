@@ -32,6 +32,8 @@ hls_hdfeos.o: ${COMMON_DIR}/hls_hdfeos.c
 install:
 	install -d ${PREFIX}/bin
 	install -m 755 $(TGT) ${PREFIX}/bin
+	install -d ${PREFIX}/share/hls-libs
+	install bandpass_parameter.*.txt ${PREFIX}/share/hls-libs
 
 clean:
 	rm -f *.o $(TGT)

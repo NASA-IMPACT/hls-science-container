@@ -158,7 +158,8 @@ fi
 
 # Bandpass
 echo "Running L8like"
-parameter="/usr/local/bandpass_parameter.${sensor}.txt"
+hls_libs_share=$(dirname $(which sentinel-l8-like))/../share/hls-libs/
+parameter="${hls_libs_share}/bandpass_parameter.${sensor}.txt"
 sentinel-l8-like "$parameter" "$nbar_input"
 
 mv "$nbar_input" "$output_hdf"
