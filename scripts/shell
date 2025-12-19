@@ -2,7 +2,7 @@
 
 set -e
 
-export CONTAINER_NAME=${CONTAINER_NAME:-hls-atmospheric-correction}
+export IMAGE_NAME=${IMAGE_NAME:-hls-atmospheric-correction}
 
 BUILD=$(dirname "$0")/build
 ${BUILD}
@@ -16,5 +16,5 @@ docker run \
     -e LASRC_AUX_DIR=/app/data/lasrc_aux/ \
     -v "${HOME}/.aws/:/root/.aws" \
     -e "AWS_PROFILE=${AWS_PROFILE:-default}" \
-    -it "${CONTAINER_NAME}":latest \
+    -it "${IMAGE_NAME}":latest \
     /bin/bash

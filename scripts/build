@@ -2,11 +2,108 @@
 
 set -e
 
-CONTAINER_NAME=${CONTAINER_NAME:-hls-atmospheric-correction}
 
+# docker build \
+#     --cache-from=${ECR_URI} \
+#     -f Dockerfile \
+#     --build-arg FMASK_INSTALLER=${FMASK_INSTALLER} \
+#     -t "${CONTAINER_NAME}":latest .
+
+
+
+#!/bin/bash
+
+# ==============================================================================
+# 🛠️  CONFIGURATION
+# ==============================================================================
 FMASK_INSTALLER="https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install"
 
-docker build \
-    -f Dockerfile \
-    --build-arg FMASK_INSTALLER=${FMASK_INSTALLER} \
-    -t "${CONTAINER_NAME}":latest .
+IMAGE_NAME="${IMAGE_NAME:-hls-atmospheric-correction}"
+REGION="us-west-2"
+CACHE_TAG="cache"
+USE_CACHE=false
+START_TIME=$(date +%s)
+
+# ==============================================================================
+# 🔍  AWS PRE-FLIGHT CHECKS
+# ==============================================================================
+echo "---------------------------------------------------"
+echo "🔎 Checking environment for AWS & ECR access..."
+
+# 1. Fetch Account ID & verify session
+ACCOUNT_ID=$(aws sts get-caller-identity --query "Account" --output text 2>/dev/null)
+
+if [ $? -eq 0 ]; then
+    echo "   ✅ Identity: [Account: $ACCOUNT_ID]"
+    
+    ECR_BASE="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+    ECR_REPO="${ECR_BASE}/${IMAGE_NAME}"
+
+    # 2. Check for existing Docker credentials
+    # Search docker config for the ECR registry URL
+    if grep -q "$ECR_BASE" ~/.docker/config.json 2>/dev/null; then
+        echo "   ✨ Existing ECR session detected. Skipping login."
+        USE_CACHE=true
+    else
+        echo "   🔑 No active ECR session. Authenticating ($REGION)..."
+        
+        aws ecr get-login-password --region "${REGION}" 2>/dev/null | \
+            docker login --username AWS --password-stdin "$ECR_BASE" >/dev/null 2>&1
+        
+        if [ $? -eq 0 ]; then
+            echo "   ✅ Login successful! Remote cache enabled."
+            USE_CACHE=true
+        else
+            echo "   ⚠️  Login failed. Proceeding with local layers only."
+        fi
+    fi
+else
+    echo "   ☁️  No active AWS session. Skipping remote cache."
+fi
+
+# ==============================================================================
+# 🏗️  DOCKER BUILD EXECUTION
+# ==============================================================================
+export DOCKER_BUILDKIT=1
+
+# Initialize build arguments
+BUILD_ARGS=(
+    --tag "$IMAGE_NAME:latest"
+    --build-arg "FMASK_INSTALLER=${FMASK_INSTALLER}"
+    --file Dockerfile
+    .
+)
+
+# Inject cache-from if ECR is accessible
+if [ "$USE_CACHE" = true ]; then
+    echo "   📦 Pulling cache from: $ECR_REPO:$CACHE_TAG"
+    BUILD_ARGS+=( --cache-from "type=registry,ref=$ECR_REPO:$CACHE_TAG" )
+else
+    echo "   🧊 Using cold-start (local cache only)."
+fi
+
+echo "---------------------------------------------------"
+echo "🚀 Starting Docker build..."
+echo ""
+
+docker build "${BUILD_ARGS[@]}"
+BUILD_EXIT_CODE=$?
+
+# ==============================================================================
+# 🏁  POST-BUILD SUMMARY
+# ==============================================================================
+END_TIME=$(date +%s)
+DURATION=$((END_TIME - START_TIME))
+
+echo ""
+echo "---------------------------------------------------"
+if [ $BUILD_EXIT_CODE -eq 0 ]; then
+    echo "✅ SUCCESS: Image tagged as [$IMAGE_NAME:latest]"
+    echo "⏱️  Total time: ${DURATION}s"
+    echo "🎉 Happy coding!"
+else
+    echo "💥 FAILURE: Build exited with code $BUILD_EXIT_CODE"
+    echo "⏱️  Time elapsed: ${DURATION}s"
+    exit $BUILD_EXIT_CODE
+fi
+echo "---------------------------------------------------"
