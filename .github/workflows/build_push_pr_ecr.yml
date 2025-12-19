@@ -16,10 +16,10 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      # - name: Free disk space
-      #   uses: jlumbroso/free-disk-space@main
-      #   with:
-      #     large-packages: false  # takes too long for ~4.7GB
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          large-packages: false  # takes too long for ~4.7GB
 
       # - name: Lint code
       #   run: |
