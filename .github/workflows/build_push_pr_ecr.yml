@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+env:
+  AWS_REGION: us-west-2
+  ECR_REPOSITORY: hls-atmospheric-correction
+
 jobs:
   build_push_to_ecr:
     runs-on: ubuntu-latest
@@ -12,22 +16,10 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          large-packages: false  # takes too long for ~4.7GB
-
-      - name: Configure ECR details
-        run: |
-          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-2.amazonaws.com
-          echo "::add-mask::${ECR_URI}"
-          echo "ECR_URI=$ECR_URI" >> $GITHUB_ENV
-
-          ECR_IMAGE=hls-atmospheric-correction
-          echo "ECR_IMAGE=$ECR_IMAGE" >> $GITHUB_ENV
-
-          echo "ECR_REF=${ECR_URI}/${ECR_IMAGE}" >> $GITHUB_ENV
-          echo "ECR_TAG=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+      # - name: Free disk space
+      #   uses: jlumbroso/free-disk-space@main
+      #   with:
+      #     large-packages: false  # takes too long for ~4.7GB
 
       # - name: Lint code
       #   run: |
@@ -39,27 +31,22 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Login to ECR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.ECR_URI }}
-          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
+      - name: Build
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
-          push: false
-          tags: ${{ env.ECR_REF }}:${{ env.ECR_TAG }}
-          cache-from: type=registry,ref=${{ env.ECR_REF }}:cache
-          cache-to: type=registry,mode=max,image-manifest=true,oci-mediatypes=true,ref=${{ env.ECR_REF }}:cache
+          load: true
+          tags: ${{ env.ECR_REPOSITORY }}:local
+          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
 
       # FIXME: run the tests in the container...
       #    - that's really what matters for this project
@@ -68,12 +55,12 @@ jobs:
       #   run: |
       #     scripts/test
 
-      - name: Build
+      - name: Build and Push to ECR
+        if: success()
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
           push: true
-          tags: ${{ env.ECR_TAG }}
-          cache-from: type=registry,ref=${{ env.ECR_TAG }}:cache
-          cache-to: type=registry,mode=max,image-manifest=true,oci-mediatypes=true,ref=${{ env.ECR_TAG }}:cache
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:pr-${{ github.event.number }}
+          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
+          cache-to: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache,mode=max
