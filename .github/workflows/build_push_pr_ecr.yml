@@ -1,4 +1,4 @@
-name: build_push_pr_ecr
+name: Build, Test, and Push Pull Requests to ECR
 
 on:
   pull_request:
@@ -58,14 +58,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Cache Rattler/Pixi packages
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.pixi-cache
-          key: ${{ runner.os }}-pixi-${{ hashFiles('pixi.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pixi-
-
       - name: Build
         uses: docker/build-push-action@v5
         with:
@@ -78,12 +70,8 @@ jobs:
             PLATFORM=${{ env.BUILD_PLATFORM }}
             FMASK_INSTALLER=${{ env.FMASK_INSTALLER }}
           tags: ${{ env.ECR_REPOSITORY }}:local
-          # Combine ECR layer cache AND local file cache
-          cache-from: |
-            type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
-            type=local,src=/tmp/.pixi-cache
-          # Export new package downloads to the local cache folder
-          cache-to: type=local,dest=/tmp/.pixi-cache-new,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # FIXME: run the tests in the container...
       #    - that's really what matters for this project
@@ -92,7 +80,7 @@ jobs:
         run: |
           docker run --rm ${{ env.ECR_REPOSITORY }}:local echo "placeholder"
 
-      - name: Build and Push to ECR
+      - name: Push to ECR
         if: success()
         uses: docker/build-push-action@v5
         with:
@@ -106,10 +94,8 @@ jobs:
             FMASK_INSTALLER=${{ env.FMASK_INSTALLER }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: |
-            type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
-            type=local,src=/tmp/.pixi-cache
-          cache-to: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # Refresh the GitHub Actions cache with new downloads
       # This ensures the cache is updated if pixi.lock changed
