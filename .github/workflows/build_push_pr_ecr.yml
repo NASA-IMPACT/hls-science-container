@@ -44,7 +44,8 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          load: true
+          load: true  # Puts the image in 'docker images' for the next step
+          target: prod
           tags: ${{ env.ECR_REPOSITORY }}:local
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
 
@@ -61,6 +62,7 @@ jobs:
         with:
           context: .
           push: true
+          target: prod
           tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:pr-${{ github.event.number }}
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
           cache-to: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache,mode=max
