@@ -19,10 +19,15 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          large-packages: false  # takes too long for ~4.7GB
+      # We run out of space w/o cleanup. This is less comprehensive but faster
+      # than `jlumbroso/free-disk-space`
+      - name: Cleanup disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
       # - name: Lint code
       #   run: |
@@ -53,6 +58,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Cache Rattler/Pixi packages
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.pixi-cache
+          key: ${{ runner.os }}-pixi-${{ hashFiles('pixi.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pixi-
+
       - name: Build
         uses: docker/build-push-action@v5
         with:
@@ -63,7 +76,12 @@ jobs:
             PLATFORM=${{ env.BUILD_PLATFORM }}
             FMASK_INSTALLER=${{ env.FMASK_INSTALLER }}
           tags: ${{ env.ECR_REPOSITORY }}:local
-          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
+          # Combine ECR layer cache AND local file cache
+          cache-from: |
+            type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
+            type=local,src=/tmp/.pixi-cache
+          # Export new package downloads to the local cache folder
+          cache-to: type=local,dest=/tmp/.pixi-cache-new,mode=max
 
       # FIXME: run the tests in the container...
       #    - that's really what matters for this project
@@ -84,5 +102,14 @@ jobs:
             FMASK_INSTALLER=${{ env.FMASK_INSTALLER }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
+          cache-from: |
+            type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
+            type=local,src=/tmp/.pixi-cache
           cache-to: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache,mode=max
+
+      # Refresh the GitHub Actions cache with new downloads
+      # This ensures the cache is updated if pixi.lock changed
+      - name: Move Pixi cache
+        run: |
+          rm -rf /tmp/.pixi-cache
+          mv /tmp/.pixi-cache-new /tmp/.pixi-cache
