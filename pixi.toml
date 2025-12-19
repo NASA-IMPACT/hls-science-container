@@ -29,6 +29,9 @@ gdal = "*"
 libgdal-jp2openjpeg = "*"
 rasterio = "*"
 pyproj = ">=3.7.2,<4"
+shapely = ">=2,<3"
+zip = "*"
+unzip = "*"
 
 [feature.dev.dependencies]
 ruff = "*"
