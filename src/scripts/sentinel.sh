@@ -103,8 +103,8 @@ if [ "${#granules[@]}" = 2 ]; then
   echo "Running consolidate on ${consolidatelist}"
   consolidate_output="${workingdir}/consolidate.hdf"
   consolidate_angle_output="${workingdir}/consolidate_angle.hdf"
-  consolidate_command="consolidate ${consolidatelist} ${consolidate_output}"
-  consolidate_angle_command="consolidate_s2ang ${consolidate_angle_list} ${consolidate_angle_output}"
+  consolidate_command="sentinel-consolidate ${consolidatelist} ${consolidate_output}"
+  consolidate_angle_command="sentinel-consolidate-angle ${consolidate_angle_list} ${consolidate_angle_output}"
   eval "$consolidate_command"
   eval "$consolidate_angle_command"
   # Use the consolidate output as loop process output for next stage.
@@ -127,7 +127,7 @@ fi
 echo "Running create_s2at30m"
 resample30m="${workingdir}/resample30m.hdf"
 resample30m_hdr="${resample30m}.hdr"
-create_s2at30m "$granuleoutput" "$resample30m"
+sentinel-create-s2at30m "$granuleoutput" "$resample30m"
 
 # Unlike all the other C libs, derive_s2nbar and L8like modify the input file
 # Move the resample output to nbar naming.
@@ -143,7 +143,7 @@ fi
 # Nbar
 echo "Running derive_s2nbar"
 cfactor="${workingdir}/cfactor.hdf"
-derive_s2nbar "$nbar_input" "$angleoutput" "$cfactor"
+sentinel-derive-nbar "$nbar_input" "$angleoutput" "$cfactor"
 
 nbarIntermediate="${workingdir}/nbarIntermediate.hdf"
 nbarIntermediate_hdr="${nbarIntermediate}.hdr"
@@ -156,7 +156,7 @@ fi
 # Bandpass
 echo "Running L8like"
 parameter="/usr/local/bandpass_parameter.${sensor}.txt"
-L8like "$parameter" "$nbar_input"
+sentinel-l8-like "$parameter" "$nbar_input"
 
 mv "$nbar_input" "$output_hdf"
 mv "${nbar_input}.hdr" "${output_hdf}.hdr"
@@ -251,7 +251,7 @@ for gibs_id_dir in "$gibs_dir"/* ; do
         echo "Copy files to debug bucket"
         debug_bucket_key=s3://${debug_bucket}/${outputname}
         aws s3 cp "$gibs_id_dir" "$debug_bucket_key" --recursive --quiet \
-        --profile gccprofile
+            --profile gccprofile
       fi
     fi
 done

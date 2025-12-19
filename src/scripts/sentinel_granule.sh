@@ -63,7 +63,7 @@ apply_s2_quality_mask "$safegranuledir"
 
 # Run derive_s2ang
 echo "Running derive_s2ang"
-derive_s2ang "$xml" "$detfoo06" "$detfoo" "$angleoutput"
+sentinel-derive-angle "$xml" "$detfoo06" "$detfoo" "$angleoutput"
 
 # The detfoo output is an unnecessary legacy output
 rm "$detfoo"
@@ -146,15 +146,15 @@ convert_espa_to_hdf --xml="$hls_espa_two_xml" --hdf="$sr_hdf_two"
 
 # Combine split hdf files and resample 10M SR bands back to 20M and 60M.
 echo "Combining hdf files"
-twohdf2one "$sr_hdf_one" "$sr_hdf_two" MTD_MSIL1C.xml MTD_TL.xml "$ACCODE" "$hls_sr_combined_hdf"
+sentinel-twohdf2one "$sr_hdf_one" "$sr_hdf_two" MTD_MSIL1C.xml MTD_TL.xml "$ACCODE" "$hls_sr_combined_hdf"
 
 # Run addFmaskSDS
 echo "Adding Fmask SDS"
-addFmaskSDS "$hls_sr_combined_hdf" "$fmaskbin" "$aerosol_qa" MTD_MSIL1C.xml MTD_TL.xml "$ACCODE" "$hls_sr_output_hdf"
+sentinel-add-fmask-sds "$hls_sr_combined_hdf" "$fmaskbin" "$aerosol_qa" MTD_MSIL1C.xml MTD_TL.xml "$ACCODE" "$hls_sr_output_hdf"
 
 # Trim edge pixels for spurious SR values
 echo "Trimming output hdf file"
-s2trim "$hls_sr_output_hdf"
+sentinel-trim "$hls_sr_output_hdf"
 
 # Remove intermediate files.
 cd "$granuledir"
