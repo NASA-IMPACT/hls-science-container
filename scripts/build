@@ -20,7 +20,7 @@ FMASK_INSTALLER="https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linu
 
 IMAGE_NAME="${IMAGE_NAME:-hls-atmospheric-correction}"
 REGION="us-west-2"
-CACHE_TAG="cache"
+CACHE_TAG="latest"
 USE_CACHE=false
 START_TIME=$(date +%s)
 
