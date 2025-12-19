@@ -71,6 +71,8 @@ jobs:
         with:
           context: .
           load: true  # Puts the image in 'docker images' for the next step
+          provenance: false
+          sbom: false
           target: prod
           build-args: |
             PLATFORM=${{ env.BUILD_PLATFORM }}
@@ -96,6 +98,8 @@ jobs:
         with:
           context: .
           push: true
+          provenance: false
+          sbom: false
           target: prod
           build-args: |
             PLATFORM=${{ env.BUILD_PLATFORM }}
