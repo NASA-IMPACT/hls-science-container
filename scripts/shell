@@ -12,6 +12,7 @@ docker run \
     -v "$(pwd)/pixi.lock":/app/pixi.lock \
     -v "$(pwd)/packages":/app/packages \
     -v "$(pwd)/data":/app/data \
+    -v "$(pwd)/src":/app/src \
     -e LASRC_AUX_DIR=/app/data/lasrc_aux/ \
     -v "${HOME}/.aws/:/root/.aws" \
     -e "AWS_PROFILE=${AWS_PROFILE:-default}" \
