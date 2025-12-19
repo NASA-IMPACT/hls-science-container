@@ -1,6 +1,9 @@
 #!/bin/bash
 # shellcheck disable=SC2153
 # shellcheck disable=SC1091
+
+set -x
+
 # Exit on any error
 set -o errexit
 
