@@ -18,13 +18,12 @@ jobs:
 
       # We run out of space w/o cleanup. This is less comprehensive but faster
       # than `jlumbroso/free-disk-space`
-      - name: Cleanup disk space
+      - name: Cleanup disk space in background
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf /usr/local/lib/android &
+          sudo rm -rf /usr/share/dotnet &
+          sudo rm -rf /opt/ghc &
+          echo "Cleanup started in background..."
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

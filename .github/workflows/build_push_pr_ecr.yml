@@ -16,18 +16,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - uses: actions/checkout@v4
 
       # We run out of space w/o cleanup. This is less comprehensive but faster
       # than `jlumbroso/free-disk-space`
       - name: Cleanup disk space
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo rm -rf /usr/local/lib/android &
+          sudo rm -rf /usr/share/dotnet &
+          sudo rm -rf /opt/ghc &
+          echo "Cleanup started in background..."
 
       # - name: Lint code
       #   run: |
