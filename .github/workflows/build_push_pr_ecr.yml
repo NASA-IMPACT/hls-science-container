@@ -29,6 +29,11 @@ jobs:
           echo "ECR_REF=${ECR_URI}/${ECR_IMAGE}" >> $GITHUB_ENV
           echo "ECR_TAG=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
 
+      # - name: Lint code
+      #   run: |
+      #     scripts/lint
+      #     scripts/typecheck
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
@@ -51,7 +56,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          push: true
+          push: false
           tags: ${{ env.ECR_REF }}:${{ env.ECR_TAG }}
           cache-from: type=registry,ref=${{ env.ECR_REF }}:cache
           cache-to: type=registry,mode=max,image-manifest=true,oci-mediatypes=true,ref=${{ env.ECR_REF }}:cache
@@ -63,17 +68,12 @@ jobs:
       #   run: |
       #     scripts/test
 
-      # - name: Lint code
-      #   run: |
-      #     scripts/lint
-      #     scripts/typecheck
-
-      # - name: Build
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     context: .
-      #     file: ./Dockerfile
-      #     push: true
-      #     tags: ${{ env.ECR_TAG }}
-      #     cache-from: type=registry,ref=${{ env.ECR_TAG }}:cache
-      #     cache-to: type=registry,mode=max,image-manifest=true,oci-mediatypes=true,ref=${{ env.ECR_TAG }}:cache
+      - name: Build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ env.ECR_TAG }}
+          cache-from: type=registry,ref=${{ env.ECR_TAG }}:cache
+          cache-to: type=registry,mode=max,image-manifest=true,oci-mediatypes=true,ref=${{ env.ECR_TAG }}:cache
