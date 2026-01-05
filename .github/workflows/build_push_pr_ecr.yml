@@ -7,7 +7,6 @@ on:
 env:
   AWS_REGION: us-west-2
   ECR_REPOSITORY: hls-atmospheric-correction
-  # Docker build args
   BUILD_PLATFORM: linux/amd64
   FMASK_INSTALLER: https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install
 
@@ -94,10 +93,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      # Refresh the GitHub Actions cache with new downloads
-      # This ensures the cache is updated if pixi.lock changed
-      - name: Move Pixi cache
-        run: |
-          rm -rf /tmp/.pixi-cache
-          mv /tmp/.pixi-cache-new /tmp/.pixi-cache
