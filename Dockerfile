@@ -24,7 +24,7 @@ RUN wget -q -O /tmp/Fmask.install ${FMASK_INSTALLER} && \
 
 # ----- Install package dependencies
 COPY --parents pixi.toml pixi.lock packages /app/
-RUN --mount=type=cache,target=/root/.cache/rattler/cache,sharing=private \
+RUN --mount=type=cache,target=/root/.cache/rattler/cache \
     pixi install --frozen
 ENV PREFIX=/app/.pixi/envs/default
 RUN echo '#!/bin/bash' > /app/entrypoint.sh && \

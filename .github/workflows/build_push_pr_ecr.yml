@@ -49,7 +49,6 @@ jobs:
           images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
           tags: |
             type=ref,event=pr,prefix=pr-
-            type=ref,event=branch
             type=sha,prefix=sha-
 
       - name: Set up Docker Buildx
@@ -67,8 +66,9 @@ jobs:
             PLATFORM=${{ env.BUILD_PLATFORM }}
             FMASK_INSTALLER=${{ env.FMASK_INSTALLER }}
           tags: ${{ env.ECR_REPOSITORY }}:local
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
 
       # FIXME: run the tests in the container...
       #    - that's really what matters for this project
@@ -82,14 +82,15 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          target: prod
           push: true
           provenance: false
           sbom: false
-          target: prod
           build-args: |
             PLATFORM=${{ env.BUILD_PLATFORM }}
             FMASK_INSTALLER=${{ env.FMASK_INSTALLER }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
