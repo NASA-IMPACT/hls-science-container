@@ -32,6 +32,7 @@ pyproj = ">=3.7.2,<4"
 shapely = ">=2,<3"
 zip = "*"
 unzip = "*"
+libgdal-hdf4 = ">=3.10.3,<4"
 
 [feature.dev.dependencies]
 ruff = "*"
