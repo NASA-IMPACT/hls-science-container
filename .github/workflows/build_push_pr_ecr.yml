@@ -8,7 +8,6 @@ env:
   AWS_REGION: us-west-2
   ECR_REPOSITORY: hls-atmospheric-correction
   BUILD_PLATFORM: linux/amd64
-  FMASK_INSTALLER: https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install
 
 jobs:
   build_push_to_ecr:
@@ -64,11 +63,8 @@ jobs:
           target: prod
           build-args: |
             PLATFORM=${{ env.BUILD_PLATFORM }}
-            FMASK_INSTALLER=${{ env.FMASK_INSTALLER }}
           tags: ${{ env.ECR_REPOSITORY }}:local
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
 
       # FIXME: run the tests in the container...
       #    - that's really what matters for this project
@@ -92,5 +88,3 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max

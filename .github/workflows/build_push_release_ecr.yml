@@ -8,7 +8,6 @@ env:
   AWS_REGION: us-west-2
   ECR_REPOSITORY: hls-atmospheric-correction
   BUILD_PLATFORM: linux/amd64
-  FMASK_URL: https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install
 
 jobs:
   release-build:
@@ -58,9 +57,7 @@ jobs:
           sbom: false
           build-args: |
             PLATFORM=${{ env.BUILD_PLATFORM }}
-            FMASK_INSTALLER=${{ env.FMASK_URL }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # cache-from: type=gha
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
           cache-to: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache,mode=max,image-manifest=true

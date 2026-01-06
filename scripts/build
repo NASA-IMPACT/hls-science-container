@@ -2,25 +2,12 @@
 
 set -e
 
-
-# docker build \
-#     --cache-from=${ECR_URI} \
-#     -f Dockerfile \
-#     --build-arg FMASK_INSTALLER=${FMASK_INSTALLER} \
-#     -t "${CONTAINER_NAME}":latest .
-
-
-
-#!/bin/bash
-
 # ==============================================================================
 # 🛠️  CONFIGURATION
 # ==============================================================================
-FMASK_INSTALLER="https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install"
-
 IMAGE_NAME="${IMAGE_NAME:-hls-atmospheric-correction}"
 REGION="us-west-2"
-CACHE_TAG="latest"
+CACHE_TAG="cache"
 USE_CACHE=false
 START_TIME=$(date +%s)
 
@@ -69,7 +56,6 @@ export DOCKER_BUILDKIT=1
 # Initialize build arguments
 BUILD_ARGS=(
     --tag "$IMAGE_NAME:latest"
-    --build-arg "FMASK_INSTALLER=${FMASK_INSTALLER}"
     --file Dockerfile
     .
 )
