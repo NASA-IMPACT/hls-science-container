@@ -1,13 +1,16 @@
 SUBDIRS = landsat-add-fmask-sds \
-			  sentinel-add-fmask-sds \
-			  sentinel-consolidate \
-			  sentinel-consolidate-angle \
-			  sentinel-create-s2at30m \
-			  sentinel-derive-angle \
-			  sentinel-derive-nbar \
-			  sentinel-l8-like \
-			  sentinel-trim \
-			  sentinel-twohdf2one
+		  landsat-angle-tiling \
+		  landsat-nbar \
+		  landsat-tiling \
+		  sentinel-add-fmask-sds \
+		  sentinel-consolidate \
+		  sentinel-consolidate-angle \
+		  sentinel-create-s2at30m \
+		  sentinel-derive-angle \
+		  sentinel-derive-nbar \
+		  sentinel-l8-like \
+		  sentinel-trim \
+		  sentinel-twohdf2one
 
 .PHONY: all $(SUBDIRS) clean
 
