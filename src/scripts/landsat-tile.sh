@@ -84,8 +84,8 @@ for pathrow in "${pathrows[@]}"; do
   # shellcheck disable=SC2219
   let INDEX=${INDEX}+1
   # Pre-create output file to avoid L8inS2tile failure when removing.
-  echo "Running L8inS2tile ${pathrow}"
-  L8inS2tile  "$mgrs" \
+  echo "Running landsat-tile ${pathrow}"
+  landsat-tile  "$mgrs" \
               "$mgrs_ulx" \
               "$mgrs_uly" \
               "NONE" \
@@ -93,8 +93,8 @@ for pathrow in "${pathrows[@]}"; do
               "$landsat_ac" \
               "$nbar_input"
 
-  echo "Running angle_tile ${pathrow}"
-  angle_tile  "$mgrs" \
+  echo "Running landsat-angle-tile ${pathrow}"
+  landsat-angle-tile  "$mgrs" \
               "$mgrs_ulx" \
               "$mgrs_uly" \
               "$landsat_sz_angle" \
@@ -106,7 +106,7 @@ if [[ -f "$nbar_input" ]] && [[ -f "$nbar_angle" ]] ; then
   echo "Running NBAR"
   # Copy intermediate gridded output for debugging analysis.
   cp "$nbar_input" "$griddedoutput"
-  derive_l8nbar "$nbar_input" "$nbar_angle" "$nbar_cfactor"
+  landsat-nbar "$nbar_input" "$nbar_angle" "$nbar_cfactor"
 
   # Rename nbar to correct output name
   echo "Rename NBAR"
