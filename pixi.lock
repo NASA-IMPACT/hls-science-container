@@ -134,8 +134,8 @@ environments:
       - conda: packages/espa-surface-reflectance
       - conda: packages/hls-libs
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/98/8b/8e028dbf6c4bf36defe899882a00c11a8d22fcb7348e88058900c13b72a0/boto3-1.42.23-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/8d/e6/114d66f81fc4b77a8c1e45e6fcf0021018d1f4eefca0905b3da8023c9a47/botocore-1.42.23-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a7/75/bbfccb268f9faa4f59030888e859dca9797a980b77d6a074113af73bd4bf/boto3-1.42.24-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ff/d4/f2655d777eed8b069ecab3761454cb83f830f8be8b5b0d292e4b3a980d00/botocore-1.42.24-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/09/40/9d521973cae7f7ef8b1f0d0e28a3db0f851c1f1dca45d4c2ed5360bb7246/dicttoxml-1.7.16-py3-none-any.whl
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -144,12 +144,12 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac#f083de30543d3b72b8239c07cbef6151fedcbc29
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog#6c17db44ec2f93e3f9842aafe9ffaa63f3ef7aad
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#751e75c057428aef6b4ace732c27b38d3a611dc5
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?branch=fix%2Frelax-deps#984b57837b25af57d94bc2d02d7044e66fa5008c
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
       - pypi: git+https://github.com/NASA-IMPACT/hls-vi#818b51d9a5f81b94c0bd1682f963ff8cddafb598
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/bf/9c/8c95d856233c1f82500c2450b8c68576b4cf1c871db3afac5c34ff84e6fd/jsonschema-4.25.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2f/04/6ef935dc74e729932e39478e44d8cfe6a83550552eaa072b7c05f6f22488/lxml-5.4.0-cp313-cp313-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/f1/c3/cb8db47ed1a28b43d498e91b629d69886778ad5d9e91dcb953d411052728/morecantile-7.0.2-py3-none-any.whl
@@ -279,8 +279,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.3.1-h8359307_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/98/8b/8e028dbf6c4bf36defe899882a00c11a8d22fcb7348e88058900c13b72a0/boto3-1.42.23-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/8d/e6/114d66f81fc4b77a8c1e45e6fcf0021018d1f4eefca0905b3da8023c9a47/botocore-1.42.23-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a7/75/bbfccb268f9faa4f59030888e859dca9797a980b77d6a074113af73bd4bf/boto3-1.42.24-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ff/d4/f2655d777eed8b069ecab3761454cb83f830f8be8b5b0d292e4b3a980d00/botocore-1.42.24-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/09/40/9d521973cae7f7ef8b1f0d0e28a3db0f851c1f1dca45d4c2ed5360bb7246/dicttoxml-1.7.16-py3-none-any.whl
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -289,12 +289,12 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac#f083de30543d3b72b8239c07cbef6151fedcbc29
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog#6c17db44ec2f93e3f9842aafe9ffaa63f3ef7aad
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#751e75c057428aef6b4ace732c27b38d3a611dc5
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?branch=fix%2Frelax-deps#984b57837b25af57d94bc2d02d7044e66fa5008c
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
       - pypi: git+https://github.com/NASA-IMPACT/hls-vi#818b51d9a5f81b94c0bd1682f963ff8cddafb598
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/bf/9c/8c95d856233c1f82500c2450b8c68576b4cf1c871db3afac5c34ff84e6fd/jsonschema-4.25.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/87/cb/2ba1e9dd953415f58548506fa5549a7f373ae55e80c61c9041b7fd09a38a/lxml-5.4.0-cp313-cp313-macosx_10_13_universal2.whl
       - pypi: https://files.pythonhosted.org/packages/f1/c3/cb8db47ed1a28b43d498e91b629d69886778ad5d9e91dcb953d411052728/morecantile-7.0.2-py3-none-any.whl
@@ -458,8 +458,8 @@ environments:
       - conda: packages/espa-surface-reflectance
       - conda: packages/hls-libs
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/98/8b/8e028dbf6c4bf36defe899882a00c11a8d22fcb7348e88058900c13b72a0/boto3-1.42.23-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/8d/e6/114d66f81fc4b77a8c1e45e6fcf0021018d1f4eefca0905b3da8023c9a47/botocore-1.42.23-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a7/75/bbfccb268f9faa4f59030888e859dca9797a980b77d6a074113af73bd4bf/boto3-1.42.24-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ff/d4/f2655d777eed8b069ecab3761454cb83f830f8be8b5b0d292e4b3a980d00/botocore-1.42.24-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/09/40/9d521973cae7f7ef8b1f0d0e28a3db0f851c1f1dca45d4c2ed5360bb7246/dicttoxml-1.7.16-py3-none-any.whl
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -468,12 +468,12 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac#f083de30543d3b72b8239c07cbef6151fedcbc29
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog#6c17db44ec2f93e3f9842aafe9ffaa63f3ef7aad
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#751e75c057428aef6b4ace732c27b38d3a611dc5
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?branch=fix%2Frelax-deps#984b57837b25af57d94bc2d02d7044e66fa5008c
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
       - pypi: git+https://github.com/NASA-IMPACT/hls-vi#818b51d9a5f81b94c0bd1682f963ff8cddafb598
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/bf/9c/8c95d856233c1f82500c2450b8c68576b4cf1c871db3afac5c34ff84e6fd/jsonschema-4.25.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2f/04/6ef935dc74e729932e39478e44d8cfe6a83550552eaa072b7c05f6f22488/lxml-5.4.0-cp313-cp313-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/f1/c3/cb8db47ed1a28b43d498e91b629d69886778ad5d9e91dcb953d411052728/morecantile-7.0.2-py3-none-any.whl
@@ -616,8 +616,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.3.1-h8359307_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/98/8b/8e028dbf6c4bf36defe899882a00c11a8d22fcb7348e88058900c13b72a0/boto3-1.42.23-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/8d/e6/114d66f81fc4b77a8c1e45e6fcf0021018d1f4eefca0905b3da8023c9a47/botocore-1.42.23-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a7/75/bbfccb268f9faa4f59030888e859dca9797a980b77d6a074113af73bd4bf/boto3-1.42.24-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ff/d4/f2655d777eed8b069ecab3761454cb83f830f8be8b5b0d292e4b3a980d00/botocore-1.42.24-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/09/40/9d521973cae7f7ef8b1f0d0e28a3db0f851c1f1dca45d4c2ed5360bb7246/dicttoxml-1.7.16-py3-none-any.whl
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -626,12 +626,12 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac#f083de30543d3b72b8239c07cbef6151fedcbc29
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog#6c17db44ec2f93e3f9842aafe9ffaa63f3ef7aad
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#751e75c057428aef6b4ace732c27b38d3a611dc5
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?branch=fix%2Frelax-deps#984b57837b25af57d94bc2d02d7044e66fa5008c
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
       - pypi: git+https://github.com/NASA-IMPACT/hls-vi#818b51d9a5f81b94c0bd1682f963ff8cddafb598
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/bf/9c/8c95d856233c1f82500c2450b8c68576b4cf1c871db3afac5c34ff84e6fd/jsonschema-4.25.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/87/cb/2ba1e9dd953415f58548506fa5549a7f373ae55e80c61c9041b7fd09a38a/lxml-5.4.0-cp313-cp313-macosx_10_13_universal2.whl
       - pypi: https://files.pythonhosted.org/packages/f1/c3/cb8db47ed1a28b43d498e91b629d69886778ad5d9e91dcb953d411052728/morecantile-7.0.2-py3-none-any.whl
@@ -1120,20 +1120,20 @@ packages:
   purls: []
   size: 33602
   timestamp: 1733513285902
-- pypi: https://files.pythonhosted.org/packages/98/8b/8e028dbf6c4bf36defe899882a00c11a8d22fcb7348e88058900c13b72a0/boto3-1.42.23-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/a7/75/bbfccb268f9faa4f59030888e859dca9797a980b77d6a074113af73bd4bf/boto3-1.42.24-py3-none-any.whl
   name: boto3
-  version: 1.42.23
-  sha256: 2ed797bdb394b08550f6269babf0a31bbeb853684bb2cb67116620df0ed632dc
+  version: 1.42.24
+  sha256: 8ed6ad670a5a2d7f66c1b0d3362791b48392c7a08f78479f5d8ab319a4d9118f
   requires_dist:
-  - botocore>=1.42.23,<1.43.0
+  - botocore>=1.42.24,<1.43.0
   - jmespath>=0.7.1,<2.0.0
   - s3transfer>=0.16.0,<0.17.0
   - botocore[crt]>=1.21.0,<2.0a0 ; extra == 'crt'
   requires_python: '>=3.9'
-- pypi: https://files.pythonhosted.org/packages/8d/e6/114d66f81fc4b77a8c1e45e6fcf0021018d1f4eefca0905b3da8023c9a47/botocore-1.42.23-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/ff/d4/f2655d777eed8b069ecab3761454cb83f830f8be8b5b0d292e4b3a980d00/botocore-1.42.24-py3-none-any.whl
   name: botocore
-  version: 1.42.23
-  sha256: d5042e0252b81f25ca1152fff9ed25463bab2438fbc4530ba53d5390d00ca1b1
+  version: 1.42.24
+  sha256: 8fca9781d7c84f7ad070fceffaff7179c4aa7a5ffb27b43df9d1d957801e0a8d
   requires_dist:
   - jmespath>=0.7.1,<2.0.0
   - python-dateutil>=2.1,<3.0.0
@@ -1772,15 +1772,15 @@ packages:
   purls: []
   size: 73715
   timestamp: 1726487214495
-- pypi: https://files.pythonhosted.org/packages/bf/9c/8c95d856233c1f82500c2450b8c68576b4cf1c871db3afac5c34ff84e6fd/jsonschema-4.25.1-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl
   name: jsonschema
-  version: 4.25.1
-  sha256: 3fba0169e345c7175110351d456342c364814cfcf3b964ba4587f22915230a63
+  version: 4.26.0
+  sha256: d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce
   requires_dist:
   - attrs>=22.2.0
   - jsonschema-specifications>=2023.3.6
   - referencing>=0.28.4
-  - rpds-py>=0.7.1
+  - rpds-py>=0.25.0
   - fqdn ; extra == 'format'
   - idna ; extra == 'format'
   - isoduration ; extra == 'format'
@@ -1798,7 +1798,7 @@ packages:
   - rfc3987-syntax>=1.1.0 ; extra == 'format-nongpl'
   - uri-template ; extra == 'format-nongpl'
   - webcolors>=24.6.0 ; extra == 'format-nongpl'
-  requires_python: '>=3.9'
+  requires_python: '>=3.10'
 - pypi: https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl
   name: jsonschema-specifications
   version: 2025.9.1
@@ -3041,7 +3041,7 @@ packages:
   purls: []
   size: 152755
   timestamp: 1753889267953
-- pypi: git+https://github.com/NASA-IMPACT/hls-metadata#751e75c057428aef6b4ace732c27b38d3a611dc5
+- pypi: git+https://github.com/NASA-IMPACT/hls-metadata?branch=fix%2Frelax-deps#984b57837b25af57d94bc2d02d7044e66fa5008c
   name: metadata-creator
   version: '2.8'
   requires_dist:
