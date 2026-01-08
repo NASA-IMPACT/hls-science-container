@@ -144,10 +144,10 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac#f083de30543d3b72b8239c07cbef6151fedcbc29
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog#6c17db44ec2f93e3f9842aafe9ffaa63f3ef7aad
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?branch=fix%2Frelax-deps#984b57837b25af57d94bc2d02d7044e66fa5008c
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#984b57837b25af57d94bc2d02d7044e66fa5008c
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
-      - pypi: git+https://github.com/NASA-IMPACT/hls-vi#818b51d9a5f81b94c0bd1682f963ff8cddafb598
+      - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl
@@ -289,10 +289,10 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac#f083de30543d3b72b8239c07cbef6151fedcbc29
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog#6c17db44ec2f93e3f9842aafe9ffaa63f3ef7aad
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?branch=fix%2Frelax-deps#984b57837b25af57d94bc2d02d7044e66fa5008c
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#984b57837b25af57d94bc2d02d7044e66fa5008c
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
-      - pypi: git+https://github.com/NASA-IMPACT/hls-vi#818b51d9a5f81b94c0bd1682f963ff8cddafb598
+      - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl
@@ -468,10 +468,10 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac#f083de30543d3b72b8239c07cbef6151fedcbc29
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog#6c17db44ec2f93e3f9842aafe9ffaa63f3ef7aad
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?branch=fix%2Frelax-deps#984b57837b25af57d94bc2d02d7044e66fa5008c
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#984b57837b25af57d94bc2d02d7044e66fa5008c
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
-      - pypi: git+https://github.com/NASA-IMPACT/hls-vi#818b51d9a5f81b94c0bd1682f963ff8cddafb598
+      - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl
@@ -626,10 +626,10 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac#f083de30543d3b72b8239c07cbef6151fedcbc29
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog#6c17db44ec2f93e3f9842aafe9ffaa63f3ef7aad
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?branch=fix%2Frelax-deps#984b57837b25af57d94bc2d02d7044e66fa5008c
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#984b57837b25af57d94bc2d02d7044e66fa5008c
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
-      - pypi: git+https://github.com/NASA-IMPACT/hls-vi#818b51d9a5f81b94c0bd1682f963ff8cddafb598
+      - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl
@@ -1668,7 +1668,7 @@ packages:
   - jinja2==2.10.1 ; extra == 'test'
   - moto[s3]~=2.0.8 ; extra == 'test'
   - markupsafe==2 ; extra == 'test'
-- pypi: git+https://github.com/NASA-IMPACT/hls-vi#818b51d9a5f81b94c0bd1682f963ff8cddafb598
+- pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz
   name: hls-vi
   version: '1.20'
   requires_dist:
@@ -3041,7 +3041,7 @@ packages:
   purls: []
   size: 152755
   timestamp: 1753889267953
-- pypi: git+https://github.com/NASA-IMPACT/hls-metadata?branch=fix%2Frelax-deps#984b57837b25af57d94bc2d02d7044e66fa5008c
+- pypi: git+https://github.com/NASA-IMPACT/hls-metadata#984b57837b25af57d94bc2d02d7044e66fa5008c
   name: metadata-creator
   version: '2.8'
   requires_dist:
