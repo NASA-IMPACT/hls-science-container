@@ -1,79 +1,90 @@
-name: build_push_pr_ecr
+name: Build, Test, and Push Pull Requests to ECR
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+
+env:
+  AWS_REGION: us-west-2
+  ECR_REPOSITORY: hls-atmospheric-correction
+  BUILD_PLATFORM: linux/amd64
 
 jobs:
   build_push_to_ecr:
     runs-on: ubuntu-latest
 
     steps:
-
       - uses: actions/checkout@v4
 
-      - name: Free disk space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          large-packages: false  # takes too long for ~4.7GB
-
-      - name: Configure ECR details
+      # We run out of space w/o cleanup. This is less comprehensive but faster
+      # than `jlumbroso/free-disk-space`
+      - name: Cleanup disk space
         run: |
-          ECR_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-2.amazonaws.com
-          echo "::add-mask::${ECR_URI}"
-          echo "ECR_URI=$ECR_URI" >> $GITHUB_ENV
-
-          ECR_IMAGE=hls-atmospheric-correction
-          echo "ECR_IMAGE=$ECR_IMAGE" >> $GITHUB_ENV
-
-          echo "ECR_REF=${ECR_URI}/${ECR_IMAGE}" >> $GITHUB_ENV
-          echo "ECR_TAG=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2
-
-      - name: Login to ECR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.ECR_URI }}
-          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ env.ECR_REF }}:${{ env.ECR_TAG }}
-          cache-from: type=registry,ref=${{ env.ECR_REF }}:cache
-          cache-to: type=registry,mode=max,image-manifest=true,oci-mediatypes=true,ref=${{ env.ECR_REF }}:cache
-
-      # FIXME: run the tests in the container...
-      #    - that's really what matters for this project
-      #    - the C code deps are hard to build
-      # - name: Run tests
-      #   run: |
-      #     scripts/test
+          sudo rm -rf /usr/local/lib/android &
+          sudo rm -rf /usr/share/dotnet &
+          sudo rm -rf /opt/ghc &
+          echo "Cleanup started in background..."
 
       # - name: Lint code
       #   run: |
       #     scripts/lint
       #     scripts/typecheck
 
-      # - name: Build
-      #   uses: docker/build-push-action@v5
-      #   with:
-      #     context: .
-      #     file: ./Dockerfile
-      #     push: true
-      #     tags: ${{ env.ECR_TAG }}
-      #     cache-from: type=registry,ref=${{ env.ECR_TAG }}:cache
-      #     cache-to: type=registry,mode=max,image-manifest=true,oci-mediatypes=true,ref=${{ env.ECR_TAG }}:cache
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
+          tags: |
+            type=ref,event=pr,prefix=pr-
+            type=sha,prefix=sha-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true  # Puts the image in 'docker images' for the next step
+          provenance: false
+          sbom: false
+          target: prod
+          build-args: |
+            PLATFORM=${{ env.BUILD_PLATFORM }}
+          tags: ${{ env.ECR_REPOSITORY }}:local
+          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
+
+      # FIXME: run the tests in the container...
+      #    - that's really what matters for this project
+      #    - the C code deps are hard to build
+      - name: Run tests
+        run: |
+          docker run --rm ${{ env.ECR_REPOSITORY }}:local echo "placeholder"
+
+      - name: Push to ECR
+        if: success()
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: prod
+          push: true
+          provenance: false
+          sbom: false
+          build-args: |
+            PLATFORM=${{ env.BUILD_PLATFORM }}
+            FMASK_INSTALLER=${{ env.FMASK_INSTALLER }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache

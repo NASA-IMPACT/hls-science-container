@@ -1,37 +1,63 @@
-name: build_push_release_ecr
+name: Release to ECR
 
 on:
   release:
-    branches: [ main ]
-    types: [ published ]
+    types: [published]
+
+env:
+  AWS_REGION: us-west-2
+  ECR_REPOSITORY: hls-atmospheric-correction
+  BUILD_PLATFORM: linux/amd64
 
 jobs:
-  build_push_to_prod_ecr:
+  release-build:
     runs-on: ubuntu-latest
-
     steps:
+      - uses: actions/checkout@v4
+
+      # We run out of space w/o cleanup. This is less comprehensive but faster
+      # than `jlumbroso/free-disk-space`
+      - name: Cleanup disk space in background
+        run: |
+          sudo rm -rf /usr/local/lib/android &
+          sudo rm -rf /usr/share/dotnet &
+          sudo rm -rf /opt/ghc &
+          echo "Cleanup started in background..."
+
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - uses: actions/checkout@v2
-
-      - name: Build image
-        run: docker build -t hls-atmospheric-correction .
-
-      - name: Push to prod ECR
-        id: push-prod-ecr
-        uses: jwalton/gh-ecr-push@v1
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          region: us-west-2
-          local-image: hls-atmospheric-correction
-          image: hls-atmospheric-correction:${GITHUB_REF##*/}
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Release to ECR
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: prod
+          push: true
+          provenance: false
+          sbom: false
+          build-args: |
+            PLATFORM=${{ env.BUILD_PLATFORM }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
+          cache-to: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache,mode=max,image-manifest=true

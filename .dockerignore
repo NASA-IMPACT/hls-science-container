@@ -1,5 +1,46 @@
-.pixi
-**/.pixi
-**/.venv/
 data/
 **/tests/
+
+# Git
+.git
+.gitignore
+
+# Pixi / Conda / Environments
+.pixi
+**/.pixi
+.pixi-cache
+.pixi-cache-new
+envs/
+*.conda
+*.tar.bz2
+
+# --- UV / Python Project Management ---
+.uv
+.venv
+.python-version
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+build/
+dist/
+
+# Test Artifacts (Crucial to prevent Push rebuilds)
+test-results/
+coverage/
+*.log
+.coverage
+htmlcov/
+
+# GitHub / IDEs
+.github/
+.vscode/
+.idea/
+.DS_Store
+
+# Large installers / Temp files
+*.install
+/tmp/
