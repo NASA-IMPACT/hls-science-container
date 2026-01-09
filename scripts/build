@@ -72,7 +72,7 @@ echo "---------------------------------------------------"
 echo "🚀 Starting Docker build..."
 echo ""
 
-docker build "${BUILD_ARGS[@]}"
+docker buildx build "${BUILD_ARGS[@]}"
 BUILD_EXIT_CODE=$?
 
 # ==============================================================================
