@@ -25,13 +25,13 @@ hls-vi = { url = "https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/
 python = "*"
 awscli = "~=2"
 gdal = "*"
+libgdal-hdf4 = ">=3.10.3,<4"
 libgdal-jp2openjpeg = "*"
 rasterio = "*"
 pyproj = ">=3.7.2,<4"
 shapely = ">=2,<3"
 zip = "*"
 unzip = "*"
-libgdal-hdf4 = ">=3.10.3,<4"
 
 [feature.dev.dependencies]
 ruff = "*"
