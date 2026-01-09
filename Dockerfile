@@ -54,5 +54,6 @@ COPY --from=build /opt/fmask ${FMASK_PREFIX}
 COPY packages/fmask4/run_Fmask.sh /app/.pixi/envs/default/bin
 COPY src/scripts/*.sh /app/.pixi/envs/default/bin
 
-ENTRYPOINT [ "/app/entrypoint.sh" ]
-CMD [ "/bin/bash", "-c" ]
+# Run Pixi entrypoint and execute Bash shell
+ENTRYPOINT [ "/app/entrypoint.sh", "/bin/bash", "-c" ]
+CMD [ "/bin/bash" ]
