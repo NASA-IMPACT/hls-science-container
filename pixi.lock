@@ -146,7 +146,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#984b57837b25af57d94bc2d02d7044e66fa5008c
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
-      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
+      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities?tag=v1.11.3#3da1685235f11a1231d54dd8863847029411401f
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl
@@ -291,7 +291,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#984b57837b25af57d94bc2d02d7044e66fa5008c
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
-      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
+      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities?tag=v1.11.3#3da1685235f11a1231d54dd8863847029411401f
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl
@@ -470,7 +470,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#984b57837b25af57d94bc2d02d7044e66fa5008c
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
-      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
+      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities?tag=v1.11.3#3da1685235f11a1231d54dd8863847029411401f
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl
@@ -628,7 +628,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest#177e6473591b5305f2448aeee9df06be7ea55796
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata#984b57837b25af57d94bc2d02d7044e66fa5008c
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails#bbe6371a687cbcf52524770275a0d39ee7f5338f
-      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
+      - pypi: git+https://github.com/NASA-IMPACT/hls-utilities?tag=v1.11.3#3da1685235f11a1231d54dd8863847029411401f
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz
       - pypi: https://files.pythonhosted.org/packages/a4/ed/1f1afb2e9e7f38a545d628f864d562a5ae64fe6f7a10e28ffb9b185b4e89/importlib_resources-6.5.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl
@@ -1652,9 +1652,9 @@ packages:
   - pillow
   - flake8 ; extra == 'test'
   - pytest ; extra == 'test'
-- pypi: git+https://github.com/NASA-IMPACT/hls-utilities#b2850b457c030828db277fdb8131245ac500e7bd
+- pypi: git+https://github.com/NASA-IMPACT/hls-utilities?tag=v1.11.3#3da1685235f11a1231d54dd8863847029411401f
   name: hls-utilities
-  version: 1.11.2
+  version: 1.11.3
   requires_dist:
   - click
   - lxml
@@ -1665,8 +1665,8 @@ packages:
   - ruff ; extra == 'dev'
   - ruff ; extra == 'test'
   - pytest ; extra == 'test'
-  - jinja2==2.10.1 ; extra == 'test'
-  - moto[s3]~=2.0.8 ; extra == 'test'
+  - jinja2 ; extra == 'test'
+  - moto[s3] ; extra == 'test'
   - markupsafe==2 ; extra == 'test'
 - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz
   name: hls-vi
