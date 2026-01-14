@@ -18,7 +18,7 @@ hls-hdf_to_cog = { git = "https://github.com/NASA-IMPACT/hls-hdf_to_cog", tag = 
 hls-manifest = { git = "https://github.com/NASA-IMPACT/hls-manifest", tag = "v2.1" }
 metadata-creator = { git = "https://github.com/NASA-IMPACT/hls-metadata", tag = "v2.8" }
 hls-thumbnails = { git = "https://github.com/NASA-IMPACT/hls-thumbnails", tag=  "v1.3" }
-hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", tag = "v1.11.2" }
+hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", tag = "v1.11.3" }
 hls-vi = { url = "https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz" }
 
 [dependencies]

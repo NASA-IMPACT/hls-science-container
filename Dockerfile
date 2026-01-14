@@ -48,11 +48,15 @@ ENV PYSTAC_STAC_VERSION_OVERRIDE=1.0.0
 ENV GDAL_MEM_ENABLE_OPEN=YES
 ENV FMASK_PREFIX=/opt/fmask
 
+# Set variable defining LaSRC version used in HLS product metadata
+ENV ACCODE="LaSRC v3.5.1.0"
+
 COPY --from=build /app/.pixi/envs/default /app/.pixi/envs/default
 COPY --from=build --chmod=0755 /app/entrypoint.sh /app/entrypoint.sh
 COPY --from=build /opt/fmask ${FMASK_PREFIX}
 COPY packages/fmask4/run_Fmask.sh /app/.pixi/envs/default/bin
 COPY src/scripts/*.sh /app/.pixi/envs/default/bin
+COPY src/scripts/*.py /app/.pixi/envs/default/bin
 
 # Run Pixi entrypoint and execute Bash shell
 ENTRYPOINT [ "/app/entrypoint.sh", "/bin/bash", "-c" ]
