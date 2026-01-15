@@ -1,17 +1,21 @@
 #! /usr/bin/env python
-import warnings
-warnings.filterwarnings("ignore")
-
 import datetime
 import sys
+import warnings
+
 import click
 import rasterio
+
+warnings.filterwarnings("ignore")
 
 
 @click.command()
 @click.argument(
     "inputhdfile",
-    type=click.Path(dir_okay=False, file_okay=True,),
+    type=click.Path(
+        dir_okay=False,
+        file_okay=True,
+    ),
 )
 def main(inputhdfile):
     with rasterio.open(inputhdfile) as dataset:
@@ -24,10 +28,10 @@ def main(inputhdfile):
         hms = "%s%s%s" % (
             str(scene_time.hour).zfill(2),
             str(scene_time.minute).zfill(2),
-            str(scene_time.second).zfill(2)
+            str(scene_time.second).zfill(2),
         )
         sys.stdout.write(hms)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -12,6 +12,7 @@ requirements:
     - gcc
     - gfortran
   host:
+    - python
     - espa-product-formatter
     - hdfeos2
     - hdfeos5
@@ -51,3 +52,4 @@ tests:
         exists:
           - bin/sentinel-add-fmask-sds
           - bin/landsat-add-fmask-sds
+          - bin/extract_landsat_hms.py

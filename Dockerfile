@@ -56,7 +56,6 @@ COPY --from=build --chmod=0755 /app/entrypoint.sh /app/entrypoint.sh
 COPY --from=build /opt/fmask ${FMASK_PREFIX}
 COPY packages/fmask4/run_Fmask.sh /app/.pixi/envs/default/bin
 COPY src/scripts/*.sh /app/.pixi/envs/default/bin
-COPY src/scripts/*.py /app/.pixi/envs/default/bin
 
 # Run Pixi entrypoint and execute Bash shell
 ENTRYPOINT [ "/app/entrypoint.sh", "/bin/bash", "-c" ]
