@@ -1,0 +1,22 @@
+[project]
+name = "hls-nextgen-orchestration"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Chris Holden", email = "ceholden@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+
+[project.scripts]
+hls-nextgen-orchestration = "hls_nextgen_orchestration:main"
+
+[build-system]
+requires = ["uv_build>=0.9.10,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
