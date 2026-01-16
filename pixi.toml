@@ -45,4 +45,4 @@ pytest = "*"
 hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = true }
 
 [environments]
-dev = ["dev", "orchestration"]
+dev = { features = ["dev", "orchestration"], no-default-feature = true }
