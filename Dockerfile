@@ -22,7 +22,7 @@ RUN wget -q -O /tmp/Fmask.install https://fmask4installer.s3.amazonaws.com/Fmask
     rm /tmp/Fmask.install
 
 # ----- Install package dependencies
-COPY --parents pixi.toml pixi.lock packages /app/
+COPY --parents pixi.toml pixi.lock packages src/ /app/
 RUN --mount=type=cache,target=/root/.cache/rattler/cache \
     pixi install --frozen
 ENV PREFIX=/app/.pixi/envs/default
