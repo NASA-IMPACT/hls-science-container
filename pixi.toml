@@ -13,7 +13,7 @@ hls-libs = { path = "packages/hls-libs" }
 
 [pypi-dependencies]
 # Local packages
-hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration" }
+hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = true }
 # Remote repositories
 hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", tag = "v1.8"}
 hls-cmr_stac = { git = "https://github.com/NASA-IMPACT/hls-cmr_stac", tag = "v1.8" }
@@ -41,5 +41,8 @@ ruff = "*"
 mypy = "*"
 pytest = "*"
 
+[feature.orchestration.pypi-dependencies]
+hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = true }
+
 [environments]
-dev = ["dev"]
+dev = ["dev", "orchestration"]

@@ -28,6 +28,7 @@ jobs:
       - uses: prefix-dev/setup-pixi@v0.9.3
         with:
           frozen: true
+          environments: dev
 
       - name: Lint code
         run: |
