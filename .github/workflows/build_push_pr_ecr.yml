@@ -35,6 +35,10 @@ jobs:
           scripts/lint
           scripts/typecheck
 
+      - name: Run tests
+        run: |
+          scripts/test
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
@@ -71,9 +75,9 @@ jobs:
           tags: ${{ env.ECR_REPOSITORY }}:local
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
 
-      - name: Run tests
+      - name: Run container tests
         run: |
-          docker run --rm ${{ env.ECR_REPOSITORY }}:local scripts/test
+          docker run --rm ${{ env.ECR_REPOSITORY }}:local echo "placeholder"
 
       - name: Push to ECR
         if: success()
