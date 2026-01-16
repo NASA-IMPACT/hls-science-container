@@ -12,11 +12,12 @@ requirements:
     - gcc
     - gfortran
   host:
-    - python
     - espa-product-formatter
     - hdfeos2
     - hdfeos5
     - liblzma-devel
+  run:
+    - python
 
 build:
   number: 0
