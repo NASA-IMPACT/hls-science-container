@@ -12,6 +12,9 @@ espa-surface-reflectance = { path = "packages/espa-surface-reflectance" }
 hls-libs = { path = "packages/hls-libs" }
 
 [pypi-dependencies]
+# Local packages
+hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration" }
+# Remote repositories
 hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", tag = "v1.8"}
 hls-cmr_stac = { git = "https://github.com/NASA-IMPACT/hls-cmr_stac", tag = "v1.8" }
 hls-hdf_to_cog = { git = "https://github.com/NASA-IMPACT/hls-hdf_to_cog", tag = "v2.2" }
@@ -22,8 +25,8 @@ hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", tag = "v
 hls-vi = { url = "https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz" }
 
 [dependencies]
-python = "*"
-awscli = "~=2"
+python = ">=3.13,<3.14"
+awscliv2 = "~=2"
 gdal = "*"
 libgdal-hdf4 = ">=3.10.3,<4"
 libgdal-jp2openjpeg = "*"
