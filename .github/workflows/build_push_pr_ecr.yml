@@ -26,6 +26,8 @@ jobs:
           echo "Cleanup started in background..."
 
       - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          frozen: true
 
       - name: Lint code
         run: |
