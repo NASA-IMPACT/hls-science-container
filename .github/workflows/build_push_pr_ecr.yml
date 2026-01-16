@@ -25,10 +25,10 @@ jobs:
           sudo rm -rf /opt/ghc &
           echo "Cleanup started in background..."
 
-      # - name: Lint code
-      #   run: |
-      #     scripts/lint
-      #     scripts/typecheck
+      - name: Lint code
+        run: |
+          scripts/lint
+          scripts/typecheck
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v5
@@ -66,12 +66,9 @@ jobs:
           tags: ${{ env.ECR_REPOSITORY }}:local
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
 
-      # FIXME: run the tests in the container...
-      #    - that's really what matters for this project
-      #    - the C code deps are hard to build
       - name: Run tests
         run: |
-          docker run --rm ${{ env.ECR_REPOSITORY }}:local echo "placeholder"
+          docker run --rm ${{ env.ECR_REPOSITORY }}:local scripts/test
 
       - name: Push to ECR
         if: success()

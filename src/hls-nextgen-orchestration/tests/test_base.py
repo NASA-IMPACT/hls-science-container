@@ -37,7 +37,7 @@ class SimpleTask(Task):
 
 
 @pytest.fixture
-def builder():
+def builder() -> PipelineBuilder:
     return PipelineBuilder()
 
 

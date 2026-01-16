@@ -1,5 +1,6 @@
 from __future__ import annotations
 import logging
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -13,7 +14,7 @@ class Asset:
     key: str
     description: str = ""
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{self.key}>"
 
 
@@ -25,7 +26,7 @@ class TaskContext:
 
     _store: dict[str, Any] = field(default_factory=dict)
 
-    def put(self, asset: Asset, value: Any):
+    def put(self, asset: Asset, value: Any) -> None:
         logging.info(f"[Context] Storing {asset.key}")
         logging.debug(f"          Value: {value}")
         self._store[asset.key] = value
@@ -37,7 +38,7 @@ class TaskContext:
 
 
 @dataclass(frozen=True)
-class NodeBase:
+class NodeBase(ABC):
     """
     Base class defines the identity (name) and the interface.
     """
@@ -46,10 +47,11 @@ class NodeBase:
     requires: tuple[Asset, ...] = ()
     provides: tuple[Asset, ...] = ()
 
-    def execute(self, context: TaskContext):
+    @abstractmethod
+    def execute(self, context: TaskContext) -> None:
         raise NotImplementedError
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.name})"
 
 
@@ -62,7 +64,7 @@ class DataSource(NodeBase):
     def fetch(self) -> dict[Asset, Any]:
         raise NotImplementedError
 
-    def execute(self, context: TaskContext):
+    def execute(self, context: TaskContext) -> None:
         logging.info(f"Running DataSource: {self.name}")
         results = self.fetch()
 
@@ -83,7 +85,7 @@ class Task(NodeBase):
     def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
         raise NotImplementedError
 
-    def execute(self, context: TaskContext):
+    def execute(self, context: TaskContext) -> None:
         logging.info(f"Running Task: {self.name}")
 
         # 1. Gather Inputs
@@ -99,9 +101,6 @@ class Task(NodeBase):
                     f"{self.name} failed to provide promised output: {asset.key}"
                 )
             context.put(asset, outputs[asset])
-
-
-# --- Pipeline Construction & Execution ---
 
 
 @dataclass(frozen=True)
@@ -126,7 +125,7 @@ class Pipeline:
         logging.info("--- Execution Complete ---")
         return context
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Pretty-print the execution plan.
         """
