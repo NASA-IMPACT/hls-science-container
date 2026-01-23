@@ -900,7 +900,7 @@ packages:
 - pypi: ./src/hls-nextgen-orchestration
   name: hls-nextgen-orchestration
   version: 0.1.0
-  sha256: cf14beae15e819b58d5331d13a3626d909ac646e4b8a0acc0e9032894a1a6e51
+  sha256: 0213308a9cf5906fe3b5c64e640b7cc93c5c4c90c584403141d2dd0faad16895
   requires_python: '>=3.12'
 - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
   name: hls-thumbnails
