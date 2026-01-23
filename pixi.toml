@@ -43,7 +43,7 @@ mypy = "*"
 pytest = "*"
 
 [feature.orchestration.pypi-dependencies]
-hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = true }
+hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = true, extras = ["dev"] }
 
 [environments]
 dev = { features = ["dev", "orchestration"], no-default-feature = true }
