@@ -6,6 +6,16 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+class TaskFailure(Exception):
+    """
+    Exception raised by a task to indicate a controlled stop/failure with a specific exit code.
+    """
+
+    def __init__(self, message: str, exit_code: int = 1):
+        super().__init__(message)
+        self.exit_code = exit_code
+
+
 @dataclass(frozen=True)
 class Asset:
     """
@@ -25,6 +35,7 @@ class TaskContext:
     Mutable container for data during execution.
     """
 
+    exit_code: int = 0
     _store: dict[str, Any] = field(default_factory=dict)
 
     def put(self, asset: Asset, value: Any) -> None:
@@ -121,7 +132,16 @@ class Pipeline:
 
         for i, node in enumerate(self.execution_order, 1):
             logging.info(f"Step {i}/{len(self.execution_order)}: {node.name}")
-            node.execute(context)
+            try:
+                node.execute(context)
+            except TaskFailure as e:
+                logging.warning(f"Pipeline stopped at step '{node.name}': {e}")
+                context.exit_code = e.exit_code
+                return context
+            except Exception:
+                logging.exception(f"Pipeline failed unexpectedly at step '{node.name}'")
+                context.exit_code = 1
+                raise
 
         logging.info("--- Execution Complete ---")
         return context

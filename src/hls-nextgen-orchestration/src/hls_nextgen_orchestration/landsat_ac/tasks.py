@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any
 
 import boto3
 
-from hls_nextgen_orchestration.base import DataSource, Task
+from hls_nextgen_orchestration.base import DataSource, Task, TaskFailure
 from hls_nextgen_orchestration.utils import validate_command
 
 from .assets import (
@@ -154,9 +154,10 @@ class CheckSolarZenith(Task):
             text=True,
             check=False,
         )
+
         if result.stdout.strip() == "invalid":
-            logging.error("Invalid solar zenith angle. Exiting now")
-            sys.exit(3)
+            raise TaskFailure("Invalid solar zenith angle", exit_code=3)
+
         return {SOLAR_VALID: True}
 
 
