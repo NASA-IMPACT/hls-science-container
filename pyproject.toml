@@ -1,5 +1,9 @@
 [tool.ruff]
+line-length = 88
 include = ["packages/**/*.py", "packages/**/*.pyi"]
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "UP"]
 
 [tool.ruff.lint.isort]
 known-first-party = [

@@ -71,7 +71,9 @@ class DataSource(NodeBase):
 
         for asset in self.provides:
             if asset not in results:
-                raise RuntimeError(f"{self.name} failed to provide promised asset: {asset.key}")
+                raise RuntimeError(
+                    f"{self.name} failed to provide promised asset: {asset.key}"
+                )
             context.put(asset, results[asset])
 
 
@@ -96,7 +98,9 @@ class Task(NodeBase):
         # 3. Validate & Store Outputs
         for asset in self.provides:
             if asset not in outputs:
-                raise RuntimeError(f"{self.name} failed to provide promised output: {asset.key}")
+                raise RuntimeError(
+                    f"{self.name} failed to provide promised output: {asset.key}"
+                )
             context.put(asset, outputs[asset])
 
 
@@ -126,7 +130,9 @@ class Pipeline:
         """
         Pretty-print the execution plan.
         """
-        plan = "\n".join(f"{i + 1}. {node}" for i, node in enumerate(self.execution_order))
+        plan = "\n".join(
+            f"{i + 1}. {node}" for i, node in enumerate(self.execution_order)
+        )
         return f"Pipeline Execution Plan:\n{plan}"
 
 
@@ -146,7 +152,8 @@ class PipelineBuilder:
             if asset.key in self.catalog:
                 existing = self.catalog[asset.key]
                 raise ValueError(
-                    f"Conflict: Asset '{asset.key}' is provided by both '{existing.name}' and '{node.name}'"
+                    f"Conflict: Asset '{asset.key}' is provided by both "
+                    f"'{existing.name}' and '{node.name}'"
                 )
             self.catalog[asset.key] = node
 
@@ -162,7 +169,10 @@ class PipelineBuilder:
         for node in self.nodes:
             for req in node.requires:
                 if req.key not in self.catalog:
-                    raise ValueError(f"Integrity Error: '{node.name}' requires '{req.key}', but no provider exists.")
+                    raise ValueError(
+                        f"Integrity Error: '{node.name}' requires "
+                        f"'{req.key}', but no provider exists."
+                    )
 
                 provider = self.catalog[req.key]
 
