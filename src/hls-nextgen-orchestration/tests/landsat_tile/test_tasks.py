@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import PropertyMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import boto3
 import pytest
@@ -9,39 +10,57 @@ import pytest
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
 
-from hls_nextgen_orchestration.base import TaskContext
 from hls_nextgen_orchestration.landsat_tile.assets import (
+    ANGLE_HDF,
+    CMR_XML,
+    COGS_CREATED,
     CONFIG,
-    FINAL_HDF,
-    FMASK_BIN,
-    GRANULE_DIR,
-    METADATA,
-    MTL_FILE,
-    SOLAR_VALID,
+    GIBS_DIR,
+    GRIDDED_HDF,
+    MANIFEST_FILE,
+    NBAR_ANGLE,
+    NBAR_INPUT,
+    OUTPUT_BASE_NAME,
+    OUTPUT_HDF,
+    SCENE_TIME,
+    STAC_JSON,
+    THUMBNAIL_FILE,
     UPLOAD_COMPLETE,
+    VI_DIR,
 )
 from hls_nextgen_orchestration.landsat_tile.tasks import (
-    CheckSolarZenith,
-    DownloadGranule,
+    ConvertToCogs,
+    CreateManifest,
+    CreateMetadata,
+    CreateThumbnail,
     EnvConfig,
     EnvSource,
-    ParseMetadata,
-    RunFmask,
-    UploadResults,
+    ProcessGibs,
+    ProcessPathRows,
+    ProcessVi,
+    RunNbar,
+    UploadAll,
 )
 
 # --- Test Data Constants ---
-JOB_ID = "job-123"
-GRANULE = "LC08_L1TP_025030_20200101_20200114_01_T1"
+JOB_ID = "job-tile-123"
+PATHROW_LIST = "025030"
+DATE = "2020-01-01"  # DOY = 001
+MGRS = "T12ABC"
+MGRS_ULX = "100"
+MGRS_ULY = "200"
 BUCKET_IN = "input-bucket"
 BUCKET_OUT = "output-bucket"
+BUCKET_GIBS = "gibs-bucket"
+
+# Mocked output of extract_landsat_hms.py
+MOCKED_SCENE_TIME = "101010"
 
 
 @pytest.fixture
 def mock_config(tmp_path):
     """
-    Creates an EnvConfig that points to a temporary directory
-    instead of /var/scratch.
+    Creates an EnvConfig that points to a temporary directory.
     """
     with patch(
         "hls_nextgen_orchestration.landsat_tile.tasks.EnvConfig.working_dir",
@@ -51,15 +70,17 @@ def mock_config(tmp_path):
 
         config = EnvConfig(
             job_id=JOB_ID,
-            granule=GRANULE,
+            pathrow_list=PATHROW_LIST.split(","),
+            date=DATE,
+            mgrs=MGRS,
+            mgrs_ulx=MGRS_ULX,
+            mgrs_uly=MGRS_ULY,
             input_bucket=BUCKET_IN,
             output_bucket=BUCKET_OUT,
-            prefix="L8",
-            ac_code="LaSRC",
+            gibs_bucket=BUCKET_GIBS,
         )
-        # Ensure granule dir exists as EnvSource would
-        if not config.granule_dir.exists():
-            config.granule_dir.mkdir(parents=True)
+        if not config.working_dir.exists():
+            config.working_dir.mkdir(parents=True)
 
         yield config
 
@@ -67,11 +88,15 @@ def mock_config(tmp_path):
 def test_env_source(monkeypatch, tmp_path):
     """Test environment variable parsing."""
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
-    monkeypatch.setenv("GRANULE", GRANULE)
+    monkeypatch.setenv("PATHROW_LIST", PATHROW_LIST)
+    monkeypatch.setenv("DATE", DATE)
+    monkeypatch.setenv("MGRS", MGRS)
+    monkeypatch.setenv("MGRS_ULX", MGRS_ULX)
+    monkeypatch.setenv("MGRS_ULY", MGRS_ULY)
     monkeypatch.setenv("INPUT_BUCKET", BUCKET_IN)
     monkeypatch.setenv("OUTPUT_BUCKET", BUCKET_OUT)
+    monkeypatch.setenv("GIBS_OUTPUT_BUCKET", BUCKET_GIBS)
 
-    # Patch Path inside the class property to avoid /var/scratch issues
     with patch(
         "hls_nextgen_orchestration.landsat_tile.tasks.EnvConfig.working_dir",
         new_callable=PropertyMock,
@@ -84,91 +109,294 @@ def test_env_source(monkeypatch, tmp_path):
         assert CONFIG in result
         cfg = result[CONFIG]
         assert cfg.job_id == JOB_ID
-        assert cfg.granule == GRANULE
-        assert cfg.granule_dir.exists()
+        assert cfg.pathrow_list == ["025030"]
+        assert cfg.date == DATE
+        assert cfg.mgrs == MGRS
+        assert cfg.working_dir.exists()
 
 
-def test_download_granule(mock_binaries, mock_config, monkeypatch):
-    """Test download calls binary and verifies output."""
-    # Set GRANULE env var because our mock bash script uses it to name the MTL file
-    monkeypatch.setenv("GRANULE", GRANULE)
+def test_process_path_rows(mock_binaries, mock_config, mock_aws_s3):
+    """
+    Test downloading inputs and running landsat-tile tools.
+    Should produce NBAR inputs and scene time.
+    """
+    # Setup S3 input data
+    s3 = boto3.client("s3", region_name="us-east-1")
+    s3.create_bucket(Bucket=BUCKET_IN)
 
-    task = DownloadGranule(
-        "test_download", requires=(CONFIG,), provides=(GRANULE_DIR, MTL_FILE)
+    # Prefix based on config date/pathrow: 2020-01-01/025030
+    prefix = "2020-01-01/025030"
+
+    # Create dummy files that would exist in the source bucket
+    # landsat_ac name format derived in task: {date}_{pathrow}.hdf
+    ac_file = "2020-01-01_025030.hdf"
+    sza_file = "2020-01-01_025030_SZA.img"
+
+    s3.put_object(Bucket=BUCKET_IN, Key=f"{prefix}/{ac_file}", Body="dummy content")
+    s3.put_object(Bucket=BUCKET_IN, Key=f"{prefix}/{sza_file}", Body="dummy content")
+
+    task = ProcessPathRows(
+        "test_process",
+        requires=(CONFIG,),
+        provides=(NBAR_INPUT, NBAR_ANGLE, SCENE_TIME, OUTPUT_BASE_NAME),
     )
 
-    ctx = TaskContext()
-    ctx.put(CONFIG, mock_config)
+    # We mock subprocess.run only for the tools,
+    # letting mock_binaries handle side effects.
+    with patch("subprocess.run") as mock_run:
+        # Configure side effects for the mocked binaries
+        def side_effect(cmd, **kwargs):
+            if cmd[0] == "extract_landsat_hms.py":
+                # Mock return of scene time
+                return MagicMock(stdout=f"{MOCKED_SCENE_TIME}\n")
+            elif cmd[0] == "landsat-tile":
+                # Simulate output creation
+                # cmd[-1] is output nbar input hdf
+                Path(cmd[-1]).touch()
+                return MagicMock(returncode=0)
+            elif cmd[0] == "landsat-angle-tile":
+                # cmd[-1] is output nbar angle hdf
+                Path(cmd[-1]).touch()
+                return MagicMock(returncode=0)
+            return MagicMock(returncode=0)
 
-    # We call run directly to avoid context boilerplate in execute()
-    outputs = task.run({CONFIG: mock_config})
+        mock_run.side_effect = side_effect
 
-    assert outputs[GRANULE_DIR] == mock_config.granule_dir
-    assert outputs[MTL_FILE].exists()
-    assert outputs[MTL_FILE].name == f"{GRANULE}_MTL.txt"
+        outputs = task.run({CONFIG: mock_config})
 
+        # Verify assets produced
+        assert outputs[SCENE_TIME] == MOCKED_SCENE_TIME
+        assert (
+            outputs[NBAR_INPUT].name
+            == f"HLS.L30.{MGRS}.2020001.{MOCKED_SCENE_TIME}.v2.0.hdf"
+        )
+        assert (
+            outputs[NBAR_ANGLE].name
+            == f"L8ANGLE.{MGRS}.2020001.{MOCKED_SCENE_TIME}.v2.0.hdf"
+        )
+        assert outputs[OUTPUT_BASE_NAME] == f"T{MGRS}.2020001T{MOCKED_SCENE_TIME}.v2.0"
 
-def test_parse_metadata(mock_config):
-    """Test metadata string parsing."""
-    task = ParseMetadata("test_meta", requires=(CONFIG,), provides=(METADATA,))
-    outputs = task.run({CONFIG: mock_config})
-
-    meta = outputs[METADATA]
-    # 20200101 -> 2020-01-01
-    assert meta["year"] == "2020"
-    assert meta["output_name"] == "2020-01-01_025030"
-    assert meta["bucket_key"] == "2020-01-01/025030"
-
-
-def test_check_solar_zenith_valid(mock_binaries, mock_config):
-    """Test solar zenith check passes with valid mock."""
-    mtl_path = mock_config.granule_dir / f"{GRANULE}_MTL.txt"
-    mtl_path.touch()
-
-    task = CheckSolarZenith("test_solar", requires=(MTL_FILE,), provides=(SOLAR_VALID,))
-    outputs = task.run({MTL_FILE: mtl_path})
-    assert outputs[SOLAR_VALID] is True
-
-
-def test_run_fmask(mock_binaries, mock_config):
-    """Test Fmask execution and file generation."""
-    task = RunFmask("test_fmask", requires=(CONFIG, GRANULE_DIR), provides=(FMASK_BIN,))
-    outputs = task.run({CONFIG: mock_config, GRANULE_DIR: mock_config.granule_dir})
-
-    assert outputs[FMASK_BIN].exists()
-    assert outputs[FMASK_BIN].name == "fmask.bin"
+        # Verify files were downloaded to working dir via boto3
+        assert (mock_config.working_dir / ac_file).exists()
+        assert (mock_config.working_dir / sza_file).exists()
 
 
-def test_upload_results(mock_aws_s3, mock_config):
-    """Test production upload to S3."""
-    s3: S3Client = boto3.client("s3", region_name="us-east-1")
-    s3.create_bucket(Bucket=BUCKET_OUT)
+def test_run_nbar(mock_binaries, mock_config):
+    """Test NBAR execution and renaming."""
+    scene_time = MOCKED_SCENE_TIME
+    output_basename = f"T{MGRS}.2020001T{MOCKED_SCENE_TIME}.v2.0"
 
-    # Setup dummy files
-    final_hdf = mock_config.granule_dir / "output.hdf"
-    final_hdf.touch()
-    (mock_config.granule_dir / "test_VAA.img").touch()
+    # Setup Inputs
+    nbar_basename = f"{MGRS}.2020001.{scene_time}.v2.0"
+    nbar_input = mock_config.working_dir / f"HLS.L30.{nbar_basename}.hdf"
+    nbar_input.touch()
+    nbar_angle = mock_config.working_dir / f"L8ANGLE.{nbar_basename}.hdf"
+    nbar_angle.touch()
 
-    meta = {"bucket_key": "2020/001", "output_name": "output"}
-
-    task = UploadResults(
-        "test_upload",
-        requires=(CONFIG, METADATA, FINAL_HDF, GRANULE_DIR),
-        provides=(UPLOAD_COMPLETE,),
+    task = RunNbar(
+        "test_nbar",
+        requires=(CONFIG, NBAR_INPUT, NBAR_ANGLE, SCENE_TIME, OUTPUT_BASE_NAME),
+        provides=(OUTPUT_HDF, ANGLE_HDF, GRIDDED_HDF),
     )
+
     outputs = task.run(
         {
             CONFIG: mock_config,
-            METADATA: meta,
-            FINAL_HDF: final_hdf,
-            GRANULE_DIR: mock_config.granule_dir,
+            NBAR_INPUT: nbar_input,
+            NBAR_ANGLE: nbar_angle,
+            SCENE_TIME: scene_time,
+            OUTPUT_BASE_NAME: output_basename,
+        }
+    )
+
+    # Check outputs were renamed/created
+    expected_output = mock_config.working_dir / f"HLS.L30.{output_basename}.hdf"
+    expected_angle = mock_config.working_dir / f"HLS.L30.{output_basename}.ANGLE.hdf"
+
+    assert outputs[OUTPUT_HDF] == expected_output
+    assert outputs[ANGLE_HDF] == expected_angle
+    assert outputs[GRIDDED_HDF].exists()  # Copied for debug
+
+    # Original files should be moved
+    assert not nbar_input.exists()
+    assert expected_output.exists()
+
+
+def test_convert_to_cogs(mock_binaries, mock_config):
+    """Test COG conversion calls."""
+    output_hdf = mock_config.working_dir / "output.hdf"
+    angle_hdf = mock_config.working_dir / "angle.hdf"
+    output_hdf.touch()
+    angle_hdf.touch()
+
+    task = ConvertToCogs(
+        "test_cogs", requires=(CONFIG, OUTPUT_HDF, ANGLE_HDF), provides=(COGS_CREATED,)
+    )
+
+    outputs = task.run(
+        {CONFIG: mock_config, OUTPUT_HDF: output_hdf, ANGLE_HDF: angle_hdf}
+    )
+
+    assert outputs[COGS_CREATED] is True
+
+
+def test_create_thumbnail(mock_binaries, mock_config):
+    """Test thumbnail generation."""
+    output_basename = "test_basename"
+
+    task = CreateThumbnail(
+        "test_thumb", requires=(CONFIG, OUTPUT_BASE_NAME), provides=(THUMBNAIL_FILE,)
+    )
+
+    # Mocking side effect of create_thumbnail script is handled by mock_binaries fixture
+    # (The script touches the output file specified by -o)
+    outputs = task.run({CONFIG: mock_config, OUTPUT_BASE_NAME: output_basename})
+
+    assert outputs[THUMBNAIL_FILE].name == f"HLS.L30.{output_basename}.jpg"
+    assert outputs[THUMBNAIL_FILE].exists()
+
+
+def test_create_metadata(mock_binaries, mock_config):
+    """Test CMR/STAC metadata generation."""
+    output_hdf = mock_config.working_dir / "output.hdf"
+    output_basename = "test_basename"
+
+    task = CreateMetadata(
+        "test_meta",
+        requires=(CONFIG, OUTPUT_HDF, OUTPUT_BASE_NAME),
+        provides=(CMR_XML, STAC_JSON),
+    )
+
+    outputs = task.run(
+        {CONFIG: mock_config, OUTPUT_HDF: output_hdf, OUTPUT_BASE_NAME: output_basename}
+    )
+
+    assert outputs[CMR_XML].name == f"HLS.L30.{output_basename}.cmr.xml"
+    assert outputs[STAC_JSON].name == f"HLS.L30.{output_basename}_stac.json"
+    assert outputs[CMR_XML].exists()
+    assert outputs[STAC_JSON].exists()
+
+
+def test_create_manifest(mock_binaries, mock_config):
+    """Test manifest creation."""
+    output_basename = "test_basename"
+
+    task = CreateManifest(
+        "test_manifest",
+        requires=(CONFIG, OUTPUT_BASE_NAME, COGS_CREATED, THUMBNAIL_FILE, CMR_XML),
+        provides=(MANIFEST_FILE,),
+    )
+
+    outputs = task.run(
+        {
+            CONFIG: mock_config,
+            OUTPUT_BASE_NAME: output_basename,
+            COGS_CREATED: True,
+            THUMBNAIL_FILE: MagicMock(),
+            CMR_XML: MagicMock(),
+        }
+    )
+
+    assert outputs[MANIFEST_FILE].name == f"HLS.L30.{output_basename}.json"
+    assert outputs[MANIFEST_FILE].exists()
+
+
+def test_process_gibs(mock_binaries, mock_config):
+    """Test GIBS processing and sub-manifest creation."""
+    output_basename = "test_basename"
+
+    task = ProcessGibs(
+        "test_gibs", requires=(CONFIG, OUTPUT_BASE_NAME), provides=(GIBS_DIR,)
+    )
+
+    outputs = task.run({CONFIG: mock_config, OUTPUT_BASE_NAME: output_basename})
+
+    gibs_dir = outputs[GIBS_DIR]
+    assert gibs_dir.exists()
+    # The mock binary creates a subdir "GIBS_ID_1" with "test.xml"
+    assert (gibs_dir / "GIBS_ID_1" / "test.xml").exists()
+
+
+def test_process_vi(mock_binaries, mock_config):
+    """Test VI processing."""
+    output_basename = "test_basename"
+
+    task = ProcessVi("test_vi", requires=(CONFIG, OUTPUT_BASE_NAME), provides=(VI_DIR,))
+
+    outputs = task.run({CONFIG: mock_config, OUTPUT_BASE_NAME: output_basename})
+
+    vi_dir = outputs[VI_DIR]
+    assert vi_dir.exists()
+    # Check for mocked artifacts
+    assert (vi_dir / "NDVI.tif").exists()
+
+
+def test_upload_all_production(mock_aws_s3, mock_config):
+    """Test production upload logic."""
+    s3: S3Client = boto3.client("s3", region_name="us-east-1")
+    s3.create_bucket(Bucket=BUCKET_OUT)
+    s3.create_bucket(Bucket=BUCKET_GIBS)
+
+    # Create dummy files to upload
+    (mock_config.working_dir / "product.tif").touch()
+    (mock_config.working_dir / "product.json").touch()  # Manifest
+
+    # Dummy GIBS
+    gibs_dir = mock_config.working_dir / "gibs"
+    gibs_dir.mkdir()
+    (gibs_dir / "id1").mkdir()
+    (gibs_dir / "id1" / "gibs.tif").touch()
+    (gibs_dir / "id1" / "gibs.xml").touch()
+    (gibs_dir / "id1" / "gibs.json").touch()  # Manifest
+
+    # Dummy VI
+    vi_dir = mock_config.working_dir / "vi"
+    vi_dir.mkdir()
+    (vi_dir / "vi.tif").touch()
+
+    task = UploadAll(
+        "test_upload",
+        requires=(
+            CONFIG,
+            OUTPUT_BASE_NAME,
+            GIBS_DIR,
+            VI_DIR,
+            GRIDDED_HDF,
+            MANIFEST_FILE,
+        ),
+        provides=(UPLOAD_COMPLETE,),
+    )
+
+    outputs = task.run(
+        {
+            CONFIG: mock_config,
+            OUTPUT_BASE_NAME: "test_base",
+            GIBS_DIR: gibs_dir,
+            VI_DIR: vi_dir,
+            GRIDDED_HDF: Path("dummy"),
+            MANIFEST_FILE: mock_config.working_dir / "product.json",
         }
     )
 
     assert outputs[UPLOAD_COMPLETE] is True
 
-    # Check S3
-    objs = s3.list_objects(Bucket=BUCKET_OUT)
-    keys = [o["Key"] for o in objs.get("Contents", [])]
-    assert "2020/001/output.hdf" in keys
-    assert "2020/001/test_VAA.img" in keys
+    # Verify S3 Contents
+    # 1. Main Product
+    # Key structure: L30/data/2020001/HLS.L30.test_base/product.tif
+    main_objs = s3.list_objects(
+        Bucket=BUCKET_OUT, Prefix="L30/data/2020001/HLS.L30.test_base"
+    )
+    main_keys = [o["Key"] for o in main_objs.get("Contents", [])]
+    assert any("product.tif" in k for k in main_keys)
+
+    # 2. GIBS
+    # Key: L30/data/2020001/id1/gibs.tif
+    gibs_objs = s3.list_objects(Bucket=BUCKET_GIBS, Prefix="L30/data/2020001")
+    gibs_keys = [o["Key"] for o in gibs_objs.get("Contents", [])]
+    assert any("id1/gibs.tif" in k for k in gibs_keys)
+
+    # 3. VI
+    # Key: L30_VI/data/2020001/HLS-VI.L30.test_base/vi.tif
+    vi_objs = s3.list_objects(Bucket=BUCKET_OUT, Prefix="L30_VI/data/2020001")
+    vi_keys = [o["Key"] for o in vi_objs.get("Contents", [])]
+    assert any("vi.tif" in k for k in vi_keys)

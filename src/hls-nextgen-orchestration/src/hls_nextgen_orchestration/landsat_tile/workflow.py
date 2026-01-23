@@ -6,35 +6,34 @@ import sys
 from hls_nextgen_orchestration.base import Pipeline, PipelineBuilder
 
 from .assets import (
+    ANGLE_HDF,
+    CMR_XML,
+    COGS_CREATED,
     CONFIG,
-    ESPA_XML,
-    FINAL_HDF,
-    FMASK_BIN,
-    GRANULE_DIR,
-    HLS_XML,
-    LASRC_DONE,
-    METADATA,
-    MTL_FILE,
-    RENAMED_ANGLES,
-    SCANLINE_DONE,
-    SOLAR_VALID,
-    SR_HDF,
+    GIBS_DIR,
+    GRIDDED_HDF,
+    MANIFEST_FILE,
+    NBAR_ANGLE,
+    NBAR_INPUT,
+    OUTPUT_BASE_NAME,
+    OUTPUT_HDF,
+    SCENE_TIME,
+    STAC_JSON,
+    THUMBNAIL_FILE,
     UPLOAD_COMPLETE,
+    VI_DIR,
 )
 from .tasks import (
-    AddFmaskSds,
-    CheckSolarZenith,
-    ConvertScanline,
-    ConvertToEspa,
-    ConvertToHdf,
-    CreateHlsXml,
-    DownloadGranule,
+    ConvertToCogs,
+    CreateManifest,
+    CreateMetadata,
+    CreateThumbnail,
     EnvSource,
-    ParseMetadata,
-    RenameAngleBands,
-    RunFmask,
-    RunLaSRC,
-    UploadResults,
+    ProcessGibs,
+    ProcessPathRows,
+    ProcessVi,
+    RunNbar,
+    UploadAll,
 )
 
 __all__ = ["construct_pipeline"]
@@ -45,58 +44,84 @@ def construct_pipeline() -> Pipeline:
         PipelineBuilder()
         .add(EnvSource("EnvConfig", provides=(CONFIG,)))
         .add(
-            DownloadGranule(
-                "Download", requires=(CONFIG,), provides=(GRANULE_DIR, MTL_FILE)
-            )
-        )
-        .add(ParseMetadata("Metadata", requires=(CONFIG,), provides=(METADATA,)))
-        .add(
-            CheckSolarZenith(
-                "CheckSolar", requires=(MTL_FILE,), provides=(SOLAR_VALID,)
-            )
-        )
-        .add(RunFmask("Fmask", requires=(CONFIG, GRANULE_DIR), provides=(FMASK_BIN,)))
-        .add(
-            ConvertScanline(
-                "Scanline", requires=(GRANULE_DIR,), provides=(SCANLINE_DONE,)
+            ProcessPathRows(
+                "ProcessPathRows",
+                requires=(CONFIG,),
+                provides=(NBAR_INPUT, NBAR_ANGLE, SCENE_TIME, OUTPUT_BASE_NAME),
             )
         )
         .add(
-            ConvertToEspa(
-                "EspaConv",
-                requires=(CONFIG, MTL_FILE, GRANULE_DIR, SCANLINE_DONE),
-                provides=(ESPA_XML,),
+            RunNbar(
+                "RunNbar",
+                requires=(
+                    CONFIG,
+                    NBAR_INPUT,
+                    NBAR_ANGLE,
+                    SCENE_TIME,
+                    OUTPUT_BASE_NAME,
+                ),
+                provides=(OUTPUT_HDF, ANGLE_HDF, GRIDDED_HDF),
             )
         )
         .add(
-            RunLaSRC("LaSRC", requires=(ESPA_XML, SOLAR_VALID), provides=(LASRC_DONE,))
-        )
-        .add(
-            RenameAngleBands(
-                "RenameAngles",
-                requires=(CONFIG, METADATA, GRANULE_DIR, LASRC_DONE),
-                provides=(RENAMED_ANGLES,),
+            ConvertToCogs(
+                "ConvertToCogs",
+                requires=(CONFIG, OUTPUT_HDF, ANGLE_HDF),
+                provides=(COGS_CREATED,),
             )
         )
         .add(
-            CreateHlsXml(
-                "HlsXml",
-                requires=(CONFIG, ESPA_XML, RENAMED_ANGLES),
-                provides=(HLS_XML,),
-            )
-        )
-        .add(ConvertToHdf("HdfConv", requires=(HLS_XML,), provides=(SR_HDF,)))
-        .add(
-            AddFmaskSds(
-                "AddFmask",
-                requires=(CONFIG, METADATA, SR_HDF, FMASK_BIN, MTL_FILE),
-                provides=(FINAL_HDF,),
+            CreateThumbnail(
+                "CreateThumbnail",
+                requires=(CONFIG, OUTPUT_BASE_NAME),
+                provides=(THUMBNAIL_FILE,),
             )
         )
         .add(
-            UploadResults(
-                "Upload",
-                requires=(CONFIG, METADATA, FINAL_HDF, GRANULE_DIR),
+            CreateMetadata(
+                "CreateMetadata",
+                requires=(CONFIG, OUTPUT_HDF, OUTPUT_BASE_NAME),
+                provides=(CMR_XML, STAC_JSON),
+            )
+        )
+        .add(
+            CreateManifest(
+                "CreateManifest",
+                requires=(
+                    CONFIG,
+                    OUTPUT_BASE_NAME,
+                    COGS_CREATED,
+                    THUMBNAIL_FILE,
+                    CMR_XML,
+                ),
+                provides=(MANIFEST_FILE,),
+            )
+        )
+        .add(
+            ProcessGibs(
+                "ProcessGibs",
+                requires=(CONFIG, OUTPUT_BASE_NAME),
+                provides=(GIBS_DIR,),
+            )
+        )
+        .add(
+            ProcessVi(
+                "ProcessVi",
+                requires=(CONFIG, OUTPUT_BASE_NAME),
+                provides=(VI_DIR,),
+            )
+        )
+        .add(
+            UploadAll(
+                "UploadAll",
+                requires=(
+                    CONFIG,
+                    OUTPUT_BASE_NAME,
+                    GIBS_DIR,
+                    VI_DIR,
+                    GRIDDED_HDF,
+                    MANIFEST_FILE,
+                ),
                 provides=(UPLOAD_COMPLETE,),
             )
         )
@@ -109,7 +134,8 @@ if __name__ == "__main__":
     try:
         pipeline = construct_pipeline()
         print(pipeline)
-        pipeline.run()
+        context = pipeline.run()
+        sys.exit(context.exit_code)
     except Exception as e:
-        logging.error(f"Pipeline failed: {e}")
+        logging.error(f"Pipeline failed initialization: {e}")
         sys.exit(1)

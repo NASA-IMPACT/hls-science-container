@@ -1,37 +1,48 @@
-from __future__ import annotations
-
 from hls_nextgen_orchestration.base import Asset
 
 __all__ = [
     "CONFIG",
-    "GRANULE_DIR",
-    "MTL_FILE",
-    "METADATA",
-    "FMASK_BIN",
-    "SCANLINE_DONE",
-    "ESPA_XML",
-    "LASRC_DONE",
-    "RENAMED_ANGLES",
-    "HLS_XML",
-    "SR_HDF",
-    "FINAL_HDF",
+    "NBAR_INPUT",
+    "NBAR_ANGLE",
+    "SCENE_TIME",
+    "OUTPUT_BASE_NAME",
+    "OUTPUT_HDF",
+    "ANGLE_HDF",
+    "GRIDDED_HDF",
+    "COGS_CREATED",
+    "THUMBNAIL_FILE",
+    "CMR_XML",
+    "STAC_JSON",
+    "MANIFEST_FILE",
+    "GIBS_DIR",
+    "VI_DIR",
     "UPLOAD_COMPLETE",
-    "SOLAR_VALID",
 ]
 
 # --- Assets ---
 
 CONFIG = Asset("config_object")
-GRANULE_DIR = Asset("granule_directory")
-MTL_FILE = Asset("mtl_file")
-METADATA = Asset("metadata_dict")
-FMASK_BIN = Asset("fmask_binary")
-SCANLINE_DONE = Asset("scanline_converted_flag")
-ESPA_XML = Asset("espa_xml")
-LASRC_DONE = Asset("lasrc_done_flag")
-RENAMED_ANGLES = Asset("renamed_angles_flag")
-HLS_XML = Asset("hls_xml")
-SR_HDF = Asset("sr_hdf")
-FINAL_HDF = Asset("final_hdf")
+# Intermediate outputs from the tiling loop
+NBAR_INPUT = Asset("nbar_input_hdf")
+NBAR_ANGLE = Asset("nbar_angle_hdf")
+SCENE_TIME = Asset("scene_time_str")
+OUTPUT_BASE_NAME = Asset("output_base_name")
+
+# Outputs from NBAR
+OUTPUT_HDF = Asset("final_output_hdf")
+ANGLE_HDF = Asset("final_angle_hdf")
+GRIDDED_HDF = Asset("gridded_debug_hdf")
+
+# Outputs from Product Generation
+COGS_CREATED = Asset("cogs_created_flag")
+THUMBNAIL_FILE = Asset("thumbnail_file")
+CMR_XML = Asset("cmr_metadata_xml")
+STAC_JSON = Asset("stac_metadata_json")
+MANIFEST_FILE = Asset("manifest_file")
+
+# GIBS and VI Outputs
+GIBS_DIR = Asset("gibs_output_directory")
+VI_DIR = Asset("vi_output_directory")
+
+# Final Flag
 UPLOAD_COMPLETE = Asset("upload_complete_flag")
-SOLAR_VALID = Asset("solar_zenith_valid_flag")
