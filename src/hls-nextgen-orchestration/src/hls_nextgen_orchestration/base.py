@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -70,9 +71,7 @@ class DataSource(NodeBase):
 
         for asset in self.provides:
             if asset not in results:
-                raise RuntimeError(
-                    f"{self.name} failed to provide promised asset: {asset.key}"
-                )
+                raise RuntimeError(f"{self.name} failed to provide promised asset: {asset.key}")
             context.put(asset, results[asset])
 
 
@@ -97,9 +96,7 @@ class Task(NodeBase):
         # 3. Validate & Store Outputs
         for asset in self.provides:
             if asset not in outputs:
-                raise RuntimeError(
-                    f"{self.name} failed to provide promised output: {asset.key}"
-                )
+                raise RuntimeError(f"{self.name} failed to provide promised output: {asset.key}")
             context.put(asset, outputs[asset])
 
 
@@ -129,9 +126,7 @@ class Pipeline:
         """
         Pretty-print the execution plan.
         """
-        plan = "\n".join(
-            f"{i + 1}. {node}" for i, node in enumerate(self.execution_order)
-        )
+        plan = "\n".join(f"{i + 1}. {node}" for i, node in enumerate(self.execution_order))
         return f"Pipeline Execution Plan:\n{plan}"
 
 
@@ -167,9 +162,7 @@ class PipelineBuilder:
         for node in self.nodes:
             for req in node.requires:
                 if req.key not in self.catalog:
-                    raise ValueError(
-                        f"Integrity Error: '{node.name}' requires '{req.key}', but no provider exists."
-                    )
+                    raise ValueError(f"Integrity Error: '{node.name}' requires '{req.key}', but no provider exists.")
 
                 provider = self.catalog[req.key]
 

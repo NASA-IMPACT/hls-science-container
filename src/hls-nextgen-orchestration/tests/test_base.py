@@ -1,13 +1,15 @@
 from __future__ import annotations
-import pytest
+
 from dataclasses import dataclass
 from typing import Any
+
+import pytest
 
 from hls_nextgen_orchestration.base import (
     Asset,
     DataSource,
-    Task,
     PipelineBuilder,
+    Task,
     TaskContext,
 )
 
@@ -67,7 +69,7 @@ def test_diamond_dependency(builder):
     Graph:
           /-> Task1(A->B) -\
     Source(A)               -> Task3(B,C -> D)
-          \-> Task2(A->C) -/
+          \\-> Task2(A->C) -/
     """
     source = SimpleSource("Src", provides=(A,))
     task1 = SimpleTask("T1", requires=(A,), provides=(B,))
