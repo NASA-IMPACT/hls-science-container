@@ -55,9 +55,7 @@ def construct_pipeline() -> Pipeline:
                 "CheckSolar", requires=(MTL_FILE,), provides=(SOLAR_VALID,)
             )
         )
-        .add(
-            RunFmask("Fmask", requires=(CONFIG, GRANULE_DIR), provides=(FMASK_BIN,))
-        )
+        .add(RunFmask("Fmask", requires=(CONFIG, GRANULE_DIR), provides=(FMASK_BIN,)))
         .add(
             ConvertScanline(
                 "Scanline", requires=(GRANULE_DIR,), provides=(SCANLINE_DONE,)
@@ -71,9 +69,7 @@ def construct_pipeline() -> Pipeline:
             )
         )
         .add(
-            RunLaSRC(
-                "LaSRC", requires=(ESPA_XML, SOLAR_VALID), provides=(LASRC_DONE,)
-            )
+            RunLaSRC("LaSRC", requires=(ESPA_XML, SOLAR_VALID), provides=(LASRC_DONE,))
         )
         .add(
             RenameAngleBands(

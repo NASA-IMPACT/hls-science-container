@@ -7,9 +7,7 @@ from typing import Any
 
 
 class TaskFailure(Exception):
-    """
-    Exception raised by a task to indicate a controlled stop/failure with a specific exit code.
-    """
+    """Exception raised by a task indicating a specific exit code."""
 
     def __init__(self, message: str, exit_code: int = 1):
         super().__init__(message)

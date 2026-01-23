@@ -2,7 +2,6 @@ import datetime as dt
 import logging
 import os
 import subprocess
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
