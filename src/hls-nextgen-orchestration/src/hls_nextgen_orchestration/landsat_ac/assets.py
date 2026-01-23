@@ -1,0 +1,33 @@
+from hls_nextgen_orchestration.base import Asset
+
+__all__ = [
+    "CONFIG",
+    "GRANULE_DIR",
+    "MTL_FILE",
+    "METADATA",
+    "FMASK_BIN",
+    "SCANLINE_DONE",
+    "ESPA_XML",
+    "LASRC_DONE",
+    "RENAMED_ANGLES",
+    "HLS_XML",
+    "SR_HDF",
+    "FINAL_HDF",
+    "UPLOAD_COMPLETE",
+    "SOLAR_VALID",
+]
+
+CONFIG = Asset("config_object")
+GRANULE_DIR = Asset("granule_directory")
+MTL_FILE = Asset("mtl_file")
+METADATA = Asset("metadata_dict")
+FMASK_BIN = Asset("fmask_binary")
+SCANLINE_DONE = Asset("scanline_converted_flag")
+ESPA_XML = Asset("espa_xml")
+LASRC_DONE = Asset("lasrc_done_flag")
+RENAMED_ANGLES = Asset("renamed_angles_flag")
+HLS_XML = Asset("hls_xml")
+SR_HDF = Asset("sr_hdf")
+FINAL_HDF = Asset("final_hdf")
+UPLOAD_COMPLETE = Asset("upload_complete_flag")
+SOLAR_VALID = Asset("solar_zenith_valid_flag")
