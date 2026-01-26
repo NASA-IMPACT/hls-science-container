@@ -716,6 +716,7 @@ class UploadAll(Task):
     ) -> None:
         """Handles debug mode uploads."""
         logging.info("DEBUG MODE: Creating gridded debug COG")
+        assert config.debug_bucket is not None
         subprocess.run(
             [
                 "hdf_to_cog",
