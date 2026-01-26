@@ -1918,7 +1918,7 @@ packages:
 - pypi: ./src/hls-nextgen-orchestration
   name: hls-nextgen-orchestration
   version: 0.1.0
-  sha256: 01d477c122ec94da9a4a45763210e2880cea70d7fe1847fd2fe7c350268c8d81
+  sha256: f790106b231afac37bc49eadb15699385e86fa88a3050935d5cedf8475c16380
   requires_dist:
   - boto3>=1.42.34
   - boto3-stubs[s3]>=1.36.0 ; extra == 'dev'
