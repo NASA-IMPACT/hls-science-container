@@ -1,14 +1,16 @@
 from __future__ import annotations
+
 import datetime as dt
 from dataclasses import dataclass
+
 
 @dataclass
 class LandsatGranule:
     """
     Represents a USGS Landsat Collection 2 Granule ID.
-    
+
     Example ID: LC08_L1TP_032034_20200908_20200918_02_T1
-    
+
     Attributes
     ----------
     platform : str
@@ -28,6 +30,7 @@ class LandsatGranule:
     collection_tier : str
         The collection tier (e.g., 'T1').
     """
+
     platform: str
     processing_level: str
     path: int
@@ -42,7 +45,7 @@ class LandsatGranule:
         """
         Parse a Landsat Collection 2 granule ID string.
         """
-        parts = granule_id.split('_')
+        parts = granule_id.split("_")
         if len(parts) != 7:
             raise ValueError(f"Invalid Landsat Collection 2 ID format: {granule_id}")
 
@@ -59,22 +62,24 @@ class LandsatGranule:
             acquisition_date=dt.datetime.strptime(parts[3], "%Y%m%d"),
             processing_date=dt.datetime.strptime(parts[4], "%Y%m%d"),
             collection_number=parts[5],
-            collection_tier=parts[6]
+            collection_tier=parts[6],
         )
 
     def to_str(self) -> str:
         """
         Reconstruct the Landsat granule ID string.
         """
-        return "_".join([
-            self.platform,
-            self.processing_level,
-            self.path_row,
-            self.acquisition_date.strftime("%Y%m%d"),
-            self.processing_date.strftime("%Y%m%d"),
-            self.collection_number,
-            self.collection_tier
-        ])
+        return "_".join(
+            [
+                self.platform,
+                self.processing_level,
+                self.path_row,
+                self.acquisition_date.strftime("%Y%m%d"),
+                self.processing_date.strftime("%Y%m%d"),
+                self.collection_number,
+                self.collection_tier,
+            ]
+        )
 
     @property
     def path_row(self) -> str:
@@ -112,8 +117,10 @@ class HlsGranule:
 
     def __post_init__(self) -> None:
         """Validate granule attributes"""
-        if self.tile_id.startswith('T'):
-            raise ValueError(f"tile_id must be the raw MGRS code (starting with a digit). Found prefix 'T' in: {self.tile_id}")
+        if self.tile_id.startswith("T"):
+            raise ValueError(
+                f"tile_id must be the raw MGRS code (starting with a digit). Found prefix 'T' in: {self.tile_id}"
+            )
 
     @classmethod
     def from_str(cls, granule_id: str) -> HlsGranule:
