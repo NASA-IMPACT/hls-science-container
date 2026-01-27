@@ -1,5 +1,6 @@
 [tool.ruff]
 line-length = 88
+target-version = "py312"
 include = ["packages/**/*.py", "packages/**/*.pyi"]
 
 [tool.ruff.lint]
@@ -14,6 +15,7 @@ known-first-party = [
 
 [tool.mypy]
 strict = true
+python_version = "3.12"
 namespace_packages = true
 explicit_package_bases = true
 

@@ -42,6 +42,7 @@ ignore = ["E501"]
 known-first-party = ["hls_nextgen_orchestration"]
 
 [tool.mypy]
+python_version = "3.12"
 strict = true
 
 [tool.pixi.package]
