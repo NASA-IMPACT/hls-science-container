@@ -1,34 +1,33 @@
 from __future__ import annotations
-
 import datetime as dt
 from dataclasses import dataclass
-
 
 @dataclass
 class LandsatGranule:
     """
-    Represents a Landsat Collection 2 Granule ID.
-
+    Represents a USGS Landsat Collection 2 Granule ID.
+    
+    Example ID: LC08_L1TP_032034_20200908_20200918_02_T1
+    
     Attributes
     ----------
     platform : str
-        The satellite platform (e.g., 'LC08').
+        The platform identifier (e.g., 'LC08').
     processing_level : str
         The processing level (e.g., 'L1TP').
     path : int
-        The WRS-2 path number.
+        The WRS-2 path (e.g., 32).
     row : int
-        The WRS-2 row number.
+        The WRS-2 row (e.g., 34).
     acquisition_date : dt.datetime
-        The date and time of image acquisition.
+        The acquisition date.
     processing_date : dt.datetime
-        The date the image was processed.
+        The processing date.
     collection_number : str
         The collection number (e.g., '02').
-    collection_category : str
-        The collection category (e.g., 'T1').
+    collection_tier : str
+        The collection tier (e.g., 'T1').
     """
-
     platform: str
     processing_level: str
     path: int
@@ -36,90 +35,51 @@ class LandsatGranule:
     acquisition_date: dt.datetime
     processing_date: dt.datetime
     collection_number: str
-    collection_category: str
+    collection_tier: str
 
     @classmethod
     def from_str(cls, granule_id: str) -> LandsatGranule:
         """
         Parse a Landsat Collection 2 granule ID string.
-
-        Parameters
-        ----------
-        granule_id : str
-            The granule ID to parse (e.g., 'LC08_L1TP_046028_20200908_20200918_02_T1').
-
-        Returns
-        -------
-        LandsatGranule
-            The parsed granule object.
-
-        Raises
-        ------
-        ValueError
-            If the granule_id format is incorrect.
         """
-        parts = granule_id.split("_")
+        parts = granule_id.split('_')
         if len(parts) != 7:
             raise ValueError(f"Invalid Landsat Collection 2 ID format: {granule_id}")
 
-        # components: [Platform, Level, PathRow, AcqDate, ProcDate, CollNum, CollCat]
+        # Path and Row are combined in the ID (e.g., 032034)
         path_row = parts[2]
+        path = int(path_row[:3])
+        row = int(path_row[3:])
 
         return cls(
             platform=parts[0],
             processing_level=parts[1],
-            path=int(path_row[:3]),
-            row=int(path_row[3:]),
+            path=path,
+            row=row,
             acquisition_date=dt.datetime.strptime(parts[3], "%Y%m%d"),
             processing_date=dt.datetime.strptime(parts[4], "%Y%m%d"),
             collection_number=parts[5],
-            collection_category=parts[6],
+            collection_tier=parts[6]
         )
 
     def to_str(self) -> str:
         """
-        Reconstruct the granule ID string.
-
-        Returns
-        -------
-        str
-            The formatted granule ID.
+        Reconstruct the Landsat granule ID string.
         """
-        return "_".join(
-            [
-                self.platform,
-                self.processing_level,
-                self.path_row,
-                self.acquisition_date.strftime("%Y%m%d"),
-                self.processing_date.strftime("%Y%m%d"),
-                self.collection_number,
-                self.collection_category,
-            ]
-        )
+        return "_".join([
+            self.platform,
+            self.processing_level,
+            self.path_row,
+            self.acquisition_date.strftime("%Y%m%d"),
+            self.processing_date.strftime("%Y%m%d"),
+            self.collection_number,
+            self.collection_tier
+        ])
 
     @property
     def path_row(self) -> str:
-        """
-        Get the combined PPPRRR string.
-
-        Returns
-        -------
-        str
-            The 6-digit path and row string.
-        """
+        """WRS-2 path-row string"""
         return f"{self.path:03d}{self.row:03d}"
-
-    @property
-    def sensor(self) -> str:
-        """
-        Get the sensor identifier.
-
-        Returns
-        -------
-        str
-            The platform identifier (e.g., 'LC08').
-        """
-        return self.platform
 
 
 @dataclass
@@ -134,7 +94,7 @@ class HlsGranule:
     sensor : str
         The sensor identifier (e.g., 'S30', 'L30').
     tile_id : str
-        The MGRS tile identifier (e.g., 'T18TYL').
+        The MGRS tile identifier without the leading 'T' (e.g., '18TYL').
     acquisition_time : dt.datetime
         The acquisition timestamp.
     version_major : str
@@ -174,13 +134,16 @@ class HlsGranule:
         if len(parts) != 6:
             raise ValueError(f"Invalid HLS v2 ID format: {granule_id}")
 
+        # Extract MGRS tile, stripping the 'T' prefix if present
+        raw_tile_id = parts[2].lstrip("T")
+
         # Timestamp format: YYYYDDDTHHMMSS (Year + Day of Year + Time)
         acq_time = dt.datetime.strptime(parts[3], "%Y%jT%H%M%S")
 
         return cls(
             product=parts[0],
             sensor=parts[1],
-            tile_id=parts[2],
+            tile_id=raw_tile_id,
             acquisition_time=acq_time,
             version_major=parts[4],
             version_minor=parts[5],
@@ -199,7 +162,7 @@ class HlsGranule:
             [
                 self.product,
                 self.sensor,
-                self.tile_id,
+                f"T{self.tile_id}",
                 self.acquisition_time.strftime("%Y%jT%H%M%S"),
                 self.version_major,
                 self.version_minor,
@@ -209,11 +172,6 @@ class HlsGranule:
     @property
     def mgrs_grid(self) -> str:
         """
-        Get the MGRS tile ID.
-
-        Returns
-        -------
-        str
-            The MGRS tile identifier.
+        Returns the MGRS grid code (synonymous with tile_id here).
         """
         return self.tile_id

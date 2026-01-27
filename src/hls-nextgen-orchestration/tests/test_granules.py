@@ -24,8 +24,7 @@ class TestLandsatGranule:
         assert granule.acquisition_date == dt.datetime(2020, 9, 8)
         assert granule.processing_date == dt.datetime(2020, 9, 18)
         assert granule.collection_number == "02"
-        assert granule.collection_category == "T1"
-        assert granule.sensor == "LC08"
+        assert granule.collection_tier == "T1"
 
     def test_from_str_valid_le07(self) -> None:
         """
@@ -54,7 +53,7 @@ class TestLandsatGranule:
             acquisition_date=dt.datetime(2022, 1, 1),
             processing_date=dt.datetime(2022, 1, 5),
             collection_number="02",
-            collection_category="T1",
+            collection_tier="T1",
         )
         assert granule.path_row == "005010"
 
@@ -108,12 +107,12 @@ class TestHlsGranule:
 
         assert granule.product == "HLS"
         assert granule.sensor == "S30"
-        assert granule.tile_id == "T18TYL"
+        assert granule.tile_id == "18TYL"
         # 2020 day 1 at 15:36:21
         assert granule.acquisition_time == dt.datetime(2020, 1, 1, 15, 36, 21)
         assert granule.version_major == "v2"
         assert granule.version_minor == "0"
-        assert granule.mgrs_grid == "T18TYL"
+        assert granule.mgrs_grid == "18TYL"
 
     def test_from_str_valid_l30(self) -> None:
         """
