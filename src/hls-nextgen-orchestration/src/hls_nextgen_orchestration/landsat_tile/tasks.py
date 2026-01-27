@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any
 import boto3
 
 from hls_nextgen_orchestration.base import DataSource, Task, TaskFailure
+from hls_nextgen_orchestration.granules import HlsGranule
 from hls_nextgen_orchestration.utils import validate_command
 
 from .assets import (
@@ -51,18 +52,75 @@ __all__ = [
 ]
 
 
+def get_nbar_names(granule: HlsGranule) -> dict[str, str]:
+    """
+    Generate strict NBAR-compatible filenames from a granule.
+
+    The C-based NBAR code requires specific filename formats that differ
+    slightly from the standard HLS granule ID (specifically using dots
+    instead of 'T' separators for time components).
+
+    Parameters
+    ----------
+    granule : HlsGranule
+        The HLS granule object.
+
+    Returns
+    -------
+    dict[str, str]
+        Dictionary containing filenames for 'product', 'angle', and 'cfactor'.
+    """
+    time_str = granule.acquisition_time.strftime("%H%M%S")
+    year_doy = granule.acquisition_time.strftime("%Y%j")
+
+    # Format: T12ABC.2022001.123456.v2.0
+    basename = (
+        f"{granule.tile_id}.{year_doy}.{time_str}."
+        f"{granule.version_major}.{granule.version_minor}"
+    )
+
+    return {
+        "product": f"HLS.L30.{basename}.hdf",
+        "angle": f"L8ANGLE.{basename}.hdf",
+        "cfactor": f"CFACTOR.{basename}.hdf",
+    }
+
+
 # --- Configuration ---
 
 
 @dataclass(frozen=True)
 class EnvConfig:
     """
-    Configuration for the environment variables used in the pipeline.
+    Configuration for the Landsat Tile environment variables.
+
+    Attributes
+    ----------
+    job_id : str
+        The AWS Batch job ID.
+    pathrow_list : list[str]
+        List of pathrows to process.
+    date : dt.date
+        Date object.
+    mgrs : str
+        MGRS tile ID.
+    mgrs_ulx : str
+        Upper left X coordinate.
+    mgrs_uly : str
+        Upper left Y coordinate.
+    input_bucket : str
+        Input S3 bucket.
+    output_bucket : str
+        Output S3 bucket.
+    gibs_bucket : str
+        GIBS output bucket.
+    debug_bucket : str | None
+        Optional debug bucket.
     """
 
     job_id: str
     pathrow_list: list[str]
-    date: str  # YYYY-MM-DD
+    date: dt.date
     mgrs: str
     mgrs_ulx: str
     mgrs_uly: str
@@ -73,17 +131,18 @@ class EnvConfig:
 
     @property
     def working_dir(self) -> Path:
+        """Get the working directory."""
         return Path(f"/var/scratch/{self.job_id}")
 
     @property
     def year(self) -> str:
-        return self.date[0:4]
+        """Get the year from the date."""
+        return str(self.date.year)
 
     @property
     def day_of_year(self) -> str:
-        # Simple DOY calculation from YYYY-MM-DD
-        d = dt.datetime.strptime(self.date, "%Y-%m-%d")
-        return d.strftime("%j")
+        """Get the day of year from the date."""
+        return self.date.strftime("%j")
 
 
 # --- Data Source ---
@@ -96,17 +155,25 @@ class EnvSource(DataSource):
     """
 
     def fetch(self) -> dict[Any, Any]:
-        pathrows = os.environ.get("PATHROW_LIST", "").split(",")
+        """
+        Fetch configuration from environment variables.
+
+        Returns
+        -------
+        dict
+            Dictionary containing the EnvConfig object.
+        """
+        pathrows = os.environ["PATHROW_LIST"].split(",")
         config = EnvConfig(
             job_id=os.environ.get("AWS_BATCH_JOB_ID", "local_job"),
             pathrow_list=[p.strip() for p in pathrows if p.strip()],
-            date=os.environ.get("DATE", "2020-01-01"),
-            mgrs=os.environ.get("MGRS", "T12ABC"),
-            mgrs_ulx=os.environ.get("MGRS_ULX", "0"),
-            mgrs_uly=os.environ.get("MGRS_ULY", "0"),
-            input_bucket=os.environ.get("INPUT_BUCKET", "landsat-pds"),
-            output_bucket=os.environ.get("OUTPUT_BUCKET", "processed-data"),
-            gibs_bucket=os.environ.get("GIBS_OUTPUT_BUCKET", "gibs-data"),
+            date=dt.datetime.strptime(os.environ["DATE"], "%Y-%m-%d").date(),
+            mgrs=os.environ["MGRS"],
+            mgrs_ulx=os.environ["MGRS_ULX"],
+            mgrs_uly=os.environ["MGRS_ULY"],
+            input_bucket=os.environ["INPUT_BUCKET"],
+            output_bucket=os.environ["OUTPUT_BUCKET"],
+            gibs_bucket=os.environ["GIBS_OUTPUT_BUCKET"],
             debug_bucket=os.environ.get("DEBUG_BUCKET"),
         )
 
@@ -136,12 +203,14 @@ class ProcessPathRows(Task):
         os.chdir(config.working_dir)
 
         s3: S3Client = boto3.client("s3")
-        year, month, day = config.date.split("-")
-        scene_time = ""
+        # Format date for S3 keys and filenames
+        date_str = config.date.strftime("%Y-%m-%d")
+        year, month, day = date_str.split("-")
+        scene_time_str = ""
 
         # Download and Process Loop
         for idx, pathrow in enumerate(config.pathrow_list):
-            basename = f"{config.date}_{pathrow}"
+            basename = f"{date_str}_{pathrow}"
             landsat_ac = f"{basename}.hdf"
             landsat_sz_angle = f"{basename}_SZA.img"
             input_key = f"{year}-{month}-{day}/{pathrow}"
@@ -159,16 +228,12 @@ class ProcessPathRows(Task):
                     continue
                 for obj in page["Contents"]:
                     key = obj["Key"]
-                    # Skip directory placeholders
                     if key.endswith("/"):
                         continue
 
-                    # We flatten the structure to match 'aws s3 cp ... .' behavior
-                    # expecting inputs to be in working_dir for the tools below
                     filename = Path(key).name
                     dest_path = config.working_dir / filename
 
-                    # Only download if not already present (optional optimization)
                     if not dest_path.exists():
                         s3.download_file(config.input_bucket, key, str(dest_path))
 
@@ -180,14 +245,27 @@ class ProcessPathRows(Task):
                     text=True,
                     check=True,
                 )
-                scene_time = res.stdout.strip()
+                scene_time_str = res.stdout.strip()
 
-            # Construct Output Names (needed for tile commands)
-            hls_version = "v2.0"
-            nbar_basename = f"{config.mgrs}.{config.year}{config.day_of_year}.{scene_time}.{hls_version}"
-            nbar_name = f"HLS.L30.{nbar_basename}"
-            nbar_input = config.working_dir / f"{nbar_name}.hdf"
-            nbar_angle = config.working_dir / f"L8ANGLE.{nbar_basename}.hdf"
+            # Parse datetime for HlsGranule
+            acq_time = dt.datetime.strptime(
+                f"{date_str} {scene_time_str}", "%Y-%m-%d %H%M%S"
+            )
+
+            granule = HlsGranule(
+                product="HLS",
+                sensor="L30",
+                tile_id=config.mgrs,
+                acquisition_time=acq_time,
+                version_major="v2",
+                version_minor="0",
+            )
+            full_granule_id = granule.to_str()
+
+            # Use helper for strict NBAR naming (legacy format for C binaries)
+            nbar_names = get_nbar_names(granule)
+            nbar_input = config.working_dir / nbar_names["product"]
+            nbar_angle = config.working_dir / nbar_names["angle"]
 
             logging.info(f"Running landsat-tile for {pathrow}")
             subprocess.run(
@@ -217,13 +295,23 @@ class ProcessPathRows(Task):
                 check=True,
             )
 
-        # Final check
-        hls_version = "v2.0"
-        nbar_basename = f"{config.mgrs}.{config.year}{config.day_of_year}.{scene_time}.{hls_version}"
-        nbar_name = f"HLS.L30.{nbar_basename}"
-        nbar_input = config.working_dir / f"{nbar_name}.hdf"
-        nbar_angle = config.working_dir / f"L8ANGLE.{nbar_basename}.hdf"
-        output_basename = f"T{config.mgrs}.{config.year}{config.day_of_year}T{scene_time}.{hls_version}"
+        # Re-construct granule logic to ensure availability of variables outside loop
+        acq_time = dt.datetime.strptime(
+            f"{date_str} {scene_time_str}", "%Y-%m-%d %H%M%S"
+        )
+        granule = HlsGranule(
+            product="HLS",
+            sensor="L30",
+            tile_id=config.mgrs,
+            acquisition_time=acq_time,
+            version_major="v2",
+            version_minor="0",
+        )
+        full_granule_id = granule.to_str()
+        nbar_names = get_nbar_names(granule)
+
+        nbar_input = config.working_dir / nbar_names["product"]
+        nbar_angle = config.working_dir / nbar_names["angle"]
 
         if not nbar_input.exists() or not nbar_angle.exists():
             raise TaskFailure("No output tile produced", exit_code=5)
@@ -231,8 +319,8 @@ class ProcessPathRows(Task):
         return {
             NBAR_INPUT: nbar_input,
             NBAR_ANGLE: nbar_angle,
-            SCENE_TIME: scene_time,
-            OUTPUT_BASE_NAME: output_basename,
+            SCENE_TIME: scene_time_str,
+            OUTPUT_BASE_NAME: full_granule_id,
         }
 
 
@@ -249,13 +337,13 @@ class RunNbar(Task):
         config: EnvConfig = inputs[CONFIG]
         nbar_input: Path = inputs[NBAR_INPUT]
         nbar_angle: Path = inputs[NBAR_ANGLE]
-        output_basename: str = inputs[OUTPUT_BASE_NAME]
-        scene_time: str = inputs[SCENE_TIME]
+        granule_id: str = inputs[OUTPUT_BASE_NAME]  # This is the full HLS ID
 
-        # Reconstruct implicit nbar_cfactor name required by C code logic
-        hls_version = "v2.0"
-        nbar_basename = f"{config.mgrs}.{config.year}{config.day_of_year}.{scene_time}.{hls_version}"
-        nbar_cfactor = config.working_dir / f"CFACTOR.{nbar_basename}.hdf"
+        # Reconstruct granule and get legacy NBAR names
+        granule = HlsGranule.from_str(granule_id)
+        nbar_names = get_nbar_names(granule)
+
+        nbar_cfactor = config.working_dir / nbar_names["cfactor"]
         gridded_output = config.working_dir / "gridded.hdf"
 
         logging.info("Running NBAR")
@@ -268,13 +356,15 @@ class RunNbar(Task):
             check=True,
         )
 
-        # Rename outputs
-        output_name = f"HLS.L30.{output_basename}"
-        output_hdf = config.working_dir / f"{output_name}.hdf"
-        angle_output_final = config.working_dir / f"{output_name}.ANGLE.hdf"
+        # Rename outputs to the final Standard HLS ID
+        output_hdf = config.working_dir / f"{granule_id}.hdf"
+        angle_output_final = config.working_dir / f"{granule_id}.ANGLE.hdf"
 
         logging.info("Renaming NBAR outputs")
-        nbar_input.rename(output_hdf)
+        if nbar_input != output_hdf:
+            nbar_input.rename(output_hdf)
+
+        # Handle HDR files
         if nbar_input.with_suffix(".hdf.hdr").exists():
             nbar_input.with_suffix(".hdf.hdr").rename(
                 output_hdf.with_suffix(".hdf.hdr")
@@ -282,7 +372,8 @@ class RunNbar(Task):
         elif Path(f"{nbar_input}.hdr").exists():
             Path(f"{nbar_input}.hdr").rename(f"{output_hdf}.hdr")
 
-        nbar_angle.rename(angle_output_final)
+        if nbar_angle != angle_output_final:
+            nbar_angle.rename(angle_output_final)
 
         return {
             OUTPUT_HDF: output_hdf,
@@ -344,9 +435,8 @@ class CreateThumbnail(Task):
 
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
         config: EnvConfig = inputs[CONFIG]
-        output_basename: str = inputs[OUTPUT_BASE_NAME]
-        output_name = f"HLS.L30.{output_basename}"
-        thumb_name = f"{output_name}.jpg"
+        granule_id: str = inputs[OUTPUT_BASE_NAME]
+        thumb_name = f"{granule_id}.jpg"
 
         os.chdir(config.working_dir)
 
@@ -379,14 +469,13 @@ class CreateMetadata(Task):
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
         config: EnvConfig = inputs[CONFIG]
         output_hdf: Path = inputs[OUTPUT_HDF]
-        output_basename: str = inputs[OUTPUT_BASE_NAME]
-        output_name = f"HLS.L30.{output_basename}"
+        granule_id: str = inputs[OUTPUT_BASE_NAME]
 
         os.chdir(config.working_dir)
 
         # Metadata
         logging.info("Creating metadata")
-        meta_xml = f"{output_name}.cmr.xml"
+        meta_xml = f"{granule_id}.cmr.xml"
         subprocess.run(
             ["create_metadata", str(output_hdf), "--save", meta_xml],
             check=True,
@@ -394,7 +483,7 @@ class CreateMetadata(Task):
 
         # STAC
         logging.info("Creating STAC metadata")
-        stac_json = f"{output_name}_stac.json"
+        stac_json = f"{granule_id}_stac.json"
         subprocess.run(
             [
                 "cmr_to_stac_item",
@@ -427,14 +516,13 @@ class CreateManifest(Task):
         _ = inputs[CMR_XML]
 
         config: EnvConfig = inputs[CONFIG]
-        output_basename: str = inputs[OUTPUT_BASE_NAME]
-        output_name = f"HLS.L30.{output_basename}"
-        bucket_key = f"s3://{config.output_bucket}/L30/data/{config.year}{config.day_of_year}/{output_name}"
+        granule_id: str = inputs[OUTPUT_BASE_NAME]
+        bucket_key = f"s3://{config.output_bucket}/L30/data/{config.year}{config.day_of_year}/{granule_id}"
 
         os.chdir(config.working_dir)
 
         logging.info("Generating manifest")
-        manifest_name = f"{output_name}.json"
+        manifest_name = f"{granule_id}.json"
         subprocess.run(
             [
                 "create_manifest",
@@ -442,7 +530,7 @@ class CreateManifest(Task):
                 manifest_name,
                 bucket_key,
                 "HLSL30",
-                output_name,
+                granule_id,
                 config.job_id,
                 "false",
             ],
@@ -463,8 +551,7 @@ class ProcessGibs(Task):
 
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
         config: EnvConfig = inputs[CONFIG]
-        output_basename: str = inputs[OUTPUT_BASE_NAME]
-        output_name = f"HLS.L30.{output_basename}"
+        granule_id: str = inputs[OUTPUT_BASE_NAME]
 
         gibs_dir = config.working_dir / "gibs"
         gibs_dir.mkdir(parents=True, exist_ok=True)
@@ -475,7 +562,7 @@ class ProcessGibs(Task):
 
         logging.info("Generating GIBS browse subtiles")
         subprocess.run(
-            ["granule_to_gibs", str(config.working_dir), str(gibs_dir), output_name],
+            ["granule_to_gibs", str(config.working_dir), str(gibs_dir), granule_id],
             check=True,
         )
 
@@ -525,10 +612,12 @@ class ProcessVi(Task):
 
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
         config: EnvConfig = inputs[CONFIG]
-        output_basename: str = inputs[OUTPUT_BASE_NAME]
+        granule_id: str = inputs[OUTPUT_BASE_NAME]
 
-        output_name = f"HLS.L30.{output_basename}"
-        vi_output_name = f"HLS-VI.L30.{output_basename}"
+        # NOTE: VI ID convention is usually HLS-VI.L30...
+        # We can construct it from the base ID
+        # HLS.L30.T.... -> HLS-VI.L30.T....
+        vi_output_name = granule_id.replace("HLS.L30", "HLS-VI.L30")
 
         vi_dir = config.working_dir / "vi"
         vi_dir.mkdir(parents=True, exist_ok=True)
@@ -544,7 +633,7 @@ class ProcessVi(Task):
                 "-o",
                 str(vi_dir),
                 "-s",
-                output_name,
+                granule_id,
             ],
             check=True,
         )
@@ -596,7 +685,7 @@ class UploadAll(Task):
 
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
         config: EnvConfig = inputs[CONFIG]
-        output_basename: str = inputs[OUTPUT_BASE_NAME]
+        granule_id: str = inputs[OUTPUT_BASE_NAME]
         gibs_dir: Path = inputs[GIBS_DIR]
         vi_dir: Path = inputs[VI_DIR]
         gridded_hdf: Path = inputs[GRIDDED_HDF]
@@ -606,12 +695,12 @@ class UploadAll(Task):
 
         if not config.debug_bucket:
             self._upload_production(
-                s3, config, output_basename, gibs_dir, vi_dir, manifest_file
+                s3, config, granule_id, gibs_dir, vi_dir, manifest_file
             )
         else:
             # Check debug dependency here since we only use it in this branch
             validate_command("hdf_to_cog")
-            self._upload_debug(s3, config, output_basename, gridded_hdf)
+            self._upload_debug(s3, config, granule_id, gridded_hdf)
 
         return {UPLOAD_COMPLETE: True}
 
@@ -619,31 +708,30 @@ class UploadAll(Task):
         self,
         s3: S3Client,
         config: EnvConfig,
-        output_basename: str,
+        granule_id: str,
         gibs_dir: Path,
         vi_dir: Path,
         manifest_file: Path,
     ) -> None:
         """Helper to handle all production upload logic."""
         logging.info("Uploading Main Product to S3")
-        self._upload_main_product(s3, config, output_basename, manifest_file)
+        self._upload_main_product(s3, config, granule_id, manifest_file)
 
         logging.info("Uploading GIBS tiles")
         self._upload_gibs(s3, config, gibs_dir)
 
         logging.info("Uploading VI files")
-        self._upload_vi(s3, config, output_basename, vi_dir)
+        self._upload_vi(s3, config, granule_id, vi_dir)
 
     def _upload_main_product(
         self,
         s3: S3Client,
         config: EnvConfig,
-        output_basename: str,
+        granule_id: str,
         manifest_file: Path,
     ) -> None:
         """Uploads main product files and manifest."""
-        output_name = f"HLS.L30.{output_basename}"
-        bucket_key_path = f"L30/data/{config.year}{config.day_of_year}/{output_name}"
+        bucket_key_path = f"L30/data/{config.year}{config.day_of_year}/{granule_id}"
         include_patterns = ["*.tif", "*.xml", "*.jpg", "*_stac.json"]
 
         for pattern in include_patterns:
@@ -688,10 +776,10 @@ class UploadAll(Task):
                         )
 
     def _upload_vi(
-        self, s3: S3Client, config: EnvConfig, output_basename: str, vi_dir: Path
+        self, s3: S3Client, config: EnvConfig, granule_id: str, vi_dir: Path
     ) -> None:
         """Uploads Vegetation Index files."""
-        vi_output_name = f"HLS-VI.L30.{output_basename}"
+        vi_output_name = granule_id.replace("HLS.L30", "HLS-VI.L30")
         vi_bucket_key_path = (
             f"L30_VI/data/{config.year}{config.day_of_year}/{vi_output_name}"
         )
@@ -712,7 +800,7 @@ class UploadAll(Task):
             )
 
     def _upload_debug(
-        self, s3: S3Client, config: EnvConfig, output_basename: str, gridded_hdf: Path
+        self, s3: S3Client, config: EnvConfig, granule_id: str, gridded_hdf: Path
     ) -> None:
         """Handles debug mode uploads."""
         logging.info("DEBUG MODE: Creating gridded debug COG")
@@ -730,9 +818,8 @@ class UploadAll(Task):
             check=False,
         )
 
-        output_name = f"HLS.L30.{output_basename}"
         logging.info("Copying all files to debug bucket")
-        target_key = f"{output_name}"
+        target_key = f"{granule_id}"
 
         # Recursive upload of working_dir
         for f in config.working_dir.rglob("*"):

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime as dt
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, PropertyMock, patch
@@ -45,8 +46,8 @@ from hls_nextgen_orchestration.landsat_tile.tasks import (
 # --- Test Data Constants ---
 JOB_ID = "job-tile-123"
 PATHROW_LIST = "025030"
-DATE = "2020-01-01"  # DOY = 001
-MGRS = "T12ABC"
+DATE = dt.date(2020, 1, 1)
+MGRS = "12ABC"
 MGRS_ULX = "100"
 MGRS_ULY = "200"
 BUCKET_IN = "input-bucket"
@@ -89,7 +90,7 @@ def test_env_source(monkeypatch, tmp_path):
     """Test environment variable parsing."""
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
     monkeypatch.setenv("PATHROW_LIST", PATHROW_LIST)
-    monkeypatch.setenv("DATE", DATE)
+    monkeypatch.setenv("DATE", DATE.isoformat())
     monkeypatch.setenv("MGRS", MGRS)
     monkeypatch.setenv("MGRS_ULX", MGRS_ULX)
     monkeypatch.setenv("MGRS_ULY", MGRS_ULY)
@@ -164,17 +165,21 @@ def test_process_path_rows(mock_binaries, mock_config, mock_aws_s3):
 
         outputs = task.run({CONFIG: mock_config})
 
+        # Expected ID components
+        # Full ID uses 'T' separator for time: T123456
+        full_id = f"HLS.L30.T{MGRS}.2020001T{MOCKED_SCENE_TIME}.v2.0"
+        # Legacy/NBAR input uses '.' separator for time: 123456
+        nbar_legacy_time = MOCKED_SCENE_TIME
+        nbar_legacy_base = f"{MGRS}.2020001.{nbar_legacy_time}.v2.0"
+
         # Verify assets produced
         assert outputs[SCENE_TIME] == MOCKED_SCENE_TIME
-        assert (
-            outputs[NBAR_INPUT].name
-            == f"HLS.L30.{MGRS}.2020001.{MOCKED_SCENE_TIME}.v2.0.hdf"
-        )
-        assert (
-            outputs[NBAR_ANGLE].name
-            == f"L8ANGLE.{MGRS}.2020001.{MOCKED_SCENE_TIME}.v2.0.hdf"
-        )
-        assert outputs[OUTPUT_BASE_NAME] == f"T{MGRS}.2020001T{MOCKED_SCENE_TIME}.v2.0"
+        # Check that NBAR input uses legacy naming with dots
+        assert outputs[NBAR_INPUT].name == f"HLS.L30.{nbar_legacy_base}.hdf"
+        assert outputs[NBAR_ANGLE].name == f"L8ANGLE.{nbar_legacy_base}.hdf"
+
+        # Output Base Name should be the full standard HLS ID
+        assert outputs[OUTPUT_BASE_NAME] == full_id
 
         # Verify files were downloaded to working dir via boto3
         assert (mock_config.working_dir / ac_file).exists()
@@ -184,13 +189,15 @@ def test_process_path_rows(mock_binaries, mock_config, mock_aws_s3):
 def test_run_nbar(mock_binaries, mock_config):
     """Test NBAR execution and renaming."""
     scene_time = MOCKED_SCENE_TIME
-    output_basename = f"T{MGRS}.2020001T{MOCKED_SCENE_TIME}.v2.0"
+    # Use a valid HLS ID for the input, as RunNbar now parses it
+    full_id = f"HLS.L30.T{MGRS}.2020001T{scene_time}.v2.0"
+    output_basename = full_id
 
-    # Setup Inputs
-    nbar_basename = f"{MGRS}.2020001.{scene_time}.v2.0"
-    nbar_input = mock_config.working_dir / f"HLS.L30.{nbar_basename}.hdf"
+    # Setup Inputs using Legacy naming (dots)
+    nbar_legacy_base = f"{MGRS}.2020001.{scene_time}.v2.0"
+    nbar_input = mock_config.working_dir / f"HLS.L30.{nbar_legacy_base}.hdf"
     nbar_input.touch()
-    nbar_angle = mock_config.working_dir / f"L8ANGLE.{nbar_basename}.hdf"
+    nbar_angle = mock_config.working_dir / f"L8ANGLE.{nbar_legacy_base}.hdf"
     nbar_angle.touch()
 
     task = RunNbar(
@@ -209,9 +216,9 @@ def test_run_nbar(mock_binaries, mock_config):
         }
     )
 
-    # Check outputs were renamed/created
-    expected_output = mock_config.working_dir / f"HLS.L30.{output_basename}.hdf"
-    expected_angle = mock_config.working_dir / f"HLS.L30.{output_basename}.ANGLE.hdf"
+    # Check outputs were renamed/created to the Full ID
+    expected_output = mock_config.working_dir / f"{full_id}.hdf"
+    expected_angle = mock_config.working_dir / f"{full_id}.ANGLE.hdf"
 
     assert outputs[OUTPUT_HDF] == expected_output
     assert outputs[ANGLE_HDF] == expected_angle
@@ -242,24 +249,24 @@ def test_convert_to_cogs(mock_binaries, mock_config):
 
 def test_create_thumbnail(mock_binaries, mock_config):
     """Test thumbnail generation."""
-    output_basename = "test_basename"
+    # Use full ID
+    output_basename = f"HLS.L30.T{MGRS}.2020001T101010.v2.0"
 
     task = CreateThumbnail(
         "test_thumb", requires=(CONFIG, OUTPUT_BASE_NAME), provides=(THUMBNAIL_FILE,)
     )
 
-    # Mocking side effect of create_thumbnail script is handled by mock_binaries fixture
-    # (The script touches the output file specified by -o)
     outputs = task.run({CONFIG: mock_config, OUTPUT_BASE_NAME: output_basename})
 
-    assert outputs[THUMBNAIL_FILE].name == f"HLS.L30.{output_basename}.jpg"
+    # Task now uses basename directly
+    assert outputs[THUMBNAIL_FILE].name == f"{output_basename}.jpg"
     assert outputs[THUMBNAIL_FILE].exists()
 
 
 def test_create_metadata(mock_binaries, mock_config):
     """Test CMR/STAC metadata generation."""
     output_hdf = mock_config.working_dir / "output.hdf"
-    output_basename = "test_basename"
+    output_basename = f"HLS.L30.T{MGRS}.2020001T101010.v2.0"
 
     task = CreateMetadata(
         "test_meta",
@@ -271,15 +278,16 @@ def test_create_metadata(mock_binaries, mock_config):
         {CONFIG: mock_config, OUTPUT_HDF: output_hdf, OUTPUT_BASE_NAME: output_basename}
     )
 
-    assert outputs[CMR_XML].name == f"HLS.L30.{output_basename}.cmr.xml"
-    assert outputs[STAC_JSON].name == f"HLS.L30.{output_basename}_stac.json"
+    # Task now uses basename directly
+    assert outputs[CMR_XML].name == f"{output_basename}.cmr.xml"
+    assert outputs[STAC_JSON].name == f"{output_basename}_stac.json"
     assert outputs[CMR_XML].exists()
     assert outputs[STAC_JSON].exists()
 
 
 def test_create_manifest(mock_binaries, mock_config):
     """Test manifest creation."""
-    output_basename = "test_basename"
+    output_basename = f"HLS.L30.T{MGRS}.2020001T101010.v2.0"
 
     task = CreateManifest(
         "test_manifest",
@@ -297,13 +305,13 @@ def test_create_manifest(mock_binaries, mock_config):
         }
     )
 
-    assert outputs[MANIFEST_FILE].name == f"HLS.L30.{output_basename}.json"
+    assert outputs[MANIFEST_FILE].name == f"{output_basename}.json"
     assert outputs[MANIFEST_FILE].exists()
 
 
 def test_process_gibs(mock_binaries, mock_config):
     """Test GIBS processing and sub-manifest creation."""
-    output_basename = "test_basename"
+    output_basename = "HLS.L30.TESTID.v2.0"
 
     task = ProcessGibs(
         "test_gibs", requires=(CONFIG, OUTPUT_BASE_NAME), provides=(GIBS_DIR,)
@@ -319,7 +327,7 @@ def test_process_gibs(mock_binaries, mock_config):
 
 def test_process_vi(mock_binaries, mock_config):
     """Test VI processing."""
-    output_basename = "test_basename"
+    output_basename = "HLS.L30.TESTID.v2.0"
 
     task = ProcessVi("test_vi", requires=(CONFIG, OUTPUT_BASE_NAME), provides=(VI_DIR,))
 
@@ -337,9 +345,12 @@ def test_upload_all_production(mock_aws_s3, mock_config):
     s3.create_bucket(Bucket=BUCKET_OUT)
     s3.create_bucket(Bucket=BUCKET_GIBS)
 
+    granule_id = f"HLS.L30.T{MGRS}.2020001T101010.v2.0"
+    vi_id = granule_id.replace("HLS.L30", "HLS-VI.L30")
+
     # Create dummy files to upload
     (mock_config.working_dir / "product.tif").touch()
-    (mock_config.working_dir / "product.json").touch()  # Manifest
+    (mock_config.working_dir / f"{granule_id}.json").touch()  # Manifest
 
     # Dummy GIBS
     gibs_dir = mock_config.working_dir / "gibs"
@@ -353,6 +364,7 @@ def test_upload_all_production(mock_aws_s3, mock_config):
     vi_dir = mock_config.working_dir / "vi"
     vi_dir.mkdir()
     (vi_dir / "vi.tif").touch()
+    (vi_dir / f"{vi_id}.json").touch()
 
     task = UploadAll(
         "test_upload",
@@ -370,11 +382,11 @@ def test_upload_all_production(mock_aws_s3, mock_config):
     outputs = task.run(
         {
             CONFIG: mock_config,
-            OUTPUT_BASE_NAME: "test_base",
+            OUTPUT_BASE_NAME: granule_id,
             GIBS_DIR: gibs_dir,
             VI_DIR: vi_dir,
             GRIDDED_HDF: Path("dummy"),
-            MANIFEST_FILE: mock_config.working_dir / "product.json",
+            MANIFEST_FILE: mock_config.working_dir / f"{granule_id}.json",
         }
     )
 
@@ -382,12 +394,14 @@ def test_upload_all_production(mock_aws_s3, mock_config):
 
     # Verify S3 Contents
     # 1. Main Product
-    # Key structure: L30/data/2020001/HLS.L30.test_base/product.tif
+    # Key structure: L30/data/2020001/{granule_id}/product.tif
     main_objs = s3.list_objects(
-        Bucket=BUCKET_OUT, Prefix="L30/data/2020001/HLS.L30.test_base"
+        Bucket=BUCKET_OUT, Prefix=f"L30/data/2020001/{granule_id}"
     )
     main_keys = [o["Key"] for o in main_objs.get("Contents", [])]
     assert any("product.tif" in k for k in main_keys)
+    # Check manifest upload
+    assert any(f"{granule_id}.json" in k for k in main_keys)
 
     # 2. GIBS
     # Key: L30/data/2020001/id1/gibs.tif
@@ -396,7 +410,9 @@ def test_upload_all_production(mock_aws_s3, mock_config):
     assert any("id1/gibs.tif" in k for k in gibs_keys)
 
     # 3. VI
-    # Key: L30_VI/data/2020001/HLS-VI.L30.test_base/vi.tif
-    vi_objs = s3.list_objects(Bucket=BUCKET_OUT, Prefix="L30_VI/data/2020001")
+    # Key: L30_VI/data/2020001/{vi_id}/vi.tif
+    vi_objs = s3.list_objects(Bucket=BUCKET_OUT, Prefix=f"L30_VI/data/2020001/{vi_id}")
     vi_keys = [o["Key"] for o in vi_objs.get("Contents", [])]
     assert any("vi.tif" in k for k in vi_keys)
+    # Check manifest upload
+    assert any(f"{vi_id}.json" in k for k in vi_keys)

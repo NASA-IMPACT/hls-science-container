@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 import boto3
 
 from hls_nextgen_orchestration.base import DataSource, Task, TaskFailure
+from hls_nextgen_orchestration.granules import LandsatGranule
 from hls_nextgen_orchestration.utils import validate_command
 
 from .assets import (
@@ -69,6 +70,10 @@ class EnvConfig:
     def granule_dir(self) -> Path:
         return self.working_dir / self.granule
 
+    @property
+    def landsat_granule(self) -> LandsatGranule:
+        return LandsatGranule.from_str(self.granule)
+
 
 # --- Data Source ---
 
@@ -78,13 +83,11 @@ class EnvSource(DataSource):
     def fetch(self) -> dict[Any, Any]:
         config = EnvConfig(
             job_id=os.environ.get("AWS_BATCH_JOB_ID", "local_job"),
-            granule=os.environ.get(
-                "GRANULE", "LC08_L1TP_025030_20200101_20200114_01_T1"
-            ),
-            input_bucket=os.environ.get("INPUT_BUCKET", "landsat-pds"),
-            output_bucket=os.environ.get("OUTPUT_BUCKET", "processed-data"),
-            prefix=os.environ.get("PREFIX", "L8"),
-            ac_code=os.environ.get("ACCODE", "LaSRC"),
+            granule=os.environ["GRANULE"],
+            input_bucket=os.environ["INPUT_BUCKET"],
+            output_bucket=os.environ["OUTPUT_BUCKET"],
+            prefix=os.environ["PREFIX"],
+            ac_code=os.environ["ACCODE"],
             debug_bucket=os.environ.get("DEBUG_BUCKET"),
         )
         if not config.granule_dir.exists():
@@ -122,19 +125,23 @@ class DownloadGranule(Task):
 class ParseMetadata(Task):
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
         config: EnvConfig = inputs[CONFIG]
-        components = config.granule.split("_")
-        pathrow = components[2]
-        date_str = components[3]
-        year = date_str[0:4]
-        month = date_str[4:6]
-        day = date_str[6:8]
-        output_name = f"{year}-{month}-{day}_{pathrow}"
-        bucket_key = f"{year}-{month}-{day}/{pathrow}"
+
+        # Use the Dataclass property from EnvConfig
+        granule = config.landsat_granule
+
+        # Construct output names using the parsed object
+        # Format: YYYY-MM-DD_PPPRRR
+        date_str = granule.acquisition_date.strftime("%Y-%m-%d")
+        output_name = f"{date_str}_{granule.path_row}"
+
+        # Bucket key: YYYY-MM-DD/PPPRRR
+        bucket_key = f"{date_str}/{granule.path_row}"
+
         return {
             METADATA: {
                 "output_name": output_name,
                 "bucket_key": bucket_key,
-                "year": year,
+                "year": str(granule.acquisition_date.year),
             }
         }
 
@@ -383,7 +390,7 @@ class UploadResults(Task):
             ]
             for pattern in include_globs:
                 for f in granule_dir.glob(pattern):
-                    key = f"{bucket_key}/{f.name}"
+                    key = f"{bucket_key}/{f.name}\n"
                     s3.upload_file(str(f), bucket, key)
         else:
             timestamp = dt.datetime.now().strftime("%Y_%m_%d_%H_%M")

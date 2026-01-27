@@ -110,6 +110,11 @@ class HlsGranule:
     version_major: str
     version_minor: str
 
+    def __post_init__(self) -> None:
+        """Validate granule attributes"""
+        if self.tile_id.startswith('T'):
+            raise ValueError(f"tile_id must be the raw MGRS code (starting with a digit). Found prefix 'T' in: {self.tile_id}")
+
     @classmethod
     def from_str(cls, granule_id: str) -> HlsGranule:
         """
