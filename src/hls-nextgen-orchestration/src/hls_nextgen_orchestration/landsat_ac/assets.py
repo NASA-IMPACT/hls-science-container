@@ -1,22 +1,5 @@
 from hls_nextgen_orchestration.base import Asset
 
-__all__ = [
-    "CONFIG",
-    "GRANULE_DIR",
-    "MTL_FILE",
-    "METADATA",
-    "FMASK_BIN",
-    "SCANLINE_DONE",
-    "ESPA_XML",
-    "LASRC_DONE",
-    "RENAMED_ANGLES",
-    "HLS_XML",
-    "SR_HDF",
-    "FINAL_HDF",
-    "UPLOAD_COMPLETE",
-    "SOLAR_VALID",
-]
-
 CONFIG = Asset("config_object")
 GRANULE_DIR = Asset("granule_directory")
 MTL_FILE = Asset("mtl_file")

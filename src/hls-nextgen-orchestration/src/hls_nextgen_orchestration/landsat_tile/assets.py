@@ -1,24 +1,5 @@
 from hls_nextgen_orchestration.base import Asset
 
-__all__ = [
-    "CONFIG",
-    "NBAR_INPUT",
-    "NBAR_ANGLE",
-    "SCENE_TIME",
-    "OUTPUT_BASE_NAME",
-    "OUTPUT_HDF",
-    "ANGLE_HDF",
-    "GRIDDED_HDF",
-    "COGS_CREATED",
-    "THUMBNAIL_FILE",
-    "CMR_XML",
-    "STAC_JSON",
-    "MANIFEST_FILE",
-    "GIBS_DIR",
-    "VI_DIR",
-    "UPLOAD_COMPLETE",
-]
-
 # --- Assets ---
 
 CONFIG = Asset("config_object")

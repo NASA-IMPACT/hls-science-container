@@ -37,8 +37,6 @@ from .tasks import (
     UploadResults,
 )
 
-__all__ = ["construct_pipeline"]
-
 
 def construct_pipeline() -> Pipeline:
     return (
