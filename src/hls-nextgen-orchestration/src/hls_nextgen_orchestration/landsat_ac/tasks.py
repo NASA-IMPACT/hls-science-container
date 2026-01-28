@@ -91,14 +91,14 @@ class DownloadGranule(Task):
             )
 
         # Update the configuration with the actual ID found by the downloader.
-        new_config = replace(config, granule=downloaded_granule_id)
+        updated_config = replace(config, granule=downloaded_granule_id)
 
-        mtl_path = config.granule_dir / f"{config.granule}_MTL.txt"
+        mtl_path = config.granule_dir / f"{updated_config.granule}_MTL.txt"
         if not mtl_path.exists():
             raise RuntimeError(f"Output file missing: {mtl_path}")
 
         return {
-            CONFIG: new_config,
+            CONFIG: updated_config,
             GRANULE_DIR: config.granule_dir,
             MTL_FILE: mtl_path,
         }
