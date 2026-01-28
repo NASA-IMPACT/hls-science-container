@@ -44,7 +44,7 @@ def construct_pipeline() -> Pipeline:
         .add(EnvSource("EnvConfig", provides=(CONFIG,)))
         .add(
             DownloadGranule(
-                "Download", requires=(CONFIG,), provides=(GRANULE_DIR, MTL_FILE)
+                "Download", requires=(CONFIG,), provides=(CONFIG, GRANULE_DIR, MTL_FILE)
             )
         )
         .add(ParseMetadata("Metadata", requires=(CONFIG,), provides=(METADATA,)))

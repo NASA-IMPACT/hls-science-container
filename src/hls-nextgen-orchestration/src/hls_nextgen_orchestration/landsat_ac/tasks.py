@@ -4,7 +4,7 @@ import datetime as dt
 import logging
 import os
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -57,13 +57,22 @@ class EnvSource(DataSource):
 
 @dataclass(frozen=True)
 class DownloadGranule(Task):
+    """Download the Landsat granule
+
+    If a RT version is requested and it has been replaced by a standard processing
+    version then the granule ID will be updated. For example,
+    `LC08_L1TP_116030_20260107_20260107_02_RT` was replaced by the equivalent
+    standard version, `LC08_L1TP_116030_20260107_20260114_02_T1`.
+    """
+
     def __post_init__(self) -> None:
         validate_command("download_landsat")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Any], Any]:
         config: EnvConfig = inputs[CONFIG]
-        logging.info(f"Downloading {config.granule} from {config.input_bucket}...")
-        subprocess.run(
+
+        logger.info(f"Downloading {config.granule} from {config.input_bucket}...")
+        result = subprocess.run(
             [
                 "download_landsat",
                 config.input_bucket,
@@ -71,11 +80,28 @@ class DownloadGranule(Task):
                 str(config.granule_dir),
             ],
             check=True,
+            capture_output=True,
+            text=True,
         )
+        downloaded_granule_id = result.stdout.strip()
+
+        if downloaded_granule_id != config.granule:
+            logger.info(
+                f"Downloaded an updated granule with ID={downloaded_granule_id}"
+            )
+
+        # Update the configuration with the actual ID found by the downloader.
+        new_config = replace(config, granule=downloaded_granule_id)
+
         mtl_path = config.granule_dir / f"{config.granule}_MTL.txt"
         if not mtl_path.exists():
             raise RuntimeError(f"Output file missing: {mtl_path}")
-        return {GRANULE_DIR: config.granule_dir, MTL_FILE: mtl_path}
+
+        return {
+            CONFIG: new_config,
+            GRANULE_DIR: config.granule_dir,
+            MTL_FILE: mtl_path,
+        }
 
 
 @dataclass(frozen=True)

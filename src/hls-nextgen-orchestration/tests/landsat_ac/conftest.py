@@ -10,6 +10,7 @@ DOWNLOAD_LANDSAT = """#!/bin/bash
 mkdir -p "$3"
 G=${GRANULE:-LC08_L1TP_000000_20200101_20200114_01_T1}
 touch "$3/${G}_MTL.txt"
+echo $G
 """
 
 CHECK_SOLAR_ZENITH_LANDSAT = """#!/bin/bash
