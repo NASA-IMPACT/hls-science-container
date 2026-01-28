@@ -112,8 +112,8 @@ class HlsGranule:
     sensor: str
     tile_id: str
     acquisition_time: dt.datetime
-    version_major: str
-    version_minor: str
+    version_major: str = "v2"
+    version_minor: str = "0"
 
     def __post_init__(self) -> None:
         """Validate granule attributes"""

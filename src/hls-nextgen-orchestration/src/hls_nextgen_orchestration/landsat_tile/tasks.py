@@ -243,8 +243,6 @@ class ProcessPathRows(Task):
                 sensor="L30",
                 tile_id=config.mgrs,
                 acquisition_time=acq_time,
-                version_major="v2",
-                version_minor="0",
             )
             full_granule_id = granule.to_str()
 
@@ -290,8 +288,6 @@ class ProcessPathRows(Task):
             sensor="L30",
             tile_id=config.mgrs,
             acquisition_time=acq_time,
-            version_major="v2",
-            version_minor="0",
         )
         full_granule_id = granule.to_str()
         nbar_names = get_nbar_names(granule)
