@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Chris Holden", email = "ceholden@gmail.com" }
 ]
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 dependencies = [
     "boto3>=1.42.34",
 ]
@@ -42,7 +42,7 @@ ignore = ["E501"]
 known-first-party = ["hls_nextgen_orchestration"]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 strict = true
 
 [tool.pixi.package]

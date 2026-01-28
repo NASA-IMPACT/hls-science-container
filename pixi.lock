@@ -1918,7 +1918,7 @@ packages:
 - pypi: ./src/hls-nextgen-orchestration
   name: hls-nextgen-orchestration
   version: 0.1.0
-  sha256: f790106b231afac37bc49eadb15699385e86fa88a3050935d5cedf8475c16380
+  sha256: d576a76b71e803507376635c1526172bd358d6ed7482bad945b4a2ec164985c3
   requires_dist:
   - boto3>=1.42.34
   - boto3-stubs[s3]>=1.36.0 ; extra == 'dev'
@@ -1926,7 +1926,7 @@ packages:
   - mypy>=1.14.0 ; extra == 'dev'
   - pytest>=9.0.2 ; extra == 'dev'
   - ruff>=0.9.0 ; extra == 'dev'
-  requires_python: '>=3.12'
+  requires_python: '>=3.13'
 - conda: ./src/hls-nextgen-orchestration
   name: hls-nextgen-orchestration
   version: 0.1.0
@@ -1935,7 +1935,7 @@ packages:
   variants:
     target_platform: noarch
   depends:
-  - python >=3.12
+  - python >=3.13
   - python *
 - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
   name: hls-thumbnails

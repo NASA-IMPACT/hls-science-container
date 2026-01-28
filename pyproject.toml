@@ -15,7 +15,7 @@ known-first-party = [
 
 [tool.mypy]
 strict = true
-python_version = "3.12"
+python_version = "3.13"
 namespace_packages = true
 explicit_package_bases = true
 
