@@ -106,6 +106,7 @@ class DownloadGranule(Task):
 
 @dataclass(frozen=True)
 class ParseMetadata(Task):
+    """Parse metadata, determining output filename and prefix"""
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
         config: EnvConfig = inputs[CONFIG]
 
@@ -124,7 +125,6 @@ class ParseMetadata(Task):
             METADATA: {
                 "output_name": output_name,
                 "bucket_key": bucket_key,
-                "year": str(granule.acquisition_date.year),
             }
         }
 

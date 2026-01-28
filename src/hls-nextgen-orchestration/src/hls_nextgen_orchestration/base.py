@@ -21,7 +21,6 @@ class Asset:
     """
 
     key: str
-    description: str = ""
 
     def __repr__(self) -> str:
         return f"<{self.key}>"
