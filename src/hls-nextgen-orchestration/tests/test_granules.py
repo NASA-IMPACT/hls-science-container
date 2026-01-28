@@ -112,7 +112,6 @@ class TestHlsGranule:
         assert granule.acquisition_time == dt.datetime(2020, 1, 1, 15, 36, 21)
         assert granule.version_major == "v2"
         assert granule.version_minor == "0"
-        assert granule.mgrs_grid == "18TYL"
 
     def test_from_str_valid_l30(self) -> None:
         """

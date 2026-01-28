@@ -180,10 +180,3 @@ class HlsGranule:
                 self.version_minor,
             ]
         )
-
-    @property
-    def mgrs_grid(self) -> str:
-        """
-        Returns the MGRS grid code (synonymous with tile_id here).
-        """
-        return self.tile_id
