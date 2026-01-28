@@ -38,6 +38,8 @@ from .assets import (
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
 
+logger = logging.getLogger(__name__)
+
 
 def get_nbar_names(granule: HlsGranule) -> dict[str, str]:
     """
@@ -143,7 +145,7 @@ class ProcessPathRows(Task):
             landsat_sz_angle = f"{basename}_SZA.img"
             input_key = f"{year}-{month}-{day}/{pathrow}"
 
-            logging.info(
+            logger.info(
                 f"Downloading files from s3://{config.input_bucket}/{input_key}..."
             )
 
@@ -193,7 +195,7 @@ class ProcessPathRows(Task):
             nbar_input = config.working_dir / nbar_names["product"]
             nbar_angle = config.working_dir / nbar_names["angle"]
 
-            logging.info(f"Running landsat-tile for {pathrow}")
+            logger.info(f"Running landsat-tile for {pathrow}")
             subprocess.run(
                 [
                     "landsat-tile",
@@ -208,7 +210,7 @@ class ProcessPathRows(Task):
                 check=True,
             )
 
-            logging.info(f"Running landsat-angle-tile for {pathrow}")
+            logger.info(f"Running landsat-angle-tile for {pathrow}")
             subprocess.run(
                 [
                     "landsat-angle-tile",
@@ -270,7 +272,7 @@ class RunNbar(Task):
         nbar_cfactor = config.working_dir / nbar_names["cfactor"]
         gridded_output = config.working_dir / "gridded.hdf"
 
-        logging.info("Running NBAR")
+        logger.info("Running NBAR")
         # Copy intermediate gridded output for debugging
         if nbar_input.exists():
             shutil.copy(nbar_input, gridded_output)
@@ -284,7 +286,7 @@ class RunNbar(Task):
         output_hdf = config.working_dir / f"{granule_id}.hdf"
         angle_output_final = config.working_dir / f"{granule_id}.ANGLE.hdf"
 
-        logging.info("Renaming NBAR outputs")
+        logger.info("Renaming NBAR outputs")
         if nbar_input != output_hdf:
             nbar_input.rename(output_hdf)
 
@@ -322,7 +324,7 @@ class ConvertToCogs(Task):
 
         os.chdir(config.working_dir)
 
-        logging.info("Converting to COGs")
+        logger.info("Converting to COGs")
         subprocess.run(
             [
                 "hdf_to_cog",
@@ -364,7 +366,7 @@ class CreateThumbnail(Task):
 
         os.chdir(config.working_dir)
 
-        logging.info("Creating thumbnail")
+        logger.info("Creating thumbnail")
         subprocess.run(
             [
                 "create_thumbnail",
@@ -398,7 +400,7 @@ class CreateMetadata(Task):
         os.chdir(config.working_dir)
 
         # Metadata
-        logging.info("Creating metadata")
+        logger.info("Creating metadata")
         meta_xml = f"{granule_id}.cmr.xml"
         subprocess.run(
             ["create_metadata", str(output_hdf), "--save", meta_xml],
@@ -406,7 +408,7 @@ class CreateMetadata(Task):
         )
 
         # STAC
-        logging.info("Creating STAC metadata")
+        logger.info("Creating STAC metadata")
         stac_json = f"{granule_id}_stac.json"
         subprocess.run(
             [
@@ -445,7 +447,7 @@ class CreateManifest(Task):
 
         os.chdir(config.working_dir)
 
-        logging.info("Generating manifest")
+        logger.info("Generating manifest")
         manifest_name = f"{granule_id}.json"
         subprocess.run(
             [
@@ -484,7 +486,7 @@ class ProcessGibs(Task):
             f"s3://{config.gibs_bucket}/L30/data/{config.year}{config.day_of_year}"
         )
 
-        logging.info("Generating GIBS browse subtiles")
+        logger.info("Generating GIBS browse subtiles")
         subprocess.run(
             ["granule_to_gibs", str(config.working_dir), str(gibs_dir), granule_id],
             check=True,
@@ -494,7 +496,7 @@ class ProcessGibs(Task):
         for gibs_id_dir in gibs_dir.iterdir():
             if gibs_id_dir.is_dir():
                 gibs_id = gibs_id_dir.name
-                logging.info(f"Processing gibs id {gibs_id}")
+                logger.info(f"Processing gibs id {gibs_id}")
 
                 xml_files = list(gibs_id_dir.glob("*.xml"))
                 if not xml_files:
@@ -548,7 +550,7 @@ class ProcessVi(Task):
 
         vi_bucket_key = f"s3://{config.output_bucket}/L30_VI/data/{config.year}{config.day_of_year}/{vi_output_name}"
 
-        logging.info("Generating VI files")
+        logger.info("Generating VI files")
         subprocess.run(
             [
                 "vi_generate_indices",
@@ -582,7 +584,7 @@ class ProcessVi(Task):
             check=True,
         )
 
-        logging.info("Generating VI manifest")
+        logger.info("Generating VI manifest")
         vi_manifest = vi_dir / f"{vi_output_name}.json"
         subprocess.run(
             [
@@ -638,13 +640,13 @@ class UploadAll(Task):
         manifest_file: Path,
     ) -> None:
         """Helper to handle all production upload logic."""
-        logging.info("Uploading Main Product to S3")
+        logger.info("Uploading Main Product to S3")
         self._upload_main_product(s3, config, granule_id, manifest_file)
 
-        logging.info("Uploading GIBS tiles")
+        logger.info("Uploading GIBS tiles")
         self._upload_gibs(s3, config, gibs_dir)
 
-        logging.info("Uploading VI files")
+        logger.info("Uploading VI files")
         self._upload_vi(s3, config, granule_id, vi_dir)
 
     def _upload_main_product(
@@ -727,7 +729,7 @@ class UploadAll(Task):
         self, s3: S3Client, config: EnvConfig, granule_id: str, gridded_hdf: Path
     ) -> None:
         """Handles debug mode uploads."""
-        logging.info("DEBUG MODE: Creating gridded debug COG")
+        logger.info("DEBUG MODE: Creating gridded debug COG")
         assert config.debug_bucket is not None
         subprocess.run(
             [
@@ -742,7 +744,7 @@ class UploadAll(Task):
             check=False,
         )
 
-        logging.info("Copying all files to debug bucket")
+        logger.info("Copying all files to debug bucket")
         target_key = f"{granule_id}"
 
         # Recursive upload of working_dir

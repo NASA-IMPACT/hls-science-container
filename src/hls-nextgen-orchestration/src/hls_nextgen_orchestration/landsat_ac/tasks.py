@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime as dt
 import logging
 import os
@@ -32,6 +34,8 @@ from .assets import (
 
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -107,7 +111,7 @@ class CheckSolarZenith(Task):
 
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
         mtl_path: Path = inputs[MTL_FILE]
-        logging.info("Checking Solar Zenith...")
+        logger.info("Checking Solar Zenith...")
         result = subprocess.run(
             ["check_solar_zenith_landsat", str(mtl_path)],
             capture_output=True,
@@ -134,12 +138,12 @@ class RunFmask(Task):
         os.chdir(granule_dir)
         fmask_bin_path = granule_dir / "fmask.bin"
         try:
-            logging.info("Running Fmask...")
+            logger.info("Running Fmask...")
             with open("fmask_out.txt", "a") as outfile:
                 subprocess.run(["run_Fmask.sh"], stdout=outfile, check=True)
             fmask_tif = f"{config.granule}_Fmask4.tif"
             fmask_bin = "fmask.bin"
-            logging.info("Converting Fmask to ENVI binary...")
+            logger.info("Converting Fmask to ENVI binary...")
             subprocess.run(
                 ["gdal_translate", "-of", "ENVI", fmask_tif, fmask_bin], check=True
             )
@@ -158,7 +162,7 @@ class ConvertScanline(Task):
     def run(self, inputs: dict[Any, Any]) -> dict[Asset[bool], bool]:
         granule_dir: Path = inputs[GRANULE_DIR]
         tifs = list(granule_dir.glob("*.TIF"))
-        logging.info(f"Converting {len(tifs)} TIFs to scanline...")
+        logger.info(f"Converting {len(tifs)} TIFs to scanline...")
         for f in tifs:
             scan_name = f.with_name(f"{f.stem}_scan.tif")
             subprocess.run(
@@ -186,7 +190,7 @@ class ConvertToEspa(Task):
         cwd = os.getcwd()
         os.chdir(granule_dir)
         try:
-            logging.info("Convert to ESPA")
+            logger.info("Convert to ESPA")
             subprocess.run(["convert_lpgs_to_espa", f"--mtl={mtl_path}"], check=True)
         finally:
             os.chdir(cwd)
@@ -207,7 +211,7 @@ class RunLaSRC(Task):
         cwd = os.getcwd()
         os.chdir(granule_dir)
         try:
-            logging.info("Run lasrc")
+            logger.info("Run lasrc")
             subprocess.run(["do_lasrc_landsat.py", "--xml", str(xml_file)], check=True)
         finally:
             os.chdir(cwd)
@@ -224,7 +228,7 @@ class RenameAngleBands(Task):
         old_base = config.granule
         new_base = meta.output_name
 
-        logging.info("Rename angle bands")
+        logger.info("Rename angle bands")
         suffixes = ["_VAA", "_VZA", "_SAA", "_SZA"]
         extensions = [".hdr", ".img"]
         for suffix in suffixes:
@@ -234,7 +238,7 @@ class RenameAngleBands(Task):
                 if old.exists():
                     old.rename(new)
                 else:
-                    logging.warning(f"File {old} not found for renaming")
+                    logger.warning(f"File {old} not found for renaming")
         return {RENAMED_ANGLES: True}
 
 
@@ -252,7 +256,7 @@ class CreateHlsXml(Task):
         cwd = os.getcwd()
         os.chdir(granule_dir)
         try:
-            logging.info("Create updated espa xml")
+            logger.info("Create updated espa xml")
             subprocess.run(
                 ["create_landsat_sr_hdf_xml", str(espa_xml), str(hls_xml)], check=True
             )
@@ -275,7 +279,7 @@ class ConvertToHdf(Task):
         cwd = os.getcwd()
         os.chdir(granule_dir)
         try:
-            logging.info("Convert to HDF")
+            logger.info("Convert to HDF")
             subprocess.run(
                 ["convert_espa_to_hdf", f"--xml={xml}", f"--hdf={sr_hdf}"], check=True
             )
@@ -298,7 +302,7 @@ class AddFmaskSds(Task):
         granule_dir = sr_hdf.parent
         output_hdf = granule_dir / f"{meta.output_name}.hdf"
         aerosol_qa = granule_dir / f"{config.granule}_sr_aerosol_qa.img"
-        logging.info("Run addFmaskSDS")
+        logger.info("Run addFmaskSDS")
         subprocess.run(
             [
                 "landsat-add-fmask-sds",
@@ -354,19 +358,19 @@ class UploadResults(Task):
         self,
         s3: S3Client,
         config: EnvConfig,
-        meta: dict[str, str],
+        meta: ProcessingMetadata,
         final_hdf: Path,
         granule_dir: Path,
     ) -> None:
         """Handles production upload logic."""
         bucket = config.output_bucket
-        bucket_key = meta["bucket_key"]
+        bucket_key = meta.bucket_key
         hdf_key = f"{bucket_key}/{final_hdf.name}"
 
-        logging.info(f"Uploading {final_hdf.name} to s3://{bucket}/{hdf_key}")
+        logger.info(f"Uploading {final_hdf.name} to s3://{bucket}/{hdf_key}")
         s3.upload_file(str(final_hdf), bucket, hdf_key)
 
-        logging.info("Uploading angle files...")
+        logger.info("Uploading angle files...")
         include_globs = [
             "*_VAA.img",
             "*_VAA.hdr",
@@ -391,7 +395,7 @@ class UploadResults(Task):
             raise ValueError("Debug bucket must be set for debug upload")
 
         base_key = f"{config.granule}_{timestamp}"
-        logging.info("Copy files to debug bucket")
+        logger.info("Copy files to debug bucket")
 
         for f in granule_dir.rglob("*"):
             if f.is_file():

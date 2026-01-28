@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 JOB_ID = "workflow-job-2"
 GRANULE = "LC08_L1TP_025030_20200101_20200114_01_T1"
-IN_BUCKET = "landsat-pds"
+IN_BUCKET = "usgs-landsat"
 OUT_BUCKET = "processed-data"
 
 
