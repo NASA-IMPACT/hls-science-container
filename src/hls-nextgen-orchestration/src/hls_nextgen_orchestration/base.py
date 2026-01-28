@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, TypeVar
 
+logger = logging.getLogger(__name__)
+
 
 class TaskFailure(Exception):
     """Exception raised by a task indicating a specific exit code."""
@@ -51,7 +53,7 @@ class TaskContext:
         """
         Store a value for an asset, validating its type at runtime.
         """
-        logging.info(f"[Context] Storing {asset.key}")
+        logger.info(f"[Context] Storing {asset.key}")
 
         # Runtime Type Check
         if not isinstance(value, asset.type_class):
@@ -63,7 +65,7 @@ class TaskContext:
                 f"but got {type(value).__name__}: {value}"
             )
 
-        logging.debug(f"          Value: {value}")
+        logger.debug(f"          Value: {value}")
         self._store[asset.key] = value
 
     def get(self, asset: Asset[T]) -> T:
@@ -106,7 +108,7 @@ class DataSource(NodeBase):
         raise NotImplementedError
 
     def execute(self, context: TaskContext) -> None:
-        logging.info(f"Running DataSource: {self.name}")
+        logger.info(f"Running DataSource: {self.name}")
         results = self.fetch()
 
         for asset in self.provides:
@@ -123,11 +125,11 @@ class Task(NodeBase):
     Task uses both 'requires' and 'provides'.
     """
 
-    def run(self, inputs: dict[Asset[T], Any]) -> dict[Asset[Any], Any]:
+    def run(self, inputs: dict[Asset[Any], Any]) -> dict[Asset[Any], Any]:
         raise NotImplementedError
 
     def execute(self, context: TaskContext) -> None:
-        logging.info(f"Running Task: {self.name}")
+        logger.info(f"Running Task: {self.name}")
 
         # 1. Gather Inputs
         inputs = {asset: context.get(asset) for asset in self.requires}
@@ -156,23 +158,23 @@ class Pipeline:
         """
         Executes the pipeline and returns the final context state.
         """
-        logging.info("--- Starting Pipeline Execution ---")
+        logger.info("--- Starting Pipeline Execution ---")
         context = TaskContext()
 
         for i, node in enumerate(self.execution_order, 1):
-            logging.info(f"Step {i}/{len(self.execution_order)}: {node.name}")
+            logger.info(f"Step {i}/{len(self.execution_order)}: {node.name}")
             try:
                 node.execute(context)
             except TaskFailure as e:
-                logging.warning(f"Pipeline stopped at step '{node.name}': {e}")
+                logger.warning(f"Pipeline stopped at step '{node.name}': {e}")
                 context.exit_code = e.exit_code
                 return context
             except Exception:
-                logging.exception(f"Pipeline failed unexpectedly at step '{node.name}'")
+                logger.exception(f"Pipeline failed unexpectedly at step '{node.name}'")
                 context.exit_code = 1
                 raise
 
-        logging.info("--- Execution Complete ---")
+        logger.info("--- Execution Complete ---")
         return context
 
     def __str__(self) -> str:
@@ -193,44 +195,49 @@ class PipelineBuilder:
 
     nodes: list[NodeBase] = field(default_factory=list)
     catalog: dict[str, NodeBase] = field(default_factory=dict)
+    _adjacency: dict[NodeBase, set[NodeBase]] = field(default_factory=dict)
+    _in_degree: dict[NodeBase, int] = field(default_factory=dict)
 
     def add(self, node: NodeBase) -> PipelineBuilder:
+        # Initialize graph tracking for this node
+        if node not in self._adjacency:
+            self._adjacency[node] = set()
+            self._in_degree[node] = 0
+
+        # 1. Resolve Dependencies (Eager Resolution)
+        # This enforces that providers must be added before consumers.
+        for req in node.requires:
+            if req.key not in self.catalog:
+                raise ValueError(
+                    f"Integrity Error: '{node.name}' requires "
+                    f"'{req.key}', but no provider exists yet."
+                )
+
+            provider = self.catalog[req.key]
+
+            # Record dependency: provider -> node
+            if node not in self._adjacency[provider]:
+                self._adjacency[provider].add(node)
+                self._in_degree[node] += 1
+
+        # 2. Register Provided Assets
         self.nodes.append(node)
 
         for asset in node.provides:
-            if asset.key in self.catalog:
-                existing = self.catalog[asset.key]
-                raise ValueError(
-                    f"Conflict: Asset '{asset.key}' is provided by both "
-                    f"'{existing.name}' and '{node.name}'"
-                )
+            # We allow overwriting previous providers to support
+            # "update" patterns (e.g., OldConfig -> Task -> NewConfig).
+            # The dependency resolution above locks in the version used by this node.
             self.catalog[asset.key] = node
 
         return self
 
     def build(self) -> Pipeline:
-        logging.info("Building Pipeline...")
+        logger.info("Building Pipeline...")
 
-        # 1. Build Dependency Graph
-        adjacency: dict[NodeBase, set[NodeBase]] = {n: set() for n in self.nodes}
-        in_degree: dict[NodeBase, int] = {n: 0 for n in self.nodes}
+        # Topological Sort (Kahn's Algorithm)
+        # We work on a copy of in-degrees to avoid mutating the builder state permanently
+        in_degree = self._in_degree.copy()
 
-        for node in self.nodes:
-            for req in node.requires:
-                if req.key not in self.catalog:
-                    raise ValueError(
-                        f"Integrity Error: '{node.name}' requires "
-                        f"'{req.key}', but no provider exists."
-                    )
-
-                provider = self.catalog[req.key]
-
-                if provider in self.nodes:
-                    if node not in adjacency[provider]:
-                        adjacency[provider].add(node)
-                        in_degree[node] += 1
-
-        # 2. Topological Sort (Kahn's Algorithm)
         queue = [n for n in self.nodes if in_degree[n] == 0]
         sorted_nodes = []
 
@@ -238,12 +245,12 @@ class PipelineBuilder:
             current = queue.pop(0)
             sorted_nodes.append(current)
 
-            for dependent in adjacency[current]:
+            for dependent in self._adjacency[current]:
                 in_degree[dependent] -= 1
                 if in_degree[dependent] == 0:
                     queue.append(dependent)
 
-        # 3. Cycle Detection
+        # Cycle Detection
         if len(sorted_nodes) != len(self.nodes):
             remaining = set(self.nodes) - set(sorted_nodes)
             names = [n.name for n in remaining]
