@@ -33,8 +33,6 @@ from .assets import (
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
 
-# --- Data Source ---
-
 
 @dataclass(frozen=True)
 class EnvSource(DataSource):
@@ -51,9 +49,6 @@ class EnvSource(DataSource):
         if not config.granule_dir.exists():
             config.granule_dir.mkdir(parents=True, exist_ok=True)
         return {CONFIG: config}
-
-
-# --- Tasks ---
 
 
 @dataclass(frozen=True)
@@ -132,7 +127,7 @@ class RunFmask(Task):
         validate_command("run_Fmask.sh")
         validate_command("gdal_translate")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Path], Path]:
         config: EnvConfig = inputs[CONFIG]
         granule_dir: Path = inputs[GRANULE_DIR]
         cwd = os.getcwd()
@@ -160,7 +155,7 @@ class ConvertScanline(Task):
     def __post_init__(self) -> None:
         validate_command("gdal_translate")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Any, Any]) -> dict[Asset[bool], bool]:
         granule_dir: Path = inputs[GRANULE_DIR]
         tifs = list(granule_dir.glob("*.TIF"))
         logging.info(f"Converting {len(tifs)} TIFs to scanline...")
@@ -182,7 +177,7 @@ class ConvertToEspa(Task):
     def __post_init__(self) -> None:
         validate_command("convert_lpgs_to_espa")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Path], Path]:
         _ = inputs[SCANLINE_DONE]
         config: EnvConfig = inputs[CONFIG]
         mtl_path: Path = inputs[MTL_FILE]
@@ -205,7 +200,7 @@ class RunLaSRC(Task):
     def __post_init__(self) -> None:
         validate_command("do_lasrc_landsat.py")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Any, Any]) -> dict[Asset[bool], bool]:
         _ = inputs[SOLAR_VALID]
         xml_file: Path = inputs[ESPA_XML]
         granule_dir = xml_file.parent
@@ -221,13 +216,14 @@ class RunLaSRC(Task):
 
 @dataclass(frozen=True)
 class RenameAngleBands(Task):
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Any, Any]) -> dict[Asset[bool], bool]:
         _ = inputs[LASRC_DONE]
         config: EnvConfig = inputs[CONFIG]
         meta = inputs[METADATA]
         granule_dir: Path = inputs[GRANULE_DIR]
         old_base = config.granule
         new_base = meta.output_name
+
         logging.info("Rename angle bands")
         suffixes = ["_VAA", "_VZA", "_SAA", "_SZA"]
         extensions = [".hdr", ".img"]
@@ -247,7 +243,7 @@ class CreateHlsXml(Task):
     def __post_init__(self) -> None:
         validate_command("create_landsat_sr_hdf_xml")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Path], Path]:
         _ = inputs[RENAMED_ANGLES]
         config: EnvConfig = inputs[CONFIG]
         espa_xml: Path = inputs[ESPA_XML]
@@ -272,7 +268,7 @@ class ConvertToHdf(Task):
     def __post_init__(self) -> None:
         validate_command("convert_espa_to_hdf")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Path], Path]:
         xml: Path = inputs[HLS_XML]
         granule_dir = xml.parent
         sr_hdf = granule_dir / "sr.hdf"
@@ -295,12 +291,10 @@ class AddFmaskSds(Task):
     def __post_init__(self) -> None:
         validate_command("landsat-add-fmask-sds")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Path], Path]:
         config: EnvConfig = inputs[CONFIG]
         meta = inputs[METADATA]
         sr_hdf: Path = inputs[SR_HDF]
-        fmask_bin: Path = inputs[FMASK_BIN]
-        mtl: Path = inputs[MTL_FILE]
         granule_dir = sr_hdf.parent
         output_hdf = granule_dir / f"{meta.output_name}.hdf"
         aerosol_qa = granule_dir / f"{config.granule}_sr_aerosol_qa.img"
@@ -309,9 +303,9 @@ class AddFmaskSds(Task):
             [
                 "landsat-add-fmask-sds",
                 str(sr_hdf),
-                str(fmask_bin),
+                str(inputs[FMASK_BIN]),
                 str(aerosol_qa),
-                str(mtl),
+                str(inputs[MTL_FILE]),
                 config.ac_code,
                 str(output_hdf),
             ],
@@ -324,41 +318,83 @@ class AddFmaskSds(Task):
 
 @dataclass(frozen=True)
 class UploadResults(Task):
+    """
+    Uploads the final results to the specified S3 bucket.
+    """
+
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+        """
+        Uploads HDF and angle files to output bucket, or all files to debug bucket.
+
+        Parameters
+        ----------
+        inputs : dict[Asset, Any]
+            Dictionary containing CONFIG, METADATA, FINAL_HDF, and GRANULE_DIR assets.
+
+        Returns
+        -------
+        dict[Asset, bool]
+            Dictionary containing the UPLOAD_COMPLETE asset.
+        """
         config: EnvConfig = inputs[CONFIG]
         meta = inputs[METADATA]
         final_hdf: Path = inputs[FINAL_HDF]
         granule_dir: Path = inputs[GRANULE_DIR]
+
         s3: S3Client = boto3.client("s3")
+
         if not config.debug_bucket:
-            bucket = config.output_bucket
-            bucket_key = meta.bucket_key
-            hdf_key = f"{bucket_key}/{final_hdf.name}"
-            logging.info(f"Uploading {final_hdf.name} to s3://{bucket}/{hdf_key}")
-            s3.upload_file(str(final_hdf), bucket, hdf_key)
-            logging.info("Uploading angle files...")
-            include_globs = [
-                "*_VAA.img",
-                "*_VAA.hdr",
-                "*_VZA.hdr",
-                "*_VZA.img",
-                "*_SAA.hdr",
-                "*_SAA.img",
-                "*_SZA.hdr",
-                "*_SZA.img",
-            ]
-            for pattern in include_globs:
-                for f in granule_dir.glob(pattern):
-                    key = f"{bucket_key}/{f.name}\n"
-                    s3.upload_file(str(f), bucket, key)
+            self._upload_production(s3, config, meta, final_hdf, granule_dir)
         else:
-            timestamp = dt.datetime.now().strftime("%Y_%m_%d_%H_%M")
-            bucket = config.debug_bucket
-            base_key = f"{config.granule}_{timestamp}"
-            logging.info("Copy files to debug bucket")
-            for f in granule_dir.rglob("*"):
-                if f.is_file():
-                    rel_path = f.relative_to(granule_dir)
-                    key = f"{base_key}/{rel_path}"
-                    s3.upload_file(str(f), bucket, key)
+            self._upload_debug(s3, config, granule_dir)
+
         return {UPLOAD_COMPLETE: True}
+
+    def _upload_production(
+        self,
+        s3: S3Client,
+        config: EnvConfig,
+        meta: dict[str, str],
+        final_hdf: Path,
+        granule_dir: Path,
+    ) -> None:
+        """Handles production upload logic."""
+        bucket = config.output_bucket
+        bucket_key = meta["bucket_key"]
+        hdf_key = f"{bucket_key}/{final_hdf.name}"
+
+        logging.info(f"Uploading {final_hdf.name} to s3://{bucket}/{hdf_key}")
+        s3.upload_file(str(final_hdf), bucket, hdf_key)
+
+        logging.info("Uploading angle files...")
+        include_globs = [
+            "*_VAA.img",
+            "*_VAA.hdr",
+            "*_VZA.hdr",
+            "*_VZA.img",
+            "*_SAA.hdr",
+            "*_SAA.img",
+            "*_SZA.hdr",
+            "*_SZA.img",
+        ]
+        for pattern in include_globs:
+            for f in granule_dir.glob(pattern):
+                key = f"{bucket_key}/{f.name}"
+                s3.upload_file(str(f), bucket, key)
+
+    def _upload_debug(self, s3: S3Client, config: EnvConfig, granule_dir: Path) -> None:
+        """Handles debug mode upload logic."""
+        timestamp = dt.datetime.now().strftime("%Y_%m_%d_%H_%M")
+        bucket = config.debug_bucket
+        # debug_bucket checked for None in run, but typing needs reassurance
+        if bucket is None:
+            raise ValueError("Debug bucket must be set for debug upload")
+
+        base_key = f"{config.granule}_{timestamp}"
+        logging.info("Copy files to debug bucket")
+
+        for f in granule_dir.rglob("*"):
+            if f.is_file():
+                rel_path = f.relative_to(granule_dir)
+                key = f"{base_key}/{rel_path}"
+                s3.upload_file(str(f), bucket, key)
