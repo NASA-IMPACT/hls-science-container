@@ -22,6 +22,8 @@ from hls_nextgen_orchestration.landsat_ac.assets import (
     SOLAR_VALID,
     SR_HDF,
     UPLOAD_COMPLETE,
+    EnvConfig,
+    ProcessingMetadata,
 )
 from hls_nextgen_orchestration.landsat_ac.tasks import (
     AddFmaskSds,
@@ -31,7 +33,6 @@ from hls_nextgen_orchestration.landsat_ac.tasks import (
     ConvertToHdf,
     CreateHlsXml,
     DownloadGranule,
-    EnvConfig,
     EnvSource,
     ParseMetadata,
     RenameAngleBands,
@@ -98,7 +99,7 @@ def test_download_granule(mock_binaries, mock_config, monkeypatch):
 def test_parse_metadata(mock_config):
     task = ParseMetadata("test_meta", requires=(CONFIG,), provides=(METADATA,))
     outputs = task.run({CONFIG: mock_config})
-    assert outputs[METADATA]["output_name"] == "2020-01-01_025030"
+    assert outputs[METADATA].output_name == "2020-01-01_025030"
 
 
 def test_check_solar_zenith(mock_binaries, mock_config):
@@ -180,7 +181,7 @@ def test_rename_angle_bands(mock_config):
     for s in suffixes:
         (mock_config.granule_dir / f"{GRANULE}{s}").touch()
 
-    meta = {"output_name": "NEW_NAME"}
+    meta = ProcessingMetadata(output_name="NEW_NAME", bucket_key="foo")
 
     task = RenameAngleBands(
         "test_rename",
@@ -234,7 +235,7 @@ def test_add_fmask_sds(mock_binaries, mock_config):
     mtl = mock_config.granule_dir / "MTL.txt"
     mtl.touch()
 
-    meta = {"output_name": "OUTPUT_GRANULE"}
+    meta = ProcessingMetadata(output_name="OUTPUT_GRANULE", bucket_key="foo")
 
     task = AddFmaskSds(
         "test_add_fmask",
@@ -262,7 +263,7 @@ def test_upload_results(mock_aws_s3, mock_config):
     final_hdf = mock_config.granule_dir / "output.hdf"
     final_hdf.touch()
 
-    meta = {"bucket_key": "2020/001", "output_name": "output"}
+    meta = ProcessingMetadata(output_name="output", bucket_key="2020/001")
 
     task = UploadResults(
         "test_upload",

@@ -28,13 +28,13 @@ from hls_nextgen_orchestration.landsat_tile.assets import (
     THUMBNAIL_FILE,
     UPLOAD_COMPLETE,
     VI_DIR,
+    EnvConfig,
 )
 from hls_nextgen_orchestration.landsat_tile.tasks import (
     ConvertToCogs,
     CreateManifest,
     CreateMetadata,
     CreateThumbnail,
-    EnvConfig,
     EnvSource,
     ProcessGibs,
     ProcessPathRows,

@@ -8,8 +8,7 @@ from typing import TYPE_CHECKING, Any
 
 import boto3
 
-from hls_nextgen_orchestration.base import DataSource, Task, TaskFailure
-from hls_nextgen_orchestration.granules import LandsatGranule
+from hls_nextgen_orchestration.base import Asset, DataSource, Task, TaskFailure
 from hls_nextgen_orchestration.utils import validate_command
 
 from .assets import (
@@ -27,43 +26,19 @@ from .assets import (
     SOLAR_VALID,
     SR_HDF,
     UPLOAD_COMPLETE,
+    EnvConfig,
+    ProcessingMetadata,
 )
 
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
-
-# --- Configuration ---
-
-
-@dataclass(frozen=True)
-class EnvConfig:
-    job_id: str
-    granule: str
-    input_bucket: str
-    output_bucket: str
-    prefix: str
-    ac_code: str
-    debug_bucket: str | None = None
-
-    @property
-    def working_dir(self) -> Path:
-        return Path(f"/var/scratch/{self.job_id}")
-
-    @property
-    def granule_dir(self) -> Path:
-        return self.working_dir / self.granule
-
-    @property
-    def landsat_granule(self) -> LandsatGranule:
-        return LandsatGranule.from_str(self.granule)
-
 
 # --- Data Source ---
 
 
 @dataclass(frozen=True)
 class EnvSource(DataSource):
-    def fetch(self) -> dict[Any, Any]:
+    def fetch(self) -> dict[Asset[EnvConfig], EnvConfig]:
         config = EnvConfig(
             job_id=os.environ.get("AWS_BATCH_JOB_ID", "local_job"),
             granule=os.environ["GRANULE"],
@@ -107,6 +82,7 @@ class DownloadGranule(Task):
 @dataclass(frozen=True)
 class ParseMetadata(Task):
     """Parse metadata, determining output filename and prefix"""
+
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
         config: EnvConfig = inputs[CONFIG]
 
@@ -122,10 +98,10 @@ class ParseMetadata(Task):
         bucket_key = f"{date_str}/{granule.path_row}"
 
         return {
-            METADATA: {
-                "output_name": output_name,
-                "bucket_key": bucket_key,
-            }
+            METADATA: ProcessingMetadata(
+                output_name=output_name,
+                bucket_key=bucket_key,
+            )
         }
 
 
@@ -251,7 +227,7 @@ class RenameAngleBands(Task):
         meta = inputs[METADATA]
         granule_dir: Path = inputs[GRANULE_DIR]
         old_base = config.granule
-        new_base = meta["output_name"]
+        new_base = meta.output_name
         logging.info("Rename angle bands")
         suffixes = ["_VAA", "_VZA", "_SAA", "_SZA"]
         extensions = [".hdr", ".img"]
@@ -326,7 +302,7 @@ class AddFmaskSds(Task):
         fmask_bin: Path = inputs[FMASK_BIN]
         mtl: Path = inputs[MTL_FILE]
         granule_dir = sr_hdf.parent
-        output_hdf = granule_dir / f"{meta['output_name']}.hdf"
+        output_hdf = granule_dir / f"{meta.output_name}.hdf"
         aerosol_qa = granule_dir / f"{config.granule}_sr_aerosol_qa.img"
         logging.info("Run addFmaskSDS")
         subprocess.run(
@@ -356,7 +332,7 @@ class UploadResults(Task):
         s3: S3Client = boto3.client("s3")
         if not config.debug_bucket:
             bucket = config.output_bucket
-            bucket_key = meta["bucket_key"]
+            bucket_key = meta.bucket_key
             hdf_key = f"{bucket_key}/{final_hdf.name}"
             logging.info(f"Uploading {final_hdf.name} to s3://{bucket}/{hdf_key}")
             s3.upload_file(str(final_hdf), bucket, hdf_key)

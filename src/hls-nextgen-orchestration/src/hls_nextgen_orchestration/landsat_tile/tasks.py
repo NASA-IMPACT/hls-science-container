@@ -32,6 +32,7 @@ from .assets import (
     THUMBNAIL_FILE,
     UPLOAD_COMPLETE,
     VI_DIR,
+    EnvConfig,
 )
 
 if TYPE_CHECKING:
@@ -70,65 +71,6 @@ def get_nbar_names(granule: HlsGranule) -> dict[str, str]:
         "angle": f"L8ANGLE.{basename}.hdf",
         "cfactor": f"CFACTOR.{basename}.hdf",
     }
-
-
-# --- Configuration ---
-
-
-@dataclass(frozen=True)
-class EnvConfig:
-    """
-    Configuration for the Landsat Tile environment variables.
-
-    Attributes
-    ----------
-    job_id : str
-        The AWS Batch job ID.
-    pathrow_list : list[str]
-        List of pathrows to process.
-    date : dt.date
-        Date object.
-    mgrs : str
-        MGRS tile ID.
-    mgrs_ulx : str
-        Upper left X coordinate.
-    mgrs_uly : str
-        Upper left Y coordinate.
-    input_bucket : str
-        Input S3 bucket.
-    output_bucket : str
-        Output S3 bucket.
-    gibs_bucket : str
-        GIBS output bucket.
-    debug_bucket : str | None
-        Optional debug bucket.
-    """
-
-    job_id: str
-    pathrow_list: list[str]
-    date: dt.date
-    mgrs: str
-    mgrs_ulx: str
-    mgrs_uly: str
-    input_bucket: str
-    output_bucket: str
-    gibs_bucket: str
-    debug_bucket: str | None = None
-
-    @property
-    def working_dir(self) -> Path:
-        """Get the working directory."""
-        return Path(f"/var/scratch/{self.job_id}")
-
-    @property
-    def year(self) -> str:
-        """Get the year from the date."""
-        return str(self.date.year)
-
-    @property
-    def day_of_year(self) -> str:
-        """Get the day of year from the date."""
-        return self.date.strftime("%j")
 
 
 # --- Data Source ---

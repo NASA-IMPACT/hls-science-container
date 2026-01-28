@@ -14,17 +14,17 @@ from hls_nextgen_orchestration.base import (
 )
 
 # ----- Test setup (example assets / sources / tasks) and fixtures
-A = Asset("A")
-B = Asset("B")
-C = Asset("C")
-D = Asset("D")
+A = Asset("A", str)
+B = Asset("B", str)
+C = Asset("C", str)
+D = Asset("D", str)
 
 
 @dataclass(frozen=True)
 class SimpleSource(DataSource):
     """Returns 'val_{key}' for every asset it provides."""
 
-    def fetch(self) -> dict[Asset, Any]:
+    def fetch(self) -> dict[Asset[str], str]:
         return {asset: f"val_{asset.key}" for asset in self.provides}
 
 
@@ -32,7 +32,7 @@ class SimpleSource(DataSource):
 class SimpleTask(Task):
     """Concatenates input values and returns 'val_{out}_from_{in}'."""
 
-    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+    def run(self, inputs: dict[Asset[Any], Any]) -> dict[Asset[str], str]:
         # Deterministic concatenation of input values
         input_str = "_".join(sorted(str(v) for v in inputs.values()))
         return {asset: f"val_{asset.key}_from_{input_str}" for asset in self.provides}
@@ -183,7 +183,7 @@ def test_contract_breach_missing_output(builder):
     class BrokenTask(Task):
         """Simulates a bug: returns an empty dict despite promising outputs."""
 
-        def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+        def run(self, inputs: dict[Asset[Any], Any]) -> dict[Asset[Any], Any]:
             return {}
 
     src = SimpleSource("Src", provides=(A,))

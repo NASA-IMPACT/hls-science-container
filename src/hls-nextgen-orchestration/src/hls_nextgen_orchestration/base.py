@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TypeVar
 
 
 class TaskFailure(Exception):
@@ -14,16 +14,28 @@ class TaskFailure(Exception):
         self.exit_code = exit_code
 
 
+# Define a generic type variable for Assets
+T = TypeVar("T")
+
+
 @dataclass(frozen=True)
-class Asset:
+class Asset[T]:
     """
-    Represents a unique identifier for a piece of data.
+    Represents a unique identifier for a piece of data with a specific type.
+
+    Attributes
+    ----------
+    key : str
+        The unique string identifier for this asset.
+    type_class : Type[T]
+        The class type used for runtime validation and static typing.
     """
 
     key: str
+    type_class: type[T]
 
     def __repr__(self) -> str:
-        return f"<{self.key}>"
+        return f"<{self.key} [{self.type_class.__name__}]>"
 
 
 @dataclass
@@ -35,15 +47,35 @@ class TaskContext:
     exit_code: int = 0
     _store: dict[str, Any] = field(default_factory=dict)
 
-    def put(self, asset: Asset, value: Any) -> None:
+    def put(self, asset: Asset[T], value: T) -> None:
+        """
+        Store a value for an asset, validating its type at runtime.
+        """
         logging.info(f"[Context] Storing {asset.key}")
+
+        # Runtime Type Check
+        if not isinstance(value, asset.type_class):
+            # Special handling: generic aliases like dict[str, str] or list[int]
+            # don't work well with isinstance. We strictly check the origin class.
+            # If explicit None is allowed, handle Optional logic here (omitted for strictness).
+            raise TypeError(
+                f"Asset '{asset.key}' expected type {asset.type_class.__name__}, "
+                f"but got {type(value).__name__}: {value}"
+            )
+
         logging.debug(f"          Value: {value}")
         self._store[asset.key] = value
 
-    def get(self, asset: Asset) -> Any:
+    def get(self, asset: Asset[T]) -> T:
+        """
+        Retrieve a value for an asset with type hinting.
+        """
         if asset.key not in self._store:
             raise ValueError(f"Missing dependency data for: {asset.key}")
-        return self._store[asset.key]
+
+        val = self._store[asset.key]
+        assert isinstance(val, asset.type_class)
+        return val
 
 
 @dataclass(frozen=True)
@@ -53,8 +85,8 @@ class NodeBase(ABC):
     """
 
     name: str
-    requires: tuple[Asset, ...] = ()
-    provides: tuple[Asset, ...] = ()
+    requires: tuple[Asset[Any], ...] = ()
+    provides: tuple[Asset[Any], ...] = ()
 
     @abstractmethod
     def execute(self, context: TaskContext) -> None:
@@ -70,7 +102,7 @@ class DataSource(NodeBase):
     DataSource generally only uses 'provides'.
     """
 
-    def fetch(self) -> dict[Asset, Any]:
+    def fetch(self) -> dict[Asset[Any], Any]:
         raise NotImplementedError
 
     def execute(self, context: TaskContext) -> None:
@@ -91,7 +123,7 @@ class Task(NodeBase):
     Task uses both 'requires' and 'provides'.
     """
 
-    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+    def run(self, inputs: dict[Asset[T], Any]) -> dict[Asset[Any], Any]:
         raise NotImplementedError
 
     def execute(self, context: TaskContext) -> None:
