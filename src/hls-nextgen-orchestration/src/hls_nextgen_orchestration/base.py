@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, TypeVar
@@ -109,7 +110,12 @@ class DataSource(NodeBase):
 
     def execute(self, context: TaskContext) -> None:
         logger.info(f"Running DataSource: {self.name}")
-        results = self.fetch()
+
+        cwd = os.getcwd()
+        try:
+            results = self.fetch()
+        finally:
+            os.chdir(cwd)
 
         for asset in self.provides:
             if asset not in results:
@@ -135,7 +141,11 @@ class Task(NodeBase):
         inputs = {asset: context.get(asset) for asset in self.requires}
 
         # 2. Run Logic
-        outputs = self.run(inputs)
+        cwd = os.getcwd()
+        try:
+            outputs = self.run(inputs)
+        finally:
+            os.chdir(cwd)
 
         # 3. Validate & Store Outputs
         for asset in self.provides:
