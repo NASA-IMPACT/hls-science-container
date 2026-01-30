@@ -136,6 +136,7 @@ class CheckSolarZenith(Task):
         validate_command("check_solar_zenith_landsat")
 
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+        # FIXME: we can inline this check as a Python call ^_^
         mtl_path: Path = inputs[MTL_FILE]
         logger.info("Checking Solar Zenith...")
         result = subprocess.run(
@@ -158,23 +159,24 @@ class RunFmask(Task):
         validate_command("gdal_translate")
 
     def run(self, inputs: dict[Any, Any]) -> dict[Asset[Path], Path]:
+        # FIXME: this _could_ be reused for Sentinel-2 if we have an toggle
+        # to check `fmask_out.txt` so we can check the output
         config: EnvConfig = inputs[CONFIG]
         granule_dir: Path = inputs[GRANULE_DIR]
-        cwd = os.getcwd()
-        os.chdir(granule_dir)
         fmask_bin_path = granule_dir / "fmask.bin"
-        try:
-            logger.info("Running Fmask...")
-            with open("fmask_out.txt", "a") as outfile:
-                subprocess.run(["run_Fmask.sh"], stdout=outfile, check=True)
-            fmask_tif = f"{config.granule}_Fmask4.tif"
-            fmask_bin = "fmask.bin"
-            logger.info("Converting Fmask to ENVI binary...")
-            subprocess.run(
-                ["gdal_translate", "-of", "ENVI", fmask_tif, fmask_bin], check=True
-            )
-        finally:
-            os.chdir(cwd)
+
+        logger.info("Running Fmask...")
+        os.chdir(granule_dir)
+        with open("fmask_out.txt", "a") as outfile:
+            subprocess.run(["run_Fmask.sh"], stdout=outfile, check=True)
+        fmask_tif = f"{config.granule}_Fmask4.tif"
+
+        logger.info("Converting Fmask to ENVI binary...")
+        subprocess.run(
+            ["gdal_translate", "-of", "ENVI", fmask_tif, fmask_bin_path.name],
+            check=True,
+        )
+
         if not fmask_bin_path.exists():
             raise RuntimeError(f"Output file missing: {fmask_bin_path}")
         return {FMASK_BIN: fmask_bin_path}
@@ -213,15 +215,14 @@ class ConvertToEspa(Task):
         mtl_path: Path = inputs[MTL_FILE]
         granule_dir: Path = inputs[GRANULE_DIR]
         espa_xml_path = granule_dir / f"{config.granule}.xml"
-        cwd = os.getcwd()
+
+        logger.info("Convert to ESPA")
         os.chdir(granule_dir)
-        try:
-            logger.info("Convert to ESPA")
-            subprocess.run(["convert_lpgs_to_espa", f"--mtl={mtl_path}"], check=True)
-        finally:
-            os.chdir(cwd)
+        subprocess.run(["convert_lpgs_to_espa", f"--mtl={mtl_path}"], check=True)
+
         if not espa_xml_path.exists():
             raise RuntimeError(f"Output file missing: {espa_xml_path}")
+
         return {ESPA_XML: espa_xml_path}
 
 
@@ -234,13 +235,12 @@ class RunLaSRC(Task):
         _ = inputs[SOLAR_VALID]
         xml_file: Path = inputs[ESPA_XML]
         granule_dir = xml_file.parent
-        cwd = os.getcwd()
+
         os.chdir(granule_dir)
-        try:
-            logger.info("Run lasrc")
-            subprocess.run(["do_lasrc_landsat.py", "--xml", str(xml_file)], check=True)
-        finally:
-            os.chdir(cwd)
+        logger.info("Run lasrc")
+        subprocess.run(["do_lasrc_landsat.py", "--xml", str(xml_file)], check=True)
+
+        # FIXME: check for output
         return {LASRC_DONE: True}
 
 
@@ -279,17 +279,16 @@ class CreateHlsXml(Task):
         espa_xml: Path = inputs[ESPA_XML]
         granule_dir = espa_xml.parent
         hls_xml = granule_dir / f"{config.granule}_hls.xml"
-        cwd = os.getcwd()
+
+        logger.info("Create updated espa xml")
         os.chdir(granule_dir)
-        try:
-            logger.info("Create updated espa xml")
-            subprocess.run(
-                ["create_landsat_sr_hdf_xml", str(espa_xml), str(hls_xml)], check=True
-            )
-        finally:
-            os.chdir(cwd)
+        subprocess.run(
+            ["create_landsat_sr_hdf_xml", str(espa_xml), str(hls_xml)], check=True
+        )
+
         if not hls_xml.exists():
             raise RuntimeError(f"Output file missing: {hls_xml}")
+
         return {HLS_XML: hls_xml}
 
 
@@ -302,15 +301,13 @@ class ConvertToHdf(Task):
         xml: Path = inputs[HLS_XML]
         granule_dir = xml.parent
         sr_hdf = granule_dir / "sr.hdf"
-        cwd = os.getcwd()
+
+        logger.info("Convert to HDF")
         os.chdir(granule_dir)
-        try:
-            logger.info("Convert to HDF")
-            subprocess.run(
-                ["convert_espa_to_hdf", f"--xml={xml}", f"--hdf={sr_hdf}"], check=True
-            )
-        finally:
-            os.chdir(cwd)
+        subprocess.run(
+            ["convert_espa_to_hdf", f"--xml={xml}", f"--hdf={sr_hdf}"], check=True
+        )
+
         if not sr_hdf.exists():
             raise RuntimeError(f"Output file missing: {sr_hdf}")
         return {SR_HDF: sr_hdf}
