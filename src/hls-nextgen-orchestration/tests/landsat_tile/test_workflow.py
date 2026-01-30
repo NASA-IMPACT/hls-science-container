@@ -52,7 +52,7 @@ class TileTestContext:
 
 
 @pytest.fixture
-def tile_context(s3_client: S3Client, monkeypatch) -> TileTestContext:
+def tile_context(s3_client: S3Client, tmp_path, monkeypatch) -> TileTestContext:
     """
     Prepares the S3 environment, sets environment variables, and returns
     config values for assertions.
@@ -76,6 +76,7 @@ def tile_context(s3_client: S3Client, monkeypatch) -> TileTestContext:
     monkeypatch.setenv("INPUT_BUCKET", IN_BUCKET)
     monkeypatch.setenv("OUTPUT_BUCKET", OUT_BUCKET)
     monkeypatch.setenv("GIBS_OUTPUT_BUCKET", GIBS_BUCKET)
+    monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
 
     return TileTestContext(
         job_id=JOB_ID,
@@ -92,43 +93,36 @@ def tile_context(s3_client: S3Client, monkeypatch) -> TileTestContext:
 
 
 def test_pipeline_end_to_end(
-    mock_binaries, tile_context: TileTestContext, s3_client: S3Client, tmp_path
+    mock_binaries, tile_context: TileTestContext, s3_client: S3Client
 ):
     """
     Runs the full landsat tile pipeline using mocked binaries and mocked S3.
     """
-    # Patch Working Directory to use tmp_path
-    with patch(
-        "hls_nextgen_orchestration.landsat_tile.tasks.EnvConfig.working_dir",
-        new_callable=PropertyMock,
-    ) as mock_wd:
-        mock_wd.return_value = tmp_path / "scratch" / tile_context.job_id
+    # 1. Construct Pipeline
+    pipeline = construct_pipeline()
 
-        # 1. Construct Pipeline
-        pipeline = construct_pipeline()
+    # 2. Run Pipeline
+    context = pipeline.run()
 
-        # 2. Run Pipeline
-        context = pipeline.run()
+    # 3. Verify Success
+    assert context.exit_code == 0
+    assert context.get(UPLOAD_COMPLETE) is True
 
-        # 3. Verify Success
-        assert context.exit_code == 0
-        assert context.get(UPLOAD_COMPLETE) is True
+    # 4. Verify Side Effects (S3 Upload)
+    # Check Main Product
+    objs = s3_client.list_objects(
+        Bucket=tile_context.out_bucket, Prefix=tile_context.expected_s3_prefix
+    )
+    assert "Contents" in objs
+    keys = [o["Key"] for o in objs["Contents"]]
 
-        # 4. Verify Side Effects (S3 Upload)
-        # Check Main Product
-        objs = s3_client.list_objects(
-            Bucket=tile_context.out_bucket, Prefix=tile_context.expected_s3_prefix
-        )
-        assert "Contents" in objs
-        keys = [o["Key"] for o in objs["Contents"]]
+    # Verify specific expected files exist
+    assert any(f"{tile_context.full_granule_id}.jpg" in k for k in keys)
+    assert any(f"{tile_context.full_granule_id}.json" in k for k in keys)
 
-        # Verify specific expected files exist
-        assert any(f"{tile_context.full_granule_id}.jpg" in k for k in keys)
-        assert any(f"{tile_context.full_granule_id}.json" in k for k in keys)
-
-        # Verify GIBS Uploads
-        gibs_prefix = "L30/data/2020001"
-        gibs_objs = s3_client.list_objects(
-            Bucket=tile_context.gibs_bucket, Prefix=gibs_prefix
-        )
-        assert "Contents" in gibs_objs
+    # Verify GIBS Uploads
+    gibs_prefix = "L30/data/2020001"
+    gibs_objs = s3_client.list_objects(
+        Bucket=tile_context.gibs_bucket, Prefix=gibs_prefix
+    )
+    assert "Contents" in gibs_objs

@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime as dt
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 import boto3
 import pytest
@@ -63,27 +63,22 @@ def mock_config(tmp_path):
     """
     Creates an EnvConfig that points to a temporary directory.
     """
-    with patch(
-        "hls_nextgen_orchestration.landsat_tile.tasks.EnvConfig.working_dir",
-        new_callable=PropertyMock,
-    ) as mock_wd:
-        mock_wd.return_value = tmp_path / "scratch" / JOB_ID
+    config = EnvConfig(
+        job_id=JOB_ID,
+        pathrow_list=PATHROW_LIST.split(","),
+        date=DATE,
+        mgrs=MGRS,
+        mgrs_ulx=MGRS_ULX,
+        mgrs_uly=MGRS_ULY,
+        input_bucket=BUCKET_IN,
+        output_bucket=BUCKET_OUT,
+        gibs_bucket=BUCKET_GIBS,
+        working_dir=tmp_path,
+    )
+    if not config.working_dir.exists():
+        config.working_dir.mkdir(parents=True)
 
-        config = EnvConfig(
-            job_id=JOB_ID,
-            pathrow_list=PATHROW_LIST.split(","),
-            date=DATE,
-            mgrs=MGRS,
-            mgrs_ulx=MGRS_ULX,
-            mgrs_uly=MGRS_ULY,
-            input_bucket=BUCKET_IN,
-            output_bucket=BUCKET_OUT,
-            gibs_bucket=BUCKET_GIBS,
-        )
-        if not config.working_dir.exists():
-            config.working_dir.mkdir(parents=True)
-
-        yield config
+    yield config
 
 
 def test_env_source(monkeypatch, tmp_path):
@@ -97,23 +92,18 @@ def test_env_source(monkeypatch, tmp_path):
     monkeypatch.setenv("INPUT_BUCKET", BUCKET_IN)
     monkeypatch.setenv("OUTPUT_BUCKET", BUCKET_OUT)
     monkeypatch.setenv("GIBS_OUTPUT_BUCKET", BUCKET_GIBS)
+    monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
 
-    with patch(
-        "hls_nextgen_orchestration.landsat_tile.tasks.EnvConfig.working_dir",
-        new_callable=PropertyMock,
-    ) as mock_wd:
-        mock_wd.return_value = tmp_path / JOB_ID
+    source = EnvSource("test_source", provides=(CONFIG,))
+    result = source.fetch()
 
-        source = EnvSource("test_source", provides=(CONFIG,))
-        result = source.fetch()
-
-        assert CONFIG in result
-        cfg = result[CONFIG]
-        assert cfg.job_id == JOB_ID
-        assert cfg.pathrow_list == ["025030"]
-        assert cfg.date == DATE
-        assert cfg.mgrs == MGRS
-        assert cfg.working_dir.exists()
+    assert CONFIG in result
+    cfg = result[CONFIG]
+    assert cfg.job_id == JOB_ID
+    assert cfg.pathrow_list == ["025030"]
+    assert cfg.date == DATE
+    assert cfg.mgrs == MGRS
+    assert cfg.working_dir.exists()
 
 
 def test_process_path_rows(mock_binaries, mock_config, mock_aws_s3):

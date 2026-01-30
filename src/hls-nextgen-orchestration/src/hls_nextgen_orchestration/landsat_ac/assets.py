@@ -49,17 +49,9 @@ class EnvConfig:
     output_bucket: str
     prefix: str
     ac_code: str
+    working_dir: Path
+    granule_dir: Path
     debug_bucket: str | None = None
-
-    @property
-    def working_dir(self) -> Path:
-        """Get the working directory path."""
-        return Path(f"/var/scratch/{self.job_id}")
-
-    @property
-    def granule_dir(self) -> Path:
-        """Get the specific granule directory path."""
-        return self.working_dir / self.granule
 
     @property
     def landsat_granule(self) -> LandsatGranule:

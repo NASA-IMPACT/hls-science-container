@@ -4,7 +4,7 @@ import datetime as dt
 import logging
 import os
 import subprocess
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -38,16 +38,34 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class EnvSource(DataSource):
+    """Reads environment variables to configure the processing job."""
+
+    scratch_dir: Path = field(
+        default_factory=lambda: Path(os.getenv("SCRATCH_DIR", "/var/scratch"))
+    )
+    working_dir: Path | None = None
+    granule_dir: Path | None = None
+
     def fetch(self) -> dict[Asset[EnvConfig], EnvConfig]:
+        job_id = os.environ.get("AWS_BATCH_JOB_ID", "local_job")
+        granule = os.environ["GRANULE"]
+
+        working_dir = (
+            self.working_dir if self.working_dir else self.scratch_dir / job_id
+        )
+        granule_dir = self.granule_dir or working_dir / granule
+
         config = EnvConfig(
-            job_id=os.environ.get("AWS_BATCH_JOB_ID", "local_job"),
-            granule=os.environ["GRANULE"],
+            job_id=job_id,
+            granule=granule,
             input_bucket=os.environ["INPUT_BUCKET"],
             output_bucket=os.environ["OUTPUT_BUCKET"],
             prefix=os.environ["PREFIX"],
             ac_code=os.environ["ACCODE"],
+            working_dir=working_dir,
+            granule_dir=granule_dir,
             debug_bucket=os.environ.get("DEBUG_BUCKET"),
         )
         if not config.granule_dir.exists():
@@ -99,6 +117,27 @@ class DownloadGranule(Task):
 
         return {
             CONFIG: updated_config,
+            GRANULE_DIR: config.granule_dir,
+            MTL_FILE: mtl_path,
+        }
+
+
+@dataclass(frozen=True)
+class LocalGranule(Task):
+    """Locate and describe a Landsat granule on local storage"""
+
+    def __post_init__(self) -> None:
+        validate_command("download_landsat")
+
+    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Any], Any]:
+        config: EnvConfig = inputs[CONFIG]
+
+        mtl_path = config.granule_dir / f"{config.granule}_MTL.txt"
+        if not mtl_path.exists():
+            raise RuntimeError(f"Output file missing: {mtl_path}")
+
+        return {
+            CONFIG: config,
             GRANULE_DIR: config.granule_dir,
             MTL_FILE: mtl_path,
         }

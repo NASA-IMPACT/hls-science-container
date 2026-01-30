@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from unittest.mock import PropertyMock, patch
 
 import pytest
 
@@ -33,14 +32,9 @@ def test_landsat_pipeline_end_to_end(
     monkeypatch.setenv("OUTPUT_BUCKET", OUT_BUCKET)
     monkeypatch.setenv("PREFIX", "L8")
     monkeypatch.setenv("ACCODE", "LaSRC")
+    monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
 
-    with patch(
-        "hls_nextgen_orchestration.landsat_ac.tasks.EnvConfig.working_dir",
-        new_callable=PropertyMock,
-    ) as mock_wd:
-        mock_wd.return_value = tmp_path / "scratch" / JOB_ID
+    pipeline = construct_pipeline()
+    context = pipeline.run()
 
-        pipeline = construct_pipeline()
-        context = pipeline.run()
-
-        assert context.get(UPLOAD_COMPLETE) is True
+    assert context.get(UPLOAD_COMPLETE) is True

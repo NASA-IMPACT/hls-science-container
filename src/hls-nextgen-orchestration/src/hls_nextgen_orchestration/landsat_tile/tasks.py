@@ -5,7 +5,7 @@ import logging
 import os
 import shutil
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -80,9 +80,12 @@ def get_nbar_names(granule: HlsGranule) -> dict[str, str]:
 
 @dataclass(frozen=True)
 class EnvSource(DataSource):
-    """
-    Reads environment variables to configure the processing job.
-    """
+    """Reads environment variables to configure the processing job."""
+
+    scratch_dir: Path = field(
+        default_factory=lambda: Path(os.getenv("SCRATCH_DIR", "/var/scratch"))
+    )
+    working_dir: Path | None = None
 
     def fetch(self) -> dict[Any, Any]:
         """
@@ -93,9 +96,15 @@ class EnvSource(DataSource):
         dict
             Dictionary containing the EnvConfig object.
         """
+        job_id = os.environ.get("AWS_BATCH_JOB_ID", "local_job")
         pathrows = os.environ["PATHROW_LIST"].split(",")
+
+        working_dir = (
+            self.working_dir if self.working_dir else self.scratch_dir / job_id
+        )
+
         config = EnvConfig(
-            job_id=os.environ.get("AWS_BATCH_JOB_ID", "local_job"),
+            job_id=job_id,
             pathrow_list=[p.strip() for p in pathrows if p.strip()],
             date=dt.datetime.strptime(os.environ["DATE"], "%Y-%m-%d").date(),
             mgrs=os.environ["MGRS"],
@@ -104,6 +113,7 @@ class EnvSource(DataSource):
             input_bucket=os.environ["INPUT_BUCKET"],
             output_bucket=os.environ["OUTPUT_BUCKET"],
             gibs_bucket=os.environ["GIBS_OUTPUT_BUCKET"],
+            working_dir=working_dir,
             debug_bucket=os.environ.get("DEBUG_BUCKET"),
         )
 

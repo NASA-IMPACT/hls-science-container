@@ -1,5 +1,4 @@
 from typing import TYPE_CHECKING
-from unittest.mock import PropertyMock, patch
 
 import boto3
 import pytest
@@ -50,15 +49,19 @@ BUCKET_OUT = "out-bucket"
 
 @pytest.fixture
 def mock_config(tmp_path):
-    with patch(
-        "hls_nextgen_orchestration.landsat_ac.tasks.EnvConfig.working_dir",
-        new_callable=PropertyMock,
-    ) as mock_wd:
-        mock_wd.return_value = tmp_path / "scratch" / JOB_ID
-        config = EnvConfig(JOB_ID, GRANULE, BUCKET_IN, BUCKET_OUT, "L8", "LaSRC")
-        if not config.granule_dir.exists():
-            config.granule_dir.mkdir(parents=True)
-        yield config
+    config = EnvConfig(
+        job_id=JOB_ID,
+        granule=GRANULE,
+        input_bucket=BUCKET_IN,
+        output_bucket=BUCKET_OUT,
+        prefix="L8",
+        ac_code="LaSRC",
+        working_dir=tmp_path / "jo-id",
+        granule_dir=tmp_path / "jo-id" / "granule",
+    )
+    if not config.granule_dir.exists():
+        config.granule_dir.mkdir(parents=True)
+    yield config
 
 
 def test_env_source(monkeypatch, tmp_path):
@@ -70,21 +73,14 @@ def test_env_source(monkeypatch, tmp_path):
     monkeypatch.setenv("PREFIX", "L8")
     monkeypatch.setenv("ACCODE", "LaSRC")
 
-    # Patch Path inside the class property to avoid /var/scratch issues
-    with patch(
-        "hls_nextgen_orchestration.landsat_ac.tasks.EnvConfig.working_dir",
-        new_callable=PropertyMock,
-    ) as mock_wd:
-        mock_wd.return_value = tmp_path / JOB_ID
+    source = EnvSource("test_source", provides=(CONFIG,), scratch_dir=tmp_path)
+    result = source.fetch()
 
-        source = EnvSource("test_source", provides=(CONFIG,))
-        result = source.fetch()
-
-        assert CONFIG in result
-        cfg = result[CONFIG]
-        assert cfg.job_id == JOB_ID
-        assert cfg.granule == GRANULE
-        assert cfg.granule_dir.exists()
+    assert CONFIG in result
+    cfg = result[CONFIG]
+    assert cfg.job_id == JOB_ID
+    assert cfg.granule == GRANULE
+    assert cfg.granule_dir.exists()
 
 
 def test_download_granule(mock_binaries, mock_config, monkeypatch):

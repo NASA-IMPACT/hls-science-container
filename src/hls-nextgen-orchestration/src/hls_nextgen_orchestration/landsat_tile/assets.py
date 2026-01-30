@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from hls_nextgen_orchestration.base import Asset
@@ -47,12 +47,8 @@ class EnvConfig:
     input_bucket: str
     output_bucket: str
     gibs_bucket: str
+    working_dir: Path
     debug_bucket: str | None = None
-
-    @property
-    def working_dir(self) -> Path:
-        """Get the working directory."""
-        return Path(f"/var/scratch/{self.job_id}")
 
     @property
     def year(self) -> str:
