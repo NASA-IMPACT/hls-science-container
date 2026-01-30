@@ -85,7 +85,9 @@ class EnvSource(DataSource):
     scratch_dir: Path = field(
         default_factory=lambda: Path(os.getenv("SCRATCH_DIR", "/var/scratch"))
     )
-    working_dir: Path | None = None
+    working_dir: Path | None = field(
+        default_factory=lambda: Path(d) if (d := os.getenv("WORKING_DIR")) else None
+    )
 
     def fetch(self) -> dict[Any, Any]:
         """

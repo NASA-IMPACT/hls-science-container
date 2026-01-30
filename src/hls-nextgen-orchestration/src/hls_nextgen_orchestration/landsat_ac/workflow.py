@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from pathlib import Path
 
 from hls_nextgen_orchestration.base import Pipeline, PipelineBuilder
 
@@ -38,10 +39,20 @@ from .tasks import (
 )
 
 
-def construct_pipeline() -> Pipeline:
+def construct_pipeline(
+    working_dir: Path | None = None,
+    granule_dir: Path | None = None,
+) -> Pipeline:
     return (
         PipelineBuilder()
-        .add(EnvSource("EnvConfig", provides=(CONFIG,)))
+        .add(
+            EnvSource(
+                "EnvConfig",
+                provides=(CONFIG,),
+                working_dir=working_dir,
+                granule_dir=granule_dir,
+            )
+        )
         .add(
             DownloadGranule(
                 "Download", requires=(CONFIG,), provides=(CONFIG, GRANULE_DIR, MTL_FILE)
