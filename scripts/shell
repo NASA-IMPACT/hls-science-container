@@ -4,6 +4,8 @@ set -e
 
 export IMAGE_NAME=${IMAGE_NAME:-hls-atmospheric-correction}
 
+TARGET=dev
+
 BUILD=$(dirname "$0")/build
 ${BUILD}
 
@@ -16,5 +18,5 @@ docker run \
     -e LASRC_AUX_DIR=/app/data/lasrc_aux/ \
     -v "${HOME}/.aws/:/root/.aws" \
     -e "AWS_PROFILE=${AWS_PROFILE:-default}" \
-    -it "${IMAGE_NAME}":latest \
+    -it "${IMAGE_NAME}":${TARGET} \
     /bin/bash

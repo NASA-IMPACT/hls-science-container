@@ -30,6 +30,28 @@ RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
     pixi shell-hook --frozen -e default -s bash >> /app/entrypoint.sh && \
     echo 'exec "$@"' >> /app/entrypoint.sh
 
+
+# ===== Development installation
+FROM --platform=${PLATFORM} debian:bookworm-slim AS dev
+
+# Enforce v1.0.0 for STAC specification within PySTAC
+ENV PYSTAC_STAC_VERSION_OVERRIDE=1.0.0
+# Allow GDAL to open MEM dataset with a datapointer (required for hls-hdf_to_cog)
+ENV GDAL_MEM_ENABLE_OPEN=YES
+# Define where Fmask lives (for `run_Fmask.sh`)
+ENV FMASK_PREFIX=/opt/fmask
+# Set variable defining LaSRC version used in HLS product metadata
+ENV ACCODE="LaSRC v3.5.1.0"
+
+RUN --mount=type=cache,target=/root/.cache/rattler/cache \
+    pixi install --frozen -e dev
+
+COPY packages/fmask4/run_Fmask.sh /app/.pixi/envs/default/bin
+COPY src/scripts/*.sh /app/.pixi/envs/default/bin
+
+ENTRYPOINT [ "/bin/bash", "-c" ]
+CMD [ "/bin/bash" ]
+
 # ===== Production installation
 # "Productionize" pixi install: https://pixi.sh/latest/deployment/container/
 FROM --platform=${PLATFORM} debian:bookworm-slim AS prod
@@ -46,8 +68,8 @@ WORKDIR /app
 ENV PYSTAC_STAC_VERSION_OVERRIDE=1.0.0
 # Allow GDAL to open MEM dataset with a datapointer (required for hls-hdf_to_cog)
 ENV GDAL_MEM_ENABLE_OPEN=YES
+# Define where Fmask lives (for `run_Fmask.sh`)
 ENV FMASK_PREFIX=/opt/fmask
-
 # Set variable defining LaSRC version used in HLS product metadata
 ENV ACCODE="LaSRC v3.5.1.0"
 
