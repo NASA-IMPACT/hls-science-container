@@ -113,13 +113,12 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.0-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zlib-1.3.1-hb9d3cd8_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb78ec9c_6.conda
-      - conda: ./src/hls-nextgen-orchestration
       - conda: packages/espa-product-formatter
       - conda: packages/espa-surface-reflectance
       - conda: packages/hls-libs
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/52/b3/2c0d828c9f668292e277ca5232e6160dd5b4b660a3f076f20dd5378baa1e/boto3-1.42.30-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/3d/8d/6d7b016383b1f74dd93611b1c5078bbaddaca901553ab886dcda87cae365/botocore-1.42.30-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ec/98/22e5f4f5ced6cf1aface4b438307a157e9cb7a4bcbd19f4b9dec89b0fe33/boto3-1.42.38-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/04/c1/5db0d5f9a57d5e72dd3b18c7279b0005adaf5ffe5915803ae6216fe86cec/botocore-1.42.38-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/09/40/9d521973cae7f7ef8b1f0d0e28a3db0f851c1f1dca45d4c2ed5360bb7246/dicttoxml-1.7.16-py3-none-any.whl
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -153,6 +152,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/c7/4a/7f7857e04d5499af7c20b82b6bae13cb4ca7543aabcef06b4069a09462d9/untangle-1.2.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/39/08/aaaad47bc4e9dc8c725e68f9d04865dbcb2052843ff09c97b08904852d84/urllib3-2.6.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c0/20/69a0e6058bc5ea74892d089d64dfc3a62ba78917ec5e2cfa70f7c92ba3a5/xmltodict-1.0.2-py3-none-any.whl
+      - pypi: ./src/hls-nextgen-orchestration
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/_openmp_mutex-4.5-7_kmp_llvm.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/affine-2.4.0-pyhd8ed1ab_1.conda
@@ -249,10 +249,9 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.0-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.3.1-h8359307_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
-      - conda: ./src/hls-nextgen-orchestration
       - pypi: https://files.pythonhosted.org/packages/78/b6/6307fbef88d9b5ee7421e68d78a9f162e0da4900bc5f5793f6d3d0e34fb8/annotated_types-0.7.0-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/52/b3/2c0d828c9f668292e277ca5232e6160dd5b4b660a3f076f20dd5378baa1e/boto3-1.42.30-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/3d/8d/6d7b016383b1f74dd93611b1c5078bbaddaca901553ab886dcda87cae365/botocore-1.42.30-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ec/98/22e5f4f5ced6cf1aface4b438307a157e9cb7a4bcbd19f4b9dec89b0fe33/boto3-1.42.38-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/04/c1/5db0d5f9a57d5e72dd3b18c7279b0005adaf5ffe5915803ae6216fe86cec/botocore-1.42.38-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/09/40/9d521973cae7f7ef8b1f0d0e28a3db0f851c1f1dca45d4c2ed5360bb7246/dicttoxml-1.7.16-py3-none-any.whl
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -286,6 +285,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/c7/4a/7f7857e04d5499af7c20b82b6bae13cb4ca7543aabcef06b4069a09462d9/untangle-1.2.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/39/08/aaaad47bc4e9dc8c725e68f9d04865dbcb2052843ff09c97b08904852d84/urllib3-2.6.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c0/20/69a0e6058bc5ea74892d089d64dfc3a62ba78917ec5e2cfa70f7c92ba3a5/xmltodict-1.0.2-py3-none-any.whl
+      - pypi: ./src/hls-nextgen-orchestration
   dev:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
@@ -335,19 +335,19 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb78ec9c_6.conda
       - pypi: https://files.pythonhosted.org/packages/b8/55/25c543864abc270f5fdd7814fa7b69fd23de1c40fb3d7993f4b6391f8d3b/boto3-1.42.34-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/a3/c4/1aba1653afc3cf5ef985235cea05d3e9e6736033f10ebbf102a23fc0152d/boto3_stubs-1.42.34-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/02/a4/e5a47588423b6d6022fc66afa7072b5cdafc207d05477a1b8d1aff337347/boto3_stubs-1.42.38-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/29/99/226fb4b2d141d7ac59465e3cdd2ca3a9a2917d85e1a3160884a78b097bbb/botocore-1.42.34-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/4c/c8/3845c17b89ff19e2c2474801a6737d1766ee8e80cf38d7d97e1fedc28537/botocore_stubs-1.42.34-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/10/99/c45816044000b3958990af230202224eca0b6cdac034a7660d0a7af8e413/botocore_stubs-1.42.38-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e6/ad/3cc14f097111b4de0040c83a525973216457bbeeb63739ef1ed275c1c021/certifi-2026.1.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/98/df/0a1755e750013a2081e863e7cd37e0cdd02664372c754e5560099eb7aa44/cffi-2.0.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/f5/83/6ab5883f57c9c801ce5e5677242328aa45592be8a00644310a008d04f922/charset_normalizer-3.4.4-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/c9/56/e7e69b427c3878352c2fb9b450bd0e19ed552753491d39d7d0a2f5226d41/cryptography-46.0.3-cp311-abi3-manylinux_2_28_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/2b/08/f83e2e0814248b844265802d081f2fac2f1cbe6cd258e72ba14ff006823a/cryptography-46.0.4-cp311-abi3-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/0e/61/66938bbb5fc52dbdf84594873d5b51fb1f7c7794e9c0f5bd885f30bc507b/idna-3.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/14/2f/967ba146e6d58cf6a652da73885f52fc68001525b4197effc174321d70b4/jmespath-1.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a9/21/9b05698b46f218fc0e118e1f8168395c65c8a2c750ae2bab54fc4bd4e0e8/markupsafe-3.0.3-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/7f/2f/f50892fdb28097917b87d358a5fcefd30976289884ff142893edcb0243ba/moto-5.1.20-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/f1/c0/01babfa8cef5f992a2a0f3d52fc1123fbbc336ab6decfdfc8f702e88a8af/mypy_boto3_s3-1.42.21-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/94/06/cb6050ecd72f5fa449bac80ad1a4711719367c4f545201317f36e3999784/mypy_boto3_s3-1.42.37-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c9/33/a7cbfccc39056a5cf8126b7aab4c8bafbedd4f0ca68ae40ecb627a2d2cd3/py_partiql_parser-0.6.3-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/0c/c3/44f3fbbfa403ea2a7c779186dc20772604442dde72947e7d01069cbe98e3/pycparser-3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl
@@ -395,19 +395,19 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing_extensions-4.15.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
       - pypi: https://files.pythonhosted.org/packages/b8/55/25c543864abc270f5fdd7814fa7b69fd23de1c40fb3d7993f4b6391f8d3b/boto3-1.42.34-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/a3/c4/1aba1653afc3cf5ef985235cea05d3e9e6736033f10ebbf102a23fc0152d/boto3_stubs-1.42.34-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/02/a4/e5a47588423b6d6022fc66afa7072b5cdafc207d05477a1b8d1aff337347/boto3_stubs-1.42.38-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/29/99/226fb4b2d141d7ac59465e3cdd2ca3a9a2917d85e1a3160884a78b097bbb/botocore-1.42.34-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/4c/c8/3845c17b89ff19e2c2474801a6737d1766ee8e80cf38d7d97e1fedc28537/botocore_stubs-1.42.34-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/10/99/c45816044000b3958990af230202224eca0b6cdac034a7660d0a7af8e413/botocore_stubs-1.42.38-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e6/ad/3cc14f097111b4de0040c83a525973216457bbeeb63739ef1ed275c1c021/certifi-2026.1.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/4a/d2/a6c0296814556c68ee32009d9c2ad4f85f2707cdecfd7727951ec228005d/cffi-2.0.0-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/97/45/4b3a1239bbacd321068ea6e7ac28875b03ab8bc0aa0966452db17cd36714/charset_normalizer-3.4.4-cp313-cp313-macosx_10_13_universal2.whl
-      - pypi: https://files.pythonhosted.org/packages/1d/42/9c391dd801d6cf0d561b5890549d4b27bafcc53b39c31a817e69d87c625b/cryptography-46.0.3-cp311-abi3-macosx_10_9_universal2.whl
+      - pypi: https://files.pythonhosted.org/packages/8d/99/157aae7949a5f30d51fcb1a9851e8ebd5c74bf99b5285d8bb4b8b9ee641e/cryptography-46.0.4-cp311-abi3-macosx_10_9_universal2.whl
       - pypi: https://files.pythonhosted.org/packages/0e/61/66938bbb5fc52dbdf84594873d5b51fb1f7c7794e9c0f5bd885f30bc507b/idna-3.11-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/14/2f/967ba146e6d58cf6a652da73885f52fc68001525b4197effc174321d70b4/jmespath-1.1.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9c/d9/5f7756922cdd676869eca1c4e3c0cd0df60ed30199ffd775e319089cb3ed/markupsafe-3.0.3-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/7f/2f/f50892fdb28097917b87d358a5fcefd30976289884ff142893edcb0243ba/moto-5.1.20-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/f1/c0/01babfa8cef5f992a2a0f3d52fc1123fbbc336ab6decfdfc8f702e88a8af/mypy_boto3_s3-1.42.21-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/94/06/cb6050ecd72f5fa449bac80ad1a4711719367c4f545201317f36e3999784/mypy_boto3_s3-1.42.37-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c9/33/a7cbfccc39056a5cf8126b7aab4c8bafbedd4f0ca68ae40ecb627a2d2cd3/py_partiql_parser-0.6.3-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/0c/c3/44f3fbbfa403ea2a7c779186dc20772604442dde72947e7d01069cbe98e3/pycparser-3.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl
@@ -529,16 +529,6 @@ packages:
   purls: []
   size: 33602
   timestamp: 1733513285902
-- pypi: https://files.pythonhosted.org/packages/52/b3/2c0d828c9f668292e277ca5232e6160dd5b4b660a3f076f20dd5378baa1e/boto3-1.42.30-py3-none-any.whl
-  name: boto3
-  version: 1.42.30
-  sha256: d7e548bea65e0ae2c465c77de937bc686b591aee6a352d5a19a16bc751e591c1
-  requires_dist:
-  - botocore>=1.42.30,<1.43.0
-  - jmespath>=0.7.1,<2.0.0
-  - s3transfer>=0.16.0,<0.17.0
-  - botocore[crt]>=1.21.0,<2.0a0 ; extra == 'crt'
-  requires_python: '>=3.9'
 - pypi: https://files.pythonhosted.org/packages/b8/55/25c543864abc270f5fdd7814fa7b69fd23de1c40fb3d7993f4b6391f8d3b/boto3-1.42.34-py3-none-any.whl
   name: boto3
   version: 1.42.34
@@ -549,16 +539,26 @@ packages:
   - s3transfer>=0.16.0,<0.17.0
   - botocore[crt]>=1.21.0,<2.0a0 ; extra == 'crt'
   requires_python: '>=3.9'
-- pypi: https://files.pythonhosted.org/packages/a3/c4/1aba1653afc3cf5ef985235cea05d3e9e6736033f10ebbf102a23fc0152d/boto3_stubs-1.42.34-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/ec/98/22e5f4f5ced6cf1aface4b438307a157e9cb7a4bcbd19f4b9dec89b0fe33/boto3-1.42.38-py3-none-any.whl
+  name: boto3
+  version: 1.42.38
+  sha256: b5a748b3fdddba8aa2988af0e462996ef72dc2760b0eab30329b9d201d4b38f2
+  requires_dist:
+  - botocore>=1.42.38,<1.43.0
+  - jmespath>=0.7.1,<2.0.0
+  - s3transfer>=0.16.0,<0.17.0
+  - botocore[crt]>=1.21.0,<2.0a0 ; extra == 'crt'
+  requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/02/a4/e5a47588423b6d6022fc66afa7072b5cdafc207d05477a1b8d1aff337347/boto3_stubs-1.42.38-py3-none-any.whl
   name: boto3-stubs
-  version: 1.42.34
-  sha256: eb98cf3cc0a74ed75ea4945152cf10da57c8c9628104a13db16cde10176219ab
+  version: 1.42.38
+  sha256: 27b20004788b6bf437d4f8f2f8a81d29b13e0c974e1a46c640b58c90d90f107c
   requires_dist:
   - botocore-stubs
   - types-s3transfer
   - typing-extensions>=4.1.0 ; python_full_version < '3.12'
   - boto3-stubs-full>=1.42.0,<1.43.0 ; extra == 'full'
-  - boto3==1.42.34 ; extra == 'boto3'
+  - boto3==1.42.38 ; extra == 'boto3'
   - mypy-boto3-accessanalyzer>=1.42.0,<1.43.0 ; extra == 'all'
   - mypy-boto3-account>=1.42.0,<1.43.0 ; extra == 'all'
   - mypy-boto3-acm>=1.42.0,<1.43.0 ; extra == 'all'
@@ -1395,17 +1395,6 @@ packages:
   - mypy-boto3-workspaces-web>=1.42.0,<1.43.0 ; extra == 'workspaces-web'
   - mypy-boto3-xray>=1.42.0,<1.43.0 ; extra == 'xray'
   requires_python: '>=3.9'
-- pypi: https://files.pythonhosted.org/packages/3d/8d/6d7b016383b1f74dd93611b1c5078bbaddaca901553ab886dcda87cae365/botocore-1.42.30-py3-none-any.whl
-  name: botocore
-  version: 1.42.30
-  sha256: 97070a438cac92430bb7b65f8ebd7075224f4a289719da4ee293d22d1e98db02
-  requires_dist:
-  - jmespath>=0.7.1,<2.0.0
-  - python-dateutil>=2.1,<3.0.0
-  - urllib3>=1.25.4,<1.27 ; python_full_version < '3.10'
-  - urllib3>=1.25.4,!=2.2.0,<3 ; python_full_version >= '3.10'
-  - awscrt==0.29.2 ; extra == 'crt'
-  requires_python: '>=3.9'
 - pypi: https://files.pythonhosted.org/packages/29/99/226fb4b2d141d7ac59465e3cdd2ca3a9a2917d85e1a3160884a78b097bbb/botocore-1.42.34-py3-none-any.whl
   name: botocore
   version: 1.42.34
@@ -1417,10 +1406,21 @@ packages:
   - urllib3>=1.25.4,!=2.2.0,<3 ; python_full_version >= '3.10'
   - awscrt==0.29.2 ; extra == 'crt'
   requires_python: '>=3.9'
-- pypi: https://files.pythonhosted.org/packages/4c/c8/3845c17b89ff19e2c2474801a6737d1766ee8e80cf38d7d97e1fedc28537/botocore_stubs-1.42.34-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/04/c1/5db0d5f9a57d5e72dd3b18c7279b0005adaf5ffe5915803ae6216fe86cec/botocore-1.42.38-py3-none-any.whl
+  name: botocore
+  version: 1.42.38
+  sha256: b67e0c4989a6bdd459cb49274df05003179165567b7789d8d920cdbdc6c2661f
+  requires_dist:
+  - jmespath>=0.7.1,<2.0.0
+  - python-dateutil>=2.1,<3.0.0
+  - urllib3>=1.25.4,<1.27 ; python_full_version < '3.10'
+  - urllib3>=1.25.4,!=2.2.0,<3 ; python_full_version >= '3.10'
+  - awscrt==0.29.2 ; extra == 'crt'
+  requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/10/99/c45816044000b3958990af230202224eca0b6cdac034a7660d0a7af8e413/botocore_stubs-1.42.38-py3-none-any.whl
   name: botocore-stubs
-  version: 1.42.34
-  sha256: afc08661122eff6939d88cd250084ac148e392f8a1a389d51a31a4b9dab59358
+  version: 1.42.38
+  sha256: e21dadac08ee134cc0713884545c01b8eb1552c77e0d0c55c05e9584590e2b28
   requires_dist:
   - types-awscrt
   - botocore ; extra == 'botocore'
@@ -1563,17 +1563,17 @@ packages:
   - pkg:pypi/colorama?source=hash-mapping
   size: 27011
   timestamp: 1733218222191
-- pypi: https://files.pythonhosted.org/packages/1d/42/9c391dd801d6cf0d561b5890549d4b27bafcc53b39c31a817e69d87c625b/cryptography-46.0.3-cp311-abi3-macosx_10_9_universal2.whl
+- pypi: https://files.pythonhosted.org/packages/2b/08/f83e2e0814248b844265802d081f2fac2f1cbe6cd258e72ba14ff006823a/cryptography-46.0.4-cp311-abi3-manylinux_2_28_x86_64.whl
   name: cryptography
-  version: 46.0.3
-  sha256: 109d4ddfadf17e8e7779c39f9b18111a09efb969a301a31e987416a0191ed93a
+  version: 46.0.4
+  sha256: 0a9ad24359fee86f131836a9ac3bffc9329e956624a2d379b613f8f8abaf5255
   requires_dist:
   - cffi>=1.14 ; python_full_version == '3.8.*' and platform_python_implementation != 'PyPy'
   - cffi>=2.0.0 ; python_full_version >= '3.9' and platform_python_implementation != 'PyPy'
   - typing-extensions>=4.13.2 ; python_full_version < '3.11'
   - bcrypt>=3.1.5 ; extra == 'ssh'
   - nox[uv]>=2024.4.15 ; extra == 'nox'
-  - cryptography-vectors==46.0.3 ; extra == 'test'
+  - cryptography-vectors==46.0.4 ; extra == 'test'
   - pytest>=7.4.0 ; extra == 'test'
   - pytest-benchmark>=4.0 ; extra == 'test'
   - pytest-cov>=2.10.1 ; extra == 'test'
@@ -1593,17 +1593,17 @@ packages:
   - check-sdist ; extra == 'pep8test'
   - click>=8.0.1 ; extra == 'pep8test'
   requires_python: '>=3.8,!=3.9.0,!=3.9.1'
-- pypi: https://files.pythonhosted.org/packages/c9/56/e7e69b427c3878352c2fb9b450bd0e19ed552753491d39d7d0a2f5226d41/cryptography-46.0.3-cp311-abi3-manylinux_2_28_x86_64.whl
+- pypi: https://files.pythonhosted.org/packages/8d/99/157aae7949a5f30d51fcb1a9851e8ebd5c74bf99b5285d8bb4b8b9ee641e/cryptography-46.0.4-cp311-abi3-macosx_10_9_universal2.whl
   name: cryptography
-  version: 46.0.3
-  sha256: a2c0cd47381a3229c403062f764160d57d4d175e022c1df84e168c6251a22eec
+  version: 46.0.4
+  sha256: 281526e865ed4166009e235afadf3a4c4cba6056f99336a99efba65336fd5485
   requires_dist:
   - cffi>=1.14 ; python_full_version == '3.8.*' and platform_python_implementation != 'PyPy'
   - cffi>=2.0.0 ; python_full_version >= '3.9' and platform_python_implementation != 'PyPy'
   - typing-extensions>=4.13.2 ; python_full_version < '3.11'
   - bcrypt>=3.1.5 ; extra == 'ssh'
   - nox[uv]>=2024.4.15 ; extra == 'nox'
-  - cryptography-vectors==46.0.3 ; extra == 'test'
+  - cryptography-vectors==46.0.4 ; extra == 'test'
   - pytest>=7.4.0 ; extra == 'test'
   - pytest-benchmark>=4.0 ; extra == 'test'
   - pytest-cov>=2.10.1 ; extra == 'test'
@@ -1927,16 +1927,6 @@ packages:
   - pytest>=9.0.2 ; extra == 'dev'
   - ruff>=0.9.0 ; extra == 'dev'
   requires_python: '>=3.13'
-- conda: ./src/hls-nextgen-orchestration
-  name: hls-nextgen-orchestration
-  version: 0.1.0
-  build: pyh4616a5c_0
-  subdir: noarch
-  variants:
-    target_platform: noarch
-  depends:
-  - python >=3.13
-  - python *
 - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
   name: hls-thumbnails
   version: '0.1'
@@ -3738,10 +3728,10 @@ packages:
   - pkg:pypi/mypy?source=hash-mapping
   size: 11070584
   timestamp: 1765795751296
-- pypi: https://files.pythonhosted.org/packages/f1/c0/01babfa8cef5f992a2a0f3d52fc1123fbbc336ab6decfdfc8f702e88a8af/mypy_boto3_s3-1.42.21-py3-none-any.whl
+- pypi: https://files.pythonhosted.org/packages/94/06/cb6050ecd72f5fa449bac80ad1a4711719367c4f545201317f36e3999784/mypy_boto3_s3-1.42.37-py3-none-any.whl
   name: mypy-boto3-s3
-  version: 1.42.21
-  sha256: f5b7d1ed718ba5b00f67e95a9a38c6a021159d3071ea235e6cf496e584115ded
+  version: 1.42.37
+  sha256: 7c118665f3f583dbfde1013ce47908749f9d2a760f28f59ec65732306ee9cec9
   requires_dist:
   - typing-extensions ; python_full_version < '3.12'
   requires_python: '>=3.9'
