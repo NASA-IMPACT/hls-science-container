@@ -79,7 +79,14 @@ def construct_pipeline(
         .add(RunFmask("Fmask", requires=(CONFIG, GRANULE_DIR), provides=(FMASK_BIN,)))
         .add(
             ConvertScanline(
-                "Scanline", requires=(GRANULE_DIR,), provides=(SCANLINE_DONE,)
+                "Scanline",
+                # Requires "FMASK_BIN" to keep granule dir clean since Fmask
+                # will have issues if this runs first.
+                requires=(
+                    GRANULE_DIR,
+                    FMASK_BIN,
+                ),
+                provides=(SCANLINE_DONE,),
             )
         )
         .add(
@@ -126,9 +133,16 @@ def construct_pipeline(
 
 
 if __name__ == "__main__":
+    import os
     logging.basicConfig(level=logging.INFO)
+
+    if local_granule_dir := os.getenv("LOCAL_GRANULE_DIR"):
+        local_granule_dir = Path(local_granule_dir)
+    else:
+        local_granule_dir = None
+
     try:
-        pipeline = construct_pipeline()
+        pipeline = construct_pipeline(local_granule_dir=local_granule_dir)
         print(pipeline)
         pipeline.run()
     except Exception as e:
