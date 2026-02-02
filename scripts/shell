@@ -6,9 +6,6 @@ export IMAGE_NAME=${IMAGE_NAME:-hls-atmospheric-correction}
 
 TARGET=dev
 
-BUILD=$(dirname "$0")/build
-${BUILD}
-
 docker run \
     -v "$(pwd)/pixi.toml":/app/pixi.toml \
     -v "$(pwd)/pixi.lock":/app/pixi.lock \

@@ -56,6 +56,7 @@ export DOCKER_BUILDKIT=1
 
 # Initialize build arguments
 BUILD_ARGS=(
+    --target "${TARGET}"
     --tag "$IMAGE_NAME:$TARGET"
     --file Dockerfile
     .
