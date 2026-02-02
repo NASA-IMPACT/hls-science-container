@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime as dt
 import logging
 import os
+import shutil
 import subprocess
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -47,6 +48,7 @@ class EnvSource(DataSource):
     )
     working_dir: Path | None = None
     granule_dir: Path | None = None
+    purge_granule_dir: bool = True
 
     def fetch(self) -> dict[Asset[EnvConfig], EnvConfig]:
         job_id = os.environ.get("AWS_BATCH_JOB_ID", "local_job")
@@ -68,8 +70,15 @@ class EnvSource(DataSource):
             granule_dir=granule_dir,
             debug_bucket=os.environ.get("DEBUG_BUCKET"),
         )
+
+        if config.granule_dir.exists() and self.purge_granule_dir:
+            logger.info(f"Deleting pre-existing {granule_dir=}")
+            shutil.rmtree(config.granule_dir)
+
         if not config.granule_dir.exists():
+            logger.info(f"Creating {granule_dir=}")
             config.granule_dir.mkdir(parents=True, exist_ok=True)
+
         return {CONFIG: config}
 
 
@@ -126,21 +135,27 @@ class DownloadGranule(Task):
 class LocalGranule(Task):
     """Locate and describe a Landsat granule on local storage"""
 
+    name: str
+    local_granule_dir: Path
+
     def __post_init__(self) -> None:
         validate_command("download_landsat")
 
     def run(self, inputs: dict[Any, Any]) -> dict[Asset[Any], Any]:
         config: EnvConfig = inputs[CONFIG]
 
-        mtl_paths = list(config.granule_dir.glob("*_MTL.txt"))
+        mtl_paths = list(self.local_granule_dir.glob("*_MTL.txt"))
         if len(mtl_paths) != 1:
             raise RuntimeError("Cannot locate the _MTL.txt file")
         mtl_path = mtl_paths[0]
+        granule = mtl_path.name.rstrip("_MTL.txt")
+        logger.info(f"Found {granule=} inside of {self.local_granule_dir}")
 
-        updated_config = replace(config, granule=mtl_path.name.rstrip("_MTL.txt"))
+        logger.info(f"Copying {self.local_granule_dir} to {config.granule_dir=}")
+        shutil.copytree(self.local_granule_dir, config.granule_dir, dirs_exist_ok=True)
 
         return {
-            CONFIG: updated_config,
+            CONFIG: replace(config, granule=granule),
             GRANULE_DIR: config.granule_dir,
             MTL_FILE: mtl_path,
         }

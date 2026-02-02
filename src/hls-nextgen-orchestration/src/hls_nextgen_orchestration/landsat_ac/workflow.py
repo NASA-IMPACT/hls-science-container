@@ -43,14 +43,15 @@ from .tasks import (
 def construct_pipeline(
     working_dir: Path | None = None,
     granule_dir: Path | None = None,
-    local_granule: bool = False,
+    local_granule_dir: Path | None = None,
 ) -> Pipeline:
     granule_task: LocalGranule | DownloadGranule
-    if local_granule:
-        if not granule_dir:
-            raise ValueError("Must define `granule_dir` if using a `local_granule`")
+    if local_granule_dir:
         granule_task = LocalGranule(
-            "LocalGranule", requires=(CONFIG,), provides=(CONFIG, GRANULE_DIR, MTL_FILE)
+            "LocalGranule",
+            requires=(CONFIG,),
+            provides=(CONFIG, GRANULE_DIR, MTL_FILE),
+            local_granule_dir=local_granule_dir,
         )
     else:
         granule_task = DownloadGranule(
