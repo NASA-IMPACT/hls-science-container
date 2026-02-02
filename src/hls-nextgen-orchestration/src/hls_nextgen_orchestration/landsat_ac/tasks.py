@@ -294,7 +294,7 @@ class RunLaSRC(Task):
         granule_dir = xml_file.parent
 
         os.chdir(granule_dir)
-        logger.info("Run lasrc")
+        logger.info("Run LaSRC")
         subprocess.run(["do_lasrc_landsat.py", "--xml", str(xml_file)], check=True)
 
         # FIXME: check for output
@@ -337,10 +337,10 @@ class CreateHlsXml(Task):
         granule_dir = espa_xml.parent
         hls_xml = granule_dir / f"{config.granule}_hls.xml"
 
-        logger.info("Create updated espa xml")
+        logger.info("Creating updated ESPA XML")
         os.chdir(granule_dir)
         subprocess.run(
-            ["create_landsat_sr_hdf_xml", str(espa_xml), str(hls_xml)], check=True
+            ["create_landsat_sr_hdf_xml", str(espa_xml), str(hls_xml.name)], check=True
         )
 
         if not hls_xml.exists():
@@ -367,6 +367,7 @@ class ConvertToHdf(Task):
 
         if not sr_hdf.exists():
             raise RuntimeError(f"Output file missing: {sr_hdf}")
+
         return {SR_HDF: sr_hdf}
 
 
@@ -395,8 +396,10 @@ class AddFmaskSds(Task):
             ],
             check=True,
         )
+
         if not output_hdf.exists():
             raise RuntimeError(f"Output file missing: {output_hdf}")
+
         return {FINAL_HDF: output_hdf}
 
 
