@@ -11,7 +11,8 @@ export REPLACE_EXISTING=replace
 export LASRC_AUX_DIR=/var/lasrc_aux
 export VIIRS_AUX_STARTING_DATE=20210101
 
-exit $(python -m "hls_nextgen_orchestration.landsat_ac.workflow")
+python -m "hls_nextgen_orchestration.landsat_ac.workflow"
+exit $?
 
 
 # =============================================================================
