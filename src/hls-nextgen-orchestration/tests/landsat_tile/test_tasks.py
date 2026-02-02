@@ -94,7 +94,7 @@ def test_env_source(monkeypatch, tmp_path):
     monkeypatch.setenv("GIBS_OUTPUT_BUCKET", BUCKET_GIBS)
     monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
 
-    source = EnvSource("test_source", provides=(CONFIG,))
+    source = EnvSource("test_source", requires=(), provides=(CONFIG,))
     result = source.fetch()
 
     assert CONFIG in result

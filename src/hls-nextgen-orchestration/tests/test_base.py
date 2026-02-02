@@ -49,7 +49,7 @@ def test_linear_pipeline(builder):
     """
     Graph: Source(A) -> Task(A -> B)
     """
-    source = SimpleSource("Src", provides=(A,))
+    source = SimpleSource("Src", requires=(), provides=(A,))
     task = SimpleTask("T1", requires=(A,), provides=(B,))
 
     pipeline = builder.add(source).add(task).build()
@@ -72,7 +72,7 @@ def test_diamond_dependency(builder):
     Source(A)               -> Task3(B,C -> D)
           \\-> Task2(A->C) -/
     """
-    source = SimpleSource("Src", provides=(A,))
+    source = SimpleSource("Src", requires=(), provides=(A,))
     task1 = SimpleTask("T1", requires=(A,), provides=(B,))
     task2 = SimpleTask("T2", requires=(A,), provides=(C,))
     task3 = SimpleTask("T3", requires=(B, C), provides=(D,))
@@ -105,10 +105,10 @@ def test_independent_branches(builder):
     Src1(A) -> T1(A->B)
     Src2(C) -> T2(C->D)
     """
-    src1 = SimpleSource("S1", provides=(A,))
+    src1 = SimpleSource("S1", requires=(), provides=(A,))
     task1 = SimpleTask("T1", requires=(A,), provides=(B,))
 
-    src2 = SimpleSource("S2", provides=(C,))
+    src2 = SimpleSource("S2", requires=(), provides=(C,))
     task2 = SimpleTask("T2", requires=(C,), provides=(D,))
 
     pipeline = builder.add(src1).add(task1).add(src2).add(task2).build()
@@ -138,7 +138,7 @@ def test_asset_shadowing(builder):
     Test that a new task can overwrite (shadow) an existing asset.
     Source(A="val_A") -> UpdateTask(A="val_A_updated") -> Consumer(A->B)
     """
-    src = SimpleSource("Src", provides=(A,))
+    src = SimpleSource("Src", requires=(), provides=(A,))
 
     # Task that requires A and provides a NEW version of A
     @dataclass(frozen=True)
@@ -166,7 +166,7 @@ def test_out_of_order_addition(builder):
     """
     Test that adding a consumer before a provider fails.
     """
-    SimpleSource("Src", provides=(A,))
+    SimpleSource("Src", requires=(), provides=(A,))
     task = SimpleTask("T1", requires=(A,), provides=(B,))
 
     # Adding task first should fail
@@ -189,7 +189,7 @@ def test_contract_breach_missing_output(builder):
         def run(self, inputs: dict[Asset[Any], Any]) -> dict[Asset[Any], Any]:
             return {}
 
-    src = SimpleSource("Src", provides=(A,))
+    src = SimpleSource("Src", requires=(), provides=(A,))
     bad_task = BrokenTask("Bad", requires=(A,), provides=(B,))
 
     pipeline = builder.add(src).add(bad_task).build()
@@ -208,7 +208,7 @@ def test_type_mismatch_error(builder):
         def run(self, inputs: dict[Asset[Any], Any]) -> dict[Asset[Any], Any]:
             return {B: 123}  # Int instead of str
 
-    src = SimpleSource("Src", provides=(A,))
+    src = SimpleSource("Src", requires=(), provides=(A,))
     bad_task = WrongTypeTask("BadType", requires=(A,), provides=(B,))
 
     pipeline = builder.add(src).add(bad_task).build()

@@ -73,7 +73,9 @@ def test_env_source(monkeypatch, tmp_path):
     monkeypatch.setenv("PREFIX", "L8")
     monkeypatch.setenv("ACCODE", "LaSRC")
 
-    source = EnvSource("test_source", provides=(CONFIG,), scratch_dir=tmp_path)
+    source = EnvSource(
+        "test_source", requires=(), provides=(CONFIG,), scratch_dir=tmp_path
+    )
     result = source.fetch()
 
     assert CONFIG in result

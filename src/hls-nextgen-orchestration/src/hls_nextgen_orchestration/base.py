@@ -88,8 +88,8 @@ class NodeBase(ABC):
     """
 
     name: str
-    requires: tuple[Asset[Any], ...] = ()
-    provides: tuple[Asset[Any], ...] = ()
+    requires: tuple[Asset[Any], ...]
+    provides: tuple[Asset[Any], ...]
 
     @abstractmethod
     def execute(self, context: TaskContext) -> None:

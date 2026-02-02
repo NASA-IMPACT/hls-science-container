@@ -62,6 +62,7 @@ def construct_pipeline(
         .add(
             EnvSource(
                 "EnvConfig",
+                requires=(),
                 provides=(CONFIG,),
                 working_dir=working_dir,
                 granule_dir=granule_dir,
