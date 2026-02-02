@@ -31,6 +31,7 @@ from .tasks import (
     CreateHlsXml,
     DownloadGranule,
     EnvSource,
+    LocalGranule,
     ParseMetadata,
     RenameAngleBands,
     RunFmask,
@@ -42,7 +43,20 @@ from .tasks import (
 def construct_pipeline(
     working_dir: Path | None = None,
     granule_dir: Path | None = None,
+    local_granule: bool = False,
 ) -> Pipeline:
+    granule_task: LocalGranule | DownloadGranule
+    if local_granule:
+        if not granule_dir:
+            raise ValueError("Must define `granule_dir` if using a `local_granule`")
+        granule_task = LocalGranule(
+            "LocalGranule", requires=(CONFIG,), provides=(CONFIG, GRANULE_DIR, MTL_FILE)
+        )
+    else:
+        granule_task = DownloadGranule(
+            "Download", requires=(CONFIG,), provides=(CONFIG, GRANULE_DIR, MTL_FILE)
+        )
+
     return (
         PipelineBuilder()
         .add(
@@ -53,11 +67,7 @@ def construct_pipeline(
                 granule_dir=granule_dir,
             )
         )
-        .add(
-            DownloadGranule(
-                "Download", requires=(CONFIG,), provides=(CONFIG, GRANULE_DIR, MTL_FILE)
-            )
-        )
+        .add(granule_task)
         .add(ParseMetadata("Metadata", requires=(CONFIG,), provides=(METADATA,)))
         .add(
             CheckSolarZenith(

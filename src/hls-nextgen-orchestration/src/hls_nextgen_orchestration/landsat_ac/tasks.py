@@ -132,12 +132,15 @@ class LocalGranule(Task):
     def run(self, inputs: dict[Any, Any]) -> dict[Asset[Any], Any]:
         config: EnvConfig = inputs[CONFIG]
 
-        mtl_path = config.granule_dir / f"{config.granule}_MTL.txt"
-        if not mtl_path.exists():
-            raise RuntimeError(f"Output file missing: {mtl_path}")
+        mtl_paths = list(config.granule_dir.glob("*_MTL.txt"))
+        if len(mtl_paths) != 1:
+            raise RuntimeError("Cannot locate the _MTL.txt file")
+        mtl_path = mtl_paths[0]
+
+        updated_config = replace(config, granule=mtl_path.name.rstrip("_MTL.txt"))
 
         return {
-            CONFIG: config,
+            CONFIG: updated_config,
             GRANULE_DIR: config.granule_dir,
             MTL_FILE: mtl_path,
         }
