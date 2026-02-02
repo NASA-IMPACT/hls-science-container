@@ -383,7 +383,9 @@ class AddFmaskSds(Task):
         granule_dir = sr_hdf.parent
         output_hdf = granule_dir / f"{meta.output_name}.hdf"
         aerosol_qa = granule_dir / f"{config.granule}_sr_aerosol_qa.img"
+
         logger.info("Run addFmaskSDS")
+        os.chdir(granule_dir)
         subprocess.run(
             [
                 "landsat-add-fmask-sds",
