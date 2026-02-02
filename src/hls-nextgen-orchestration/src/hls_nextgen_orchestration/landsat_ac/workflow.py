@@ -134,12 +134,10 @@ def construct_pipeline(
 
 if __name__ == "__main__":
     import os
+
     logging.basicConfig(level=logging.INFO)
 
-    if local_granule_dir := os.getenv("LOCAL_GRANULE_DIR"):
-        local_granule_dir = Path(local_granule_dir)
-    else:
-        local_granule_dir = None
+    local_granule_dir = Path(_) if (_ := os.getenv("LOCAL_GRANULE_DIR")) else None
 
     try:
         pipeline = construct_pipeline(local_granule_dir=local_granule_dir)

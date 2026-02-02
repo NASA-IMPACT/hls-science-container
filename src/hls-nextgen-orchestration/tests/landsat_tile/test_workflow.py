@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
-from unittest.mock import PropertyMock, patch
 
 import pytest
 

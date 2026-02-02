@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from hls_nextgen_orchestration.base import Asset
