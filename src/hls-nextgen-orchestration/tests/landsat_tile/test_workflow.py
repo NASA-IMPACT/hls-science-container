@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -92,8 +93,8 @@ def tile_context(s3_client: S3Client, tmp_path, monkeypatch) -> TileTestContext:
 
 
 def test_pipeline_end_to_end(
-    mock_binaries, tile_context: TileTestContext, s3_client: S3Client
-):
+    mock_binaries: Path, tile_context: TileTestContext, s3_client: S3Client
+) -> None:
     """
     Runs the full landsat tile pipeline using mocked binaries and mocked S3.
     """

@@ -6,22 +6,6 @@ from pathlib import Path
 
 from hls_nextgen_orchestration.base import Pipeline, PipelineBuilder
 
-from .assets import (
-    CONFIG,
-    ESPA_XML,
-    FINAL_HDF,
-    FMASK_BIN,
-    GRANULE_DIR,
-    HLS_XML,
-    LASRC_DONE,
-    METADATA,
-    MTL_FILE,
-    RENAMED_ANGLES,
-    SCANLINE_DONE,
-    SOLAR_VALID,
-    SR_HDF,
-    UPLOAD_COMPLETE,
-)
 from .tasks import (
     AddFmaskSds,
     CheckSolarZenith,
@@ -47,87 +31,25 @@ def construct_pipeline(
 ) -> Pipeline:
     granule_task: LocalGranule | DownloadGranule
     if local_granule_dir:
-        granule_task = LocalGranule(
-            "LocalGranule",
-            requires=(CONFIG,),
-            provides=(CONFIG, GRANULE_DIR, MTL_FILE),
-            local_granule_dir=local_granule_dir,
-        )
+        granule_task = LocalGranule("LocalGranule", local_granule_dir=local_granule_dir)
     else:
-        granule_task = DownloadGranule(
-            "Download", requires=(CONFIG,), provides=(CONFIG, GRANULE_DIR, MTL_FILE)
-        )
+        granule_task = DownloadGranule("Download")
 
     return (
         PipelineBuilder()
-        .add(
-            EnvSource(
-                "EnvConfig",
-                requires=(),
-                provides=(CONFIG,),
-                working_dir=working_dir,
-                granule_dir=granule_dir,
-            )
-        )
+        .add(EnvSource("EnvConfig", working_dir=working_dir, granule_dir=granule_dir))
         .add(granule_task)
-        .add(ParseMetadata("Metadata", requires=(CONFIG,), provides=(METADATA,)))
-        .add(
-            CheckSolarZenith(
-                "CheckSolar", requires=(MTL_FILE,), provides=(SOLAR_VALID,)
-            )
-        )
-        .add(RunFmask("Fmask", requires=(CONFIG, GRANULE_DIR), provides=(FMASK_BIN,)))
-        .add(
-            ConvertScanline(
-                "Scanline",
-                # Requires "FMASK_BIN" to keep granule dir clean since Fmask
-                # will have issues if this runs first.
-                requires=(
-                    GRANULE_DIR,
-                    FMASK_BIN,
-                ),
-                provides=(SCANLINE_DONE,),
-            )
-        )
-        .add(
-            ConvertToEspa(
-                "EspaConv",
-                requires=(CONFIG, MTL_FILE, GRANULE_DIR, SCANLINE_DONE),
-                provides=(ESPA_XML,),
-            )
-        )
-        .add(
-            RunLaSRC("LaSRC", requires=(ESPA_XML, SOLAR_VALID), provides=(LASRC_DONE,))
-        )
-        .add(
-            RenameAngleBands(
-                "RenameAngles",
-                requires=(CONFIG, METADATA, GRANULE_DIR, LASRC_DONE),
-                provides=(RENAMED_ANGLES,),
-            )
-        )
-        .add(
-            CreateHlsXml(
-                "HlsXml",
-                requires=(CONFIG, ESPA_XML, RENAMED_ANGLES),
-                provides=(HLS_XML,),
-            )
-        )
-        .add(ConvertToHdf("HdfConv", requires=(HLS_XML,), provides=(SR_HDF,)))
-        .add(
-            AddFmaskSds(
-                "AddFmask",
-                requires=(CONFIG, METADATA, SR_HDF, FMASK_BIN, MTL_FILE),
-                provides=(FINAL_HDF,),
-            )
-        )
-        .add(
-            UploadResults(
-                "Upload",
-                requires=(CONFIG, METADATA, FINAL_HDF, GRANULE_DIR),
-                provides=(UPLOAD_COMPLETE,),
-            )
-        )
+        .add(ParseMetadata("Metadata"))
+        .add(CheckSolarZenith("CheckSolar"))
+        .add(RunFmask("Fmask"))
+        .add(ConvertScanline("Scanline"))
+        .add(ConvertToEspa("EspaConv"))
+        .add(RunLaSRC("LaSRC"))
+        .add(RenameAngleBands("RenameAngles"))
+        .add(CreateHlsXml("HlsXml"))
+        .add(ConvertToHdf("HdfConv"))
+        .add(AddFmaskSds("AddFmask"))
+        .add(UploadResults("Upload"))
         .build()
     )
 

@@ -43,6 +43,8 @@ logger = logging.getLogger(__name__)
 class EnvSource(DataSource):
     """Reads environment variables to configure the processing job."""
 
+    provides = (CONFIG,)
+
     scratch_dir: Path = field(
         default_factory=lambda: Path(os.getenv("SCRATCH_DIR", "/var/scratch"))
     )
@@ -92,6 +94,9 @@ class DownloadGranule(Task):
     standard version, `LC08_L1TP_116030_20260107_20260114_02_T1`.
     """
 
+    requires = (CONFIG,)
+    provides = (CONFIG, GRANULE_DIR, MTL_FILE)
+
     def __post_init__(self) -> None:
         validate_command("download_landsat")
 
@@ -135,6 +140,9 @@ class DownloadGranule(Task):
 class LocalGranule(Task):
     """Locate and describe a Landsat granule on local storage"""
 
+    requires = (CONFIG,)
+    provides = (CONFIG, GRANULE_DIR, MTL_FILE)
+
     name: str
     local_granule_dir: Path
 
@@ -165,6 +173,9 @@ class LocalGranule(Task):
 class ParseMetadata(Task):
     """Parse metadata, determining output filename and prefix"""
 
+    requires = (CONFIG,)
+    provides = (METADATA,)
+
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
         config: EnvConfig = inputs[CONFIG]
 
@@ -189,6 +200,11 @@ class ParseMetadata(Task):
 
 @dataclass(frozen=True)
 class CheckSolarZenith(Task):
+    """Check if solar zenith angle (SZA) is too low to process"""
+
+    requires = (MTL_FILE,)
+    provides = (SOLAR_VALID,)
+
     def __post_init__(self) -> None:
         validate_command("check_solar_zenith_landsat")
 
@@ -211,6 +227,11 @@ class CheckSolarZenith(Task):
 
 @dataclass(frozen=True)
 class RunFmask(Task):
+    """Run Fmask v4.7"""
+
+    requires = (CONFIG, GRANULE_DIR)
+    provides = (FMASK_BIN,)
+
     def __post_init__(self) -> None:
         validate_command("run_Fmask.sh")
         validate_command("gdal_translate")
@@ -241,6 +262,13 @@ class RunFmask(Task):
 
 @dataclass(frozen=True)
 class ConvertScanline(Task):
+    """Convert tiled TIFFs to scanline (BIL) format ahead of ESPA format conversion"""
+
+    # Requires "FMASK_BIN" to keep granule dir clean since Fmask
+    # will have issues if this runs first.
+    requires = (GRANULE_DIR, FMASK_BIN)
+    provides = (SCANLINE_DONE,)
+
     def __post_init__(self) -> None:
         validate_command("gdal_translate")
 
@@ -263,6 +291,11 @@ class ConvertScanline(Task):
 
 @dataclass(frozen=True)
 class ConvertToEspa(Task):
+    """Convert to ESPA format ahead of LaSRC"""
+
+    requires = (CONFIG, MTL_FILE, GRANULE_DIR, SCANLINE_DONE)
+    provides = (ESPA_XML,)
+
     def __post_init__(self) -> None:
         validate_command("convert_lpgs_to_espa")
 
@@ -285,6 +318,11 @@ class ConvertToEspa(Task):
 
 @dataclass(frozen=True)
 class RunLaSRC(Task):
+    """Run LaSRC to create atmospherically corrected surface reflectance estimates"""
+
+    requires = (ESPA_XML, SOLAR_VALID)
+    provides = (LASRC_DONE,)
+
     def __post_init__(self) -> None:
         validate_command("do_lasrc_landsat.py")
 
@@ -303,6 +341,11 @@ class RunLaSRC(Task):
 
 @dataclass(frozen=True)
 class RenameAngleBands(Task):
+    """Rename sun/sensor geometry angle bands"""
+
+    requires = (CONFIG, METADATA, GRANULE_DIR, LASRC_DONE)
+    provides = (RENAMED_ANGLES,)
+
     def run(self, inputs: dict[Any, Any]) -> dict[Asset[bool], bool]:
         _ = inputs[LASRC_DONE]
         config: EnvConfig = inputs[CONFIG]
@@ -327,6 +370,11 @@ class RenameAngleBands(Task):
 
 @dataclass(frozen=True)
 class CreateHlsXml(Task):
+    """Create HLS project specific ESPA XML metadata"""
+
+    requires = (CONFIG, ESPA_XML, RENAMED_ANGLES)
+    provides = (HLS_XML,)
+
     def __post_init__(self) -> None:
         validate_command("create_landsat_sr_hdf_xml")
 
@@ -351,6 +399,11 @@ class CreateHlsXml(Task):
 
 @dataclass(frozen=True)
 class ConvertToHdf(Task):
+    """Convert IMG/TIFFs to HDF"""
+
+    requires = (HLS_XML,)
+    provides = (SR_HDF,)
+
     def __post_init__(self) -> None:
         validate_command("convert_espa_to_hdf")
 
@@ -373,6 +426,11 @@ class ConvertToHdf(Task):
 
 @dataclass(frozen=True)
 class AddFmaskSds(Task):
+    """Bundle Fmask output into the HDF as a subdataset"""
+
+    requires = (CONFIG, METADATA, SR_HDF, FMASK_BIN, MTL_FILE)
+    provides = (FINAL_HDF,)
+
     def __post_init__(self) -> None:
         validate_command("landsat-add-fmask-sds")
 
@@ -410,6 +468,9 @@ class UploadResults(Task):
     """
     Uploads the final results to the specified S3 bucket.
     """
+
+    requires = (CONFIG, METADATA, FINAL_HDF, GRANULE_DIR)
+    provides = (UPLOAD_COMPLETE,)
 
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
         """

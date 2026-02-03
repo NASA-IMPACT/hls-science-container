@@ -1,3 +1,5 @@
+from collections.abc import Generator
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import boto3
@@ -48,7 +50,7 @@ BUCKET_OUT = "out-bucket"
 
 
 @pytest.fixture
-def mock_config(tmp_path):
+def mock_config(tmp_path: Path) -> Generator[EnvConfig, None, None]:
     config = EnvConfig(
         job_id=JOB_ID,
         granule=GRANULE,
@@ -64,7 +66,7 @@ def mock_config(tmp_path):
     yield config
 
 
-def test_env_source(monkeypatch, tmp_path):
+def test_env_source(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Test environment variable parsing."""
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
     monkeypatch.setenv("GRANULE", GRANULE)
@@ -73,9 +75,7 @@ def test_env_source(monkeypatch, tmp_path):
     monkeypatch.setenv("PREFIX", "L8")
     monkeypatch.setenv("ACCODE", "LaSRC")
 
-    source = EnvSource(
-        "test_source", requires=(), provides=(CONFIG,), scratch_dir=tmp_path
-    )
+    source = EnvSource("test_source", scratch_dir=tmp_path)
     result = source.fetch()
 
     assert CONFIG in result
@@ -85,43 +85,41 @@ def test_env_source(monkeypatch, tmp_path):
     assert cfg.granule_dir.exists()
 
 
-def test_download_granule(mock_binaries, mock_config, monkeypatch):
+def test_download_granule(
+    mock_binaries: Path, mock_config: EnvConfig, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("GRANULE", GRANULE)
-    task = DownloadGranule(
-        "test_dl", requires=(CONFIG,), provides=(GRANULE_DIR, MTL_FILE)
-    )
+    task = DownloadGranule("test_dl")
     outputs = task.run({CONFIG: mock_config})
     assert outputs[MTL_FILE].exists()
 
 
-def test_parse_metadata(mock_config):
-    task = ParseMetadata("test_meta", requires=(CONFIG,), provides=(METADATA,))
+def test_parse_metadata(mock_config: EnvConfig) -> None:
+    task = ParseMetadata("test_meta")
     outputs = task.run({CONFIG: mock_config})
     assert outputs[METADATA].output_name == "2020-01-01_025030"
 
 
-def test_check_solar_zenith(mock_binaries, mock_config):
+def test_check_solar_zenith(mock_binaries: Path, mock_config: EnvConfig) -> None:
     (mock_config.granule_dir / f"{GRANULE}_MTL.txt").touch()
-    task = CheckSolarZenith("test_solar", requires=(MTL_FILE,), provides=(SOLAR_VALID,))
+    task = CheckSolarZenith("test_solar")
     outputs = task.run({MTL_FILE: mock_config.granule_dir / f"{GRANULE}_MTL.txt"})
     assert outputs[SOLAR_VALID] is True
 
 
-def test_run_fmask(mock_binaries, mock_config):
-    task = RunFmask("test_fmask", requires=(CONFIG, GRANULE_DIR), provides=(FMASK_BIN,))
+def test_run_fmask(mock_binaries: Path, mock_config: EnvConfig) -> None:
+    task = RunFmask("test_fmask")
     outputs = task.run({CONFIG: mock_config, GRANULE_DIR: mock_config.granule_dir})
     assert outputs[FMASK_BIN].exists()
     assert outputs[FMASK_BIN].name == "fmask.bin"
 
 
-def test_convert_scanline(mock_binaries, mock_config):
+def test_convert_scanline(mock_binaries: Path, mock_config: EnvConfig) -> None:
     # Create dummy TIF to convert
     tif = mock_config.granule_dir / "test.TIF"
     tif.touch()
 
-    task = ConvertScanline(
-        "test_scanline", requires=(GRANULE_DIR,), provides=(SCANLINE_DONE,)
-    )
+    task = ConvertScanline("test_scanline")
     outputs = task.run({GRANULE_DIR: mock_config.granule_dir})
 
     assert outputs[SCANLINE_DONE] is True
@@ -129,16 +127,16 @@ def test_convert_scanline(mock_binaries, mock_config):
     assert tif.exists()
 
 
-def test_convert_to_espa(mock_binaries, mock_config, monkeypatch):
+def test_convert_to_espa(
+    mock_binaries: Path, mock_config: EnvConfig, monkeypatch: pytest.MonkeyPatch
+) -> None:
     # Ensure subprocess can find the right granule name
     monkeypatch.setenv("GRANULE", GRANULE)
 
     mtl = mock_config.granule_dir / f"{GRANULE}_MTL.txt"
     mtl.touch()
 
-    task = ConvertToEspa(
-        "test_espa", requires=(CONFIG, MTL_FILE, SCANLINE_DONE), provides=(ESPA_XML,)
-    )
+    task = ConvertToEspa("test_espa")
     outputs = task.run(
         {
             SCANLINE_DONE: True,
@@ -152,19 +150,17 @@ def test_convert_to_espa(mock_binaries, mock_config, monkeypatch):
     assert outputs[ESPA_XML].name == f"{GRANULE}.xml"
 
 
-def test_run_lasrc(mock_binaries, mock_config):
+def test_run_lasrc(mock_binaries: Path, mock_config: EnvConfig) -> None:
     xml = mock_config.granule_dir / f"{GRANULE}.xml"
     xml.touch()
 
-    task = RunLaSRC(
-        "test_lasrc", requires=(ESPA_XML, SOLAR_VALID), provides=(LASRC_DONE,)
-    )
+    task = RunLaSRC("test_lasrc")
     outputs = task.run({SOLAR_VALID: True, ESPA_XML: xml})
 
     assert outputs[LASRC_DONE] is True
 
 
-def test_rename_angle_bands(mock_config):
+def test_rename_angle_bands(mock_config: EnvConfig) -> None:
     # Create dummy angle bands
     suffixes = [
         "_VAA.img",
@@ -181,11 +177,7 @@ def test_rename_angle_bands(mock_config):
 
     meta = ProcessingMetadata(output_name="NEW_NAME", bucket_key="foo")
 
-    task = RenameAngleBands(
-        "test_rename",
-        requires=(CONFIG, METADATA, GRANULE_DIR, LASRC_DONE),
-        provides=(RENAMED_ANGLES,),
-    )
+    task = RenameAngleBands("test_rename")
     outputs = task.run(
         {
             LASRC_DONE: True,
@@ -200,31 +192,29 @@ def test_rename_angle_bands(mock_config):
     assert not (mock_config.granule_dir / f"{GRANULE}_VAA.img").exists()
 
 
-def test_create_hls_xml(mock_binaries, mock_config):
+def test_create_hls_xml(mock_binaries: Path, mock_config: EnvConfig) -> None:
     espa_xml = mock_config.granule_dir / f"{GRANULE}.xml"
     espa_xml.touch()
 
-    task = CreateHlsXml(
-        "test_hls_xml", requires=(CONFIG, ESPA_XML, RENAMED_ANGLES), provides=(HLS_XML,)
-    )
+    task = CreateHlsXml("test_hls_xml")
     outputs = task.run({RENAMED_ANGLES: True, CONFIG: mock_config, ESPA_XML: espa_xml})
 
     assert outputs[HLS_XML].exists()
     assert outputs[HLS_XML].name == f"{GRANULE}_hls.xml"
 
 
-def test_convert_to_hdf(mock_binaries, mock_config):
+def test_convert_to_hdf(mock_binaries: Path, mock_config: EnvConfig) -> None:
     hls_xml = mock_config.granule_dir / f"{GRANULE}_hls.xml"
     hls_xml.touch()
 
-    task = ConvertToHdf("test_hdf", requires=(HLS_XML,), provides=(SR_HDF,))
+    task = ConvertToHdf("test_hdf")
     outputs = task.run({HLS_XML: hls_xml})
 
     assert outputs[SR_HDF].exists()
     assert outputs[SR_HDF].name == "sr.hdf"
 
 
-def test_add_fmask_sds(mock_binaries, mock_config):
+def test_add_fmask_sds(mock_binaries: Path, mock_config: EnvConfig) -> None:
     # Setup dependencies
     sr_hdf = mock_config.granule_dir / "sr.hdf"
     sr_hdf.touch()
@@ -235,11 +225,7 @@ def test_add_fmask_sds(mock_binaries, mock_config):
 
     meta = ProcessingMetadata(output_name="OUTPUT_GRANULE", bucket_key="foo")
 
-    task = AddFmaskSds(
-        "test_add_fmask",
-        requires=(CONFIG, METADATA, SR_HDF, FMASK_BIN, MTL_FILE),
-        provides=(FINAL_HDF,),
-    )
+    task = AddFmaskSds("test_add_fmask")
     outputs = task.run(
         {
             CONFIG: mock_config,
@@ -254,7 +240,7 @@ def test_add_fmask_sds(mock_binaries, mock_config):
     assert outputs[FINAL_HDF].name == "OUTPUT_GRANULE.hdf"
 
 
-def test_upload_results(mock_aws_s3, mock_config):
+def test_upload_results(mock_aws_s3, mock_config) -> None:
     s3: S3Client = boto3.client("s3", region_name="us-east-1")
     s3.create_bucket(Bucket=BUCKET_OUT)
 
@@ -263,11 +249,7 @@ def test_upload_results(mock_aws_s3, mock_config):
 
     meta = ProcessingMetadata(output_name="output", bucket_key="2020/001")
 
-    task = UploadResults(
-        "test_upload",
-        requires=(CONFIG, METADATA, FINAL_HDF, GRANULE_DIR),
-        provides=(UPLOAD_COMPLETE,),
-    )
+    task = UploadResults("test_upload")
     outputs = task.run(
         {
             CONFIG: mock_config,

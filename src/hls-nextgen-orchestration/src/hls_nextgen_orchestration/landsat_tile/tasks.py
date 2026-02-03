@@ -82,6 +82,8 @@ def get_nbar_names(granule: HlsGranule) -> dict[str, str]:
 class EnvSource(DataSource):
     """Reads environment variables to configure the processing job."""
 
+    provides = (CONFIG,)
+
     scratch_dir: Path = field(
         default_factory=lambda: Path(os.getenv("SCRATCH_DIR", "/var/scratch"))
     )
@@ -134,6 +136,9 @@ class ProcessPathRows(Task):
     Downloads input data for each pathrow, extracts scene time,
     and runs landsat-tile / landsat-angle-tile.
     """
+
+    requires = (CONFIG,)
+    provides = (NBAR_INPUT, NBAR_ANGLE, SCENE_TIME, OUTPUT_BASE_NAME)
 
     def __post_init__(self) -> None:
         validate_command("extract_landsat_hms.py")
@@ -268,6 +273,15 @@ class RunNbar(Task):
     Runs NBAR correction and renames output files.
     """
 
+    requires = (
+        CONFIG,
+        NBAR_INPUT,
+        NBAR_ANGLE,
+        SCENE_TIME,
+        OUTPUT_BASE_NAME,
+    )
+    provides = (OUTPUT_HDF, ANGLE_HDF, GRIDDED_HDF)
+
     def __post_init__(self) -> None:
         validate_command("landsat-nbar")
 
@@ -326,6 +340,9 @@ class ConvertToCogs(Task):
     Converts HDF outputs to COG format.
     """
 
+    requires = (CONFIG, OUTPUT_HDF, ANGLE_HDF)
+    provides = (COGS_CREATED,)
+
     def __post_init__(self) -> None:
         validate_command("hdf_to_cog")
 
@@ -368,6 +385,9 @@ class CreateThumbnail(Task):
     Creates a thumbnail image for the product.
     """
 
+    requires = (CONFIG, OUTPUT_BASE_NAME)
+    provides = (THUMBNAIL_FILE,)
+
     def __post_init__(self) -> None:
         validate_command("create_thumbnail")
 
@@ -399,6 +419,9 @@ class CreateMetadata(Task):
     """
     Generates CMR XML and STAC JSON metadata.
     """
+
+    requires = (CONFIG, OUTPUT_HDF, OUTPUT_BASE_NAME)
+    provides = (CMR_XML, STAC_JSON)
 
     def __post_init__(self) -> None:
         validate_command("create_metadata")
@@ -444,6 +467,15 @@ class CreateManifest(Task):
     Generates the product manifest file.
     """
 
+    requires = (
+        CONFIG,
+        OUTPUT_BASE_NAME,
+        COGS_CREATED,
+        THUMBNAIL_FILE,
+        CMR_XML,
+    )
+    provides = (MANIFEST_FILE,)
+
     def __post_init__(self) -> None:
         validate_command("create_manifest")
 
@@ -482,6 +514,9 @@ class ProcessGibs(Task):
     """
     Generates GIBS browse subtiles and manifests.
     """
+
+    requires = (CONFIG, OUTPUT_BASE_NAME)
+    provides = (GIBS_DIR,)
 
     def __post_init__(self) -> None:
         validate_command("granule_to_gibs")
@@ -541,6 +576,9 @@ class ProcessVi(Task):
     """
     Generates Vegetation Index (VI) files and metadata.
     """
+
+    requires = (CONFIG, OUTPUT_BASE_NAME)
+    provides = (VI_DIR,)
 
     def __post_init__(self) -> None:
         validate_command("vi_generate_indices")
@@ -620,6 +658,16 @@ class UploadAll(Task):
     """
     Handles all uploads (Product, Debug, GIBS, VI) based on configuration.
     """
+
+    requires = (
+        CONFIG,
+        OUTPUT_BASE_NAME,
+        GIBS_DIR,
+        VI_DIR,
+        GRIDDED_HDF,
+        MANIFEST_FILE,
+    )
+    provides = (UPLOAD_COMPLETE,)
 
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
         config: EnvConfig = inputs[CONFIG]

@@ -4,7 +4,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, TypeVar
+from typing import Any, ClassVar, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +81,9 @@ class TaskContext:
         return val
 
 
+Assets = tuple[Asset[Any], ...]
+
+
 @dataclass(frozen=True)
 class NodeBase(ABC):
     """
@@ -88,8 +91,8 @@ class NodeBase(ABC):
     """
 
     name: str
-    requires: tuple[Asset[Any], ...]
-    provides: tuple[Asset[Any], ...]
+    requires: ClassVar[Assets] = ()
+    provides: ClassVar[Assets] = ()
 
     @abstractmethod
     def execute(self, context: TaskContext) -> None:

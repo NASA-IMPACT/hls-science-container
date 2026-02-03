@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime as dt
+from collections.abc import Generator
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
@@ -59,7 +60,7 @@ MOCKED_SCENE_TIME = "101010"
 
 
 @pytest.fixture
-def mock_config(tmp_path):
+def mock_config(tmp_path: Path) -> Generator[EnvConfig, None, None]:
     """
     Creates an EnvConfig that points to a temporary directory.
     """
@@ -81,7 +82,7 @@ def mock_config(tmp_path):
     yield config
 
 
-def test_env_source(monkeypatch, tmp_path):
+def test_env_source(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Test environment variable parsing."""
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
     monkeypatch.setenv("PATHROW_LIST", PATHROW_LIST)
@@ -94,7 +95,7 @@ def test_env_source(monkeypatch, tmp_path):
     monkeypatch.setenv("GIBS_OUTPUT_BUCKET", BUCKET_GIBS)
     monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
 
-    source = EnvSource("test_source", requires=(), provides=(CONFIG,))
+    source = EnvSource("test_source")
     result = source.fetch()
 
     assert CONFIG in result
@@ -106,7 +107,7 @@ def test_env_source(monkeypatch, tmp_path):
     assert cfg.working_dir.exists()
 
 
-def test_process_path_rows(mock_binaries, mock_config, mock_aws_s3):
+def test_process_path_rows(mock_binaries: Path, mock_config, mock_aws_s3) -> None:
     """
     Test downloading inputs and running landsat-tile tools.
     Should produce NBAR inputs and scene time.
@@ -126,17 +127,13 @@ def test_process_path_rows(mock_binaries, mock_config, mock_aws_s3):
     s3.put_object(Bucket=BUCKET_IN, Key=f"{prefix}/{ac_file}", Body="dummy content")
     s3.put_object(Bucket=BUCKET_IN, Key=f"{prefix}/{sza_file}", Body="dummy content")
 
-    task = ProcessPathRows(
-        "test_process",
-        requires=(CONFIG,),
-        provides=(NBAR_INPUT, NBAR_ANGLE, SCENE_TIME, OUTPUT_BASE_NAME),
-    )
+    task = ProcessPathRows("test_process")
 
     # We mock subprocess.run only for the tools,
     # letting mock_binaries handle side effects.
     with patch("subprocess.run") as mock_run:
         # Configure side effects for the mocked binaries
-        def side_effect(cmd, **kwargs):
+        def side_effect(cmd, **kwargs) -> None:
             if cmd[0] == "extract_landsat_hms.py":
                 # Mock return of scene time
                 return MagicMock(stdout=f"{MOCKED_SCENE_TIME}\n")
@@ -176,7 +173,7 @@ def test_process_path_rows(mock_binaries, mock_config, mock_aws_s3):
         assert (mock_config.working_dir / sza_file).exists()
 
 
-def test_run_nbar(mock_binaries, mock_config):
+def test_run_nbar(mock_binaries: Path, mock_config: EnvConfig) -> None:
     """Test NBAR execution and renaming."""
     scene_time = MOCKED_SCENE_TIME
     # Use a valid HLS ID for the input, as RunNbar now parses it
@@ -190,11 +187,7 @@ def test_run_nbar(mock_binaries, mock_config):
     nbar_angle = mock_config.working_dir / f"L8ANGLE.{nbar_legacy_base}.hdf"
     nbar_angle.touch()
 
-    task = RunNbar(
-        "test_nbar",
-        requires=(CONFIG, NBAR_INPUT, NBAR_ANGLE, SCENE_TIME, OUTPUT_BASE_NAME),
-        provides=(OUTPUT_HDF, ANGLE_HDF, GRIDDED_HDF),
-    )
+    task = RunNbar("test_nbar")
 
     outputs = task.run(
         {
@@ -219,16 +212,14 @@ def test_run_nbar(mock_binaries, mock_config):
     assert expected_output.exists()
 
 
-def test_convert_to_cogs(mock_binaries, mock_config):
+def test_convert_to_cogs(mock_binaries: Path, mock_config: EnvConfig) -> None:
     """Test COG conversion calls."""
     output_hdf = mock_config.working_dir / "output.hdf"
     angle_hdf = mock_config.working_dir / "angle.hdf"
     output_hdf.touch()
     angle_hdf.touch()
 
-    task = ConvertToCogs(
-        "test_cogs", requires=(CONFIG, OUTPUT_HDF, ANGLE_HDF), provides=(COGS_CREATED,)
-    )
+    task = ConvertToCogs("test_cogs")
 
     outputs = task.run(
         {CONFIG: mock_config, OUTPUT_HDF: output_hdf, ANGLE_HDF: angle_hdf}
@@ -237,14 +228,12 @@ def test_convert_to_cogs(mock_binaries, mock_config):
     assert outputs[COGS_CREATED] is True
 
 
-def test_create_thumbnail(mock_binaries, mock_config):
+def test_create_thumbnail(mock_binaries: Path, mock_config: EnvConfig) -> None:
     """Test thumbnail generation."""
     # Use full ID
     output_basename = f"HLS.L30.T{MGRS}.2020001T101010.v2.0"
 
-    task = CreateThumbnail(
-        "test_thumb", requires=(CONFIG, OUTPUT_BASE_NAME), provides=(THUMBNAIL_FILE,)
-    )
+    task = CreateThumbnail("test_thumb")
 
     outputs = task.run({CONFIG: mock_config, OUTPUT_BASE_NAME: output_basename})
 
@@ -253,16 +242,12 @@ def test_create_thumbnail(mock_binaries, mock_config):
     assert outputs[THUMBNAIL_FILE].exists()
 
 
-def test_create_metadata(mock_binaries, mock_config):
+def test_create_metadata(mock_binaries: Path, mock_config: EnvConfig) -> None:
     """Test CMR/STAC metadata generation."""
     output_hdf = mock_config.working_dir / "output.hdf"
     output_basename = f"HLS.L30.T{MGRS}.2020001T101010.v2.0"
 
-    task = CreateMetadata(
-        "test_meta",
-        requires=(CONFIG, OUTPUT_HDF, OUTPUT_BASE_NAME),
-        provides=(CMR_XML, STAC_JSON),
-    )
+    task = CreateMetadata("test_meta")
 
     outputs = task.run(
         {CONFIG: mock_config, OUTPUT_HDF: output_hdf, OUTPUT_BASE_NAME: output_basename}
@@ -275,15 +260,11 @@ def test_create_metadata(mock_binaries, mock_config):
     assert outputs[STAC_JSON].exists()
 
 
-def test_create_manifest(mock_binaries, mock_config):
+def test_create_manifest(mock_binaries: Path, mock_config: EnvConfig) -> None:
     """Test manifest creation."""
     output_basename = f"HLS.L30.T{MGRS}.2020001T101010.v2.0"
 
-    task = CreateManifest(
-        "test_manifest",
-        requires=(CONFIG, OUTPUT_BASE_NAME, COGS_CREATED, THUMBNAIL_FILE, CMR_XML),
-        provides=(MANIFEST_FILE,),
-    )
+    task = CreateManifest("test_manifest")
 
     outputs = task.run(
         {
@@ -299,13 +280,11 @@ def test_create_manifest(mock_binaries, mock_config):
     assert outputs[MANIFEST_FILE].exists()
 
 
-def test_process_gibs(mock_binaries, mock_config):
+def test_process_gibs(mock_binaries: Path, mock_config: EnvConfig) -> None:
     """Test GIBS processing and sub-manifest creation."""
     output_basename = "HLS.L30.TESTID.v2.0"
 
-    task = ProcessGibs(
-        "test_gibs", requires=(CONFIG, OUTPUT_BASE_NAME), provides=(GIBS_DIR,)
-    )
+    task = ProcessGibs("test_gibs")
 
     outputs = task.run({CONFIG: mock_config, OUTPUT_BASE_NAME: output_basename})
 
@@ -315,11 +294,11 @@ def test_process_gibs(mock_binaries, mock_config):
     assert (gibs_dir / "GIBS_ID_1" / "test.xml").exists()
 
 
-def test_process_vi(mock_binaries, mock_config):
+def test_process_vi(mock_binaries: Path, mock_config: EnvConfig) -> None:
     """Test VI processing."""
     output_basename = "HLS.L30.TESTID.v2.0"
 
-    task = ProcessVi("test_vi", requires=(CONFIG, OUTPUT_BASE_NAME), provides=(VI_DIR,))
+    task = ProcessVi("test_vi")
 
     outputs = task.run({CONFIG: mock_config, OUTPUT_BASE_NAME: output_basename})
 
@@ -329,7 +308,7 @@ def test_process_vi(mock_binaries, mock_config):
     assert (vi_dir / "NDVI.tif").exists()
 
 
-def test_upload_all_production(mock_aws_s3, mock_config):
+def test_upload_all_production(mock_aws_s3, mock_config: EnvConfig) -> None:
     """Test production upload logic."""
     s3: S3Client = boto3.client("s3", region_name="us-east-1")
     s3.create_bucket(Bucket=BUCKET_OUT)
@@ -356,18 +335,7 @@ def test_upload_all_production(mock_aws_s3, mock_config):
     (vi_dir / "vi.tif").touch()
     (vi_dir / f"{vi_id}.json").touch()
 
-    task = UploadAll(
-        "test_upload",
-        requires=(
-            CONFIG,
-            OUTPUT_BASE_NAME,
-            GIBS_DIR,
-            VI_DIR,
-            GRIDDED_HDF,
-            MANIFEST_FILE,
-        ),
-        provides=(UPLOAD_COMPLETE,),
-    )
+    task = UploadAll("test_upload")
 
     outputs = task.run(
         {
