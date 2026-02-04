@@ -4,7 +4,7 @@ set -e
 
 export IMAGE_NAME=${IMAGE_NAME:-hls-atmospheric-correction}
 
-TARGET=dev
+TARGET=${TARGET:-dev}
 
 docker run \
     -v "$(pwd)/pixi.toml":/app/pixi.toml \

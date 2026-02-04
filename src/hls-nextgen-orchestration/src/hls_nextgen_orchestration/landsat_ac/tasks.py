@@ -98,6 +98,7 @@ class DownloadGranule(Task):
     provides = (CONFIG, GRANULE_DIR, MTL_FILE)
 
     def __post_init__(self) -> None:
+        # FIXME: import & run the Python code instead of calling via CLI
         validate_command("download_landsat")
 
     def run(self, inputs: dict[Any, Any]) -> dict[Asset[Any], Any]:
@@ -206,10 +207,10 @@ class CheckSolarZenith(Task):
     provides = (SOLAR_VALID,)
 
     def __post_init__(self) -> None:
+        # FIXME: import & run the Python code instead of calling via CLI
         validate_command("check_solar_zenith_landsat")
 
     def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
-        # FIXME: we can inline this check as a Python call ^_^
         mtl_path: Path = inputs[MTL_FILE]
         logger.info("Checking Solar Zenith...")
         result = subprocess.run(
@@ -335,7 +336,7 @@ class RunLaSRC(Task):
         logger.info("Run LaSRC")
         subprocess.run(["do_lasrc_landsat.py", "--xml", str(xml_file)], check=True)
 
-        # FIXME: check for output
+        # FIXME: check that we expected output files exist
         return {LASRC_DONE: True}
 
 
@@ -498,6 +499,7 @@ class UploadResults(Task):
         else:
             self._upload_debug(s3, config, granule_dir)
 
+        logger.info("Upload complete!")
         return {UPLOAD_COMPLETE: True}
 
     def _upload_production(
@@ -513,7 +515,7 @@ class UploadResults(Task):
         bucket_key = meta.bucket_key
         hdf_key = f"{bucket_key}/{final_hdf.name}"
 
-        logger.info(f"Uploading {final_hdf.name} to s3://{bucket}/{hdf_key}")
+        logger.info(f"Uploading {final_hdf.name} to s3://{bucket}/{hdf_key}...")
         s3.upload_file(str(final_hdf), bucket, hdf_key)
 
         logger.info("Uploading angle files...")
@@ -530,6 +532,7 @@ class UploadResults(Task):
         for pattern in include_globs:
             for f in granule_dir.glob(pattern):
                 key = f"{bucket_key}/{f.name}"
+                logger.info(f"Uploading {f} to s3://{bucket}/{key}...")
                 s3.upload_file(str(f), bucket, key)
 
     def _upload_debug(self, s3: S3Client, config: EnvConfig, granule_dir: Path) -> None:
@@ -547,4 +550,5 @@ class UploadResults(Task):
             if f.is_file():
                 rel_path = f.relative_to(granule_dir)
                 key = f"{base_key}/{rel_path}"
+                logger.info(f"Uploading {f} to s3://{bucket}/{key}...")
                 s3.upload_file(str(f), bucket, key)

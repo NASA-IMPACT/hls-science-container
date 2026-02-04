@@ -6,8 +6,6 @@ from pathlib import Path
 from hls_nextgen_orchestration.base import Asset
 from hls_nextgen_orchestration.granules import LandsatGranule
 
-# --- Data Structures ---
-
 
 @dataclass(frozen=True)
 class ProcessingMetadata:
@@ -39,6 +37,10 @@ class EnvConfig:
         S3 prefix for input data.
     ac_code : str
         Atmospheric correction code path/params.
+    working_dir : Path
+        Local processing directory
+    granule_dir : Path
+        Local, granule-specific processing directory
     debug_bucket : str | None
         Optional S3 bucket for debug outputs.
     """
@@ -58,8 +60,6 @@ class EnvConfig:
         """Get the parsed LandsatGranule object."""
         return LandsatGranule.from_str(self.granule)
 
-
-# --- Asset Definitions ---
 
 CONFIG = Asset("config_object", EnvConfig)
 GRANULE_DIR = Asset("granule_directory", Path)

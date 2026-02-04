@@ -29,11 +29,28 @@ def construct_pipeline(
     granule_dir: Path | None = None,
     local_granule_dir: Path | None = None,
 ) -> Pipeline:
+    """Create the Landsat atmospheric correction (AC) pipeline
+
+    Parameters
+    ----------
+    working_dir
+        Override local processing directory
+    granule_dir
+        Override local granule-specific processing directory
+    local_granule_dir
+        If provided, assume there is a pre-downloaded Landsat granule
+        to process in this directory.
+
+    Returns
+    -------
+    Pipeline
+        Constructed pipeline
+    """
     granule_task: LocalGranule | DownloadGranule
     if local_granule_dir:
         granule_task = LocalGranule("LocalGranule", local_granule_dir=local_granule_dir)
     else:
-        granule_task = DownloadGranule("Download")
+        granule_task = DownloadGranule("DownloadGranule")
 
     return (
         PipelineBuilder()
