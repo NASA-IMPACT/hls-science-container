@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime as dt
 from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock, patch
 
 import boto3
@@ -133,7 +133,7 @@ def test_process_path_rows(mock_binaries: Path, mock_config, mock_aws_s3) -> Non
     # letting mock_binaries handle side effects.
     with patch("subprocess.run") as mock_run:
         # Configure side effects for the mocked binaries
-        def side_effect(cmd, **kwargs) -> MagicMock:
+        def side_effect(cmd: str, **kwargs: Any) -> MagicMock:
             if cmd[0] == "extract_landsat_hms.py":
                 # Mock return of scene time
                 return MagicMock(stdout=f"{MOCKED_SCENE_TIME}\n")
