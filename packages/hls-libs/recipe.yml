@@ -16,6 +16,8 @@ requirements:
     - hdfeos2
     - hdfeos5
     - liblzma-devel
+  run:
+    - python
 
 build:
   number: 0
@@ -51,3 +53,4 @@ tests:
         exists:
           - bin/sentinel-add-fmask-sds
           - bin/landsat-add-fmask-sds
+          - bin/extract_landsat_hms.py

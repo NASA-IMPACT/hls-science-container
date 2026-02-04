@@ -7,6 +7,22 @@ known-first-party = [
   "hls_browse_imagery",
 ]
 
+[tool.mypy]
+strict = true
+namespace_packages = true
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = [
+  "tests.*",
+  "*.tests.*"
+]
+strict = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+warn_return_any = false
+
 [tool.pixi.workspace]
 name = "hls-atmospheric-correction"
 channels = ["conda-forge"]

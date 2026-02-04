@@ -22,7 +22,7 @@ RUN wget -q -O /tmp/Fmask.install https://fmask4installer.s3.amazonaws.com/Fmask
     rm /tmp/Fmask.install
 
 # ----- Install package dependencies
-COPY --parents pixi.toml pixi.lock packages /app/
+COPY --parents pixi.toml pixi.lock packages src/ /app/
 RUN --mount=type=cache,target=/root/.cache/rattler/cache \
     pixi install --frozen
 ENV PREFIX=/app/.pixi/envs/default
@@ -56,7 +56,6 @@ COPY --from=build --chmod=0755 /app/entrypoint.sh /app/entrypoint.sh
 COPY --from=build /opt/fmask ${FMASK_PREFIX}
 COPY packages/fmask4/run_Fmask.sh /app/.pixi/envs/default/bin
 COPY src/scripts/*.sh /app/.pixi/envs/default/bin
-COPY src/scripts/*.py /app/.pixi/envs/default/bin
 
 # Run Pixi entrypoint and execute Bash shell
 ENTRYPOINT [ "/app/entrypoint.sh", "/bin/bash", "-c" ]

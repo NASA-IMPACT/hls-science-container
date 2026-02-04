@@ -1,7 +1,9 @@
 #!/bin/bash
 
-pixi run --frozen -e dev ruff check
-pixi run --frozen -e dev ruff format --check
+export PIXI_FROZEN=true
+
+pixi run -e dev ruff check
+pixi run -e dev ruff format --check
 
 # pixi run mdformat --check ./**/*.md
 # FIXME: mbake for Makefile formatting

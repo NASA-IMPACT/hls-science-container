@@ -26,6 +26,7 @@ install:
 	for dir in $(SUBDIRS); do \
 		$(MAKE) -C $$dir install; \
 	done
+	install -m 755 scripts/*.py ${PREFIX}/bin
 
 clean:
 	@echo "--- Cleaning all subdirectories ---"

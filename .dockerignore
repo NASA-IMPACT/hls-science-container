@@ -16,7 +16,7 @@ envs/
 
 # --- UV / Python Project Management ---
 .uv
-.venv
+**/.venv
 .python-version
 
 # Python

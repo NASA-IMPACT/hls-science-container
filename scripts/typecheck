@@ -1,3 +1,5 @@
 #!/bin/bash
 
-pixi run --frozen -e dev mypy
+export PIXI_FROZEN=true
+
+pixi run -e dev mypy src/
