@@ -6,15 +6,6 @@ from pathlib import Path
 
 from hls_nextgen_orchestration.base import Pipeline, PipelineBuilder
 
-from .assets import (
-    CONFIG,
-    GIBS_DIR,
-    GRIDDED_HDF,
-    MANIFEST_FILE,
-    OUTPUT_BASE_NAME,
-    UPLOAD_COMPLETE,
-    VI_DIR,
-)
 from .tasks import (
     ConvertToCogs,
     CreateManifest,
@@ -43,11 +34,7 @@ def construct_pipeline(
         .add(CreateManifest("CreateManifest"))
         .add(ProcessGibs("ProcessGibs"))
         .add(ProcessVi("ProcessVi"))
-        .add(
-            UploadAll(
-                "UploadAll"
-            )
-        )
+        .add(UploadAll("UploadAll"))
         .build()
     )
 
