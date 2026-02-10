@@ -51,7 +51,7 @@ class TaskContext:
     """
 
     exit_code: int = 0
-    _store: dict[Asset, Any] = field(default_factory=dict)
+    _store: AssetBundle = field(default_factory=dict)
 
     def put(self, asset: Asset[T], value: T) -> None:
         """
