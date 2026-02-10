@@ -7,12 +7,11 @@ import shutil
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import boto3
 
 from hls_nextgen_orchestration.base import (
-    Asset,
     AssetBundle,
     DataSource,
     Task,

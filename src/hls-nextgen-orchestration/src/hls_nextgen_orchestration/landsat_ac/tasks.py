@@ -11,7 +11,13 @@ from typing import TYPE_CHECKING, Any
 
 import boto3
 
-from hls_nextgen_orchestration.base import Asset, AssetBundle, DataSource, Task, TaskFailure
+from hls_nextgen_orchestration.base import (
+    Asset,
+    AssetBundle,
+    DataSource,
+    Task,
+    TaskFailure,
+)
 from hls_nextgen_orchestration.utils import validate_command
 
 from .assets import (

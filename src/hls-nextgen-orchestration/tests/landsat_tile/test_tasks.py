@@ -18,25 +18,25 @@ from hls_nextgen_orchestration.landsat_tile.assets import (
     COGS_CREATED,
     CONFIG,
     GIBS_DIR,
-    GRIDDED_HDF,
-    SR_MANIFEST_FILE,
-    VI_MANIFEST_FILE,
     GIBS_MANIFEST_FILES,
+    GRIDDED_HDF,
     NBAR_ANGLE,
     NBAR_INPUT,
     OUTPUT_BASE_NAME,
     OUTPUT_HDF,
     SCENE_TIME,
+    SR_MANIFEST_FILE,
     STAC_JSON,
     THUMBNAIL_FILE,
     UPLOAD_COMPLETE,
     VI_DIR,
+    VI_MANIFEST_FILE,
     EnvConfig,
 )
 from hls_nextgen_orchestration.landsat_tile.tasks import (
     ConvertToCogs,
-    CreateSRManifest,
     CreateMetadata,
+    CreateSRManifest,
     CreateThumbnail,
     DownloadPathRows,
     EnvSource,
@@ -318,7 +318,9 @@ def test_process_vi(mock_binaries: Path, mock_config: EnvConfig) -> None:
     assert (vi_dir / "NDVI.tif").exists()
 
 
-def test_upload_all_production(mock_binaries: Path, mock_aws_s3: S3Client, mock_config: EnvConfig) -> None:
+def test_upload_all_production(
+    mock_binaries: Path, mock_aws_s3: S3Client, mock_config: EnvConfig
+) -> None:
     """Test production upload logic."""
     s3: S3Client = boto3.client("s3", region_name="us-east-1")
     s3.create_bucket(Bucket=BUCKET_OUT)
@@ -338,7 +340,7 @@ def test_upload_all_production(mock_binaries: Path, mock_aws_s3: S3Client, mock_
         (gibs_dir / gibs_id).mkdir(parents=True)
         (gibs_dir / gibs_id / "gibs.tif").touch()
         (gibs_dir / gibs_id / "gibs.xml").touch()
-        gibs_manifest_file = (gibs_dir / gibs_id / "gibs.json")
+        gibs_manifest_file = gibs_dir / gibs_id / "gibs.json"
         gibs_manifest_file.touch()
         gibs_manifest_files.append(gibs_manifest_file)
 
