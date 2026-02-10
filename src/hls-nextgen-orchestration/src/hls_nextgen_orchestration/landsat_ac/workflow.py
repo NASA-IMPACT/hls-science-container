@@ -28,6 +28,7 @@ def construct_pipeline(
     working_dir: Path | None = None,
     granule_dir: Path | None = None,
     local_granule_dir: Path | None = None,
+    upload: bool = True,
 ) -> Pipeline:
     """Create the Landsat atmospheric correction (AC) pipeline
 
@@ -40,6 +41,8 @@ def construct_pipeline(
     local_granule_dir
         If provided, assume there is a pre-downloaded Landsat granule
         to process in this directory.
+    upload
+        If True (default), upload to output bucket.
 
     Returns
     -------
@@ -52,7 +55,7 @@ def construct_pipeline(
     else:
         granule_task = DownloadGranule("DownloadGranule")
 
-    return (
+    builder = (
         PipelineBuilder()
         .add(EnvSource("EnvConfig", working_dir=working_dir, granule_dir=granule_dir))
         .add(granule_task)
@@ -66,9 +69,12 @@ def construct_pipeline(
         .add(CreateHlsXml("HlsXml"))
         .add(ConvertToHdf("HdfConv"))
         .add(AddFmaskSds("AddFmask"))
-        .add(UploadResults("Upload"))
-        .build()
     )
+
+    if upload:
+        builder = builder.add(UploadResults("Upload"))
+
+    return builder.build()
 
 
 if __name__ == "__main__":
@@ -79,7 +85,7 @@ if __name__ == "__main__":
     local_granule_dir = Path(_) if (_ := os.getenv("LOCAL_GRANULE_DIR")) else None
 
     try:
-        pipeline = construct_pipeline(local_granule_dir=local_granule_dir)
+        pipeline = construct_pipeline(local_granule_dir=local_granule_dir, upload=False)
         print(pipeline)
         pipeline.run()
     except Exception as e:
