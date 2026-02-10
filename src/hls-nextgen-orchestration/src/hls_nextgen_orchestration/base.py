@@ -41,6 +41,9 @@ class Asset[T]:
         return f"<{self.key} [{self.type_class.__name__}]>"
 
 
+type AssetBundle = dict[Asset[Any], Any]
+
+
 @dataclass
 class TaskContext:
     """

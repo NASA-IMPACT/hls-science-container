@@ -19,7 +19,9 @@ from hls_nextgen_orchestration.landsat_tile.assets import (
     CONFIG,
     GIBS_DIR,
     GRIDDED_HDF,
-    MANIFEST_FILE,
+    SR_MANIFEST_FILE,
+    VI_MANIFEST_FILE,
+    GIBS_MANIFEST_FILES,
     NBAR_ANGLE,
     NBAR_INPUT,
     OUTPUT_BASE_NAME,
@@ -33,9 +35,10 @@ from hls_nextgen_orchestration.landsat_tile.assets import (
 )
 from hls_nextgen_orchestration.landsat_tile.tasks import (
     ConvertToCogs,
-    CreateManifest,
+    CreateSRManifest,
     CreateMetadata,
     CreateThumbnail,
+    DownloadPathRows,
     EnvSource,
     ProcessGibs,
     ProcessPathRows,
@@ -107,10 +110,9 @@ def test_env_source(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     assert cfg.working_dir.exists()
 
 
-def test_process_path_rows(mock_binaries: Path, mock_config, mock_aws_s3) -> None:
+def test_download_pathrows(mock_config: EnvConfig, mock_aws_s3: S3Client) -> None:
     """
-    Test downloading inputs and running landsat-tile tools.
-    Should produce NBAR inputs and scene time.
+    Test downloading Landsat atmospheric correction path/rows
     """
     # Setup S3 input data
     s3 = boto3.client("s3", region_name="us-east-1")
@@ -127,6 +129,18 @@ def test_process_path_rows(mock_binaries: Path, mock_config, mock_aws_s3) -> Non
     s3.put_object(Bucket=BUCKET_IN, Key=f"{prefix}/{ac_file}", Body="dummy content")
     s3.put_object(Bucket=BUCKET_IN, Key=f"{prefix}/{sza_file}", Body="dummy content")
 
+    task = DownloadPathRows("test_process")
+    task.run({CONFIG: mock_config})
+
+    # Verify files were downloaded to working dir via boto3
+    assert (mock_config.working_dir / ac_file).exists()
+    assert (mock_config.working_dir / sza_file).exists()
+
+
+def process_path_rows(mock_binaries: Path, mock_config: EnvConfig) -> None:
+    """
+    Test running landsat-tile tools. Should produce NBAR inputs and scene time.
+    """
     task = ProcessPathRows("test_process")
 
     # We mock subprocess.run only for the tools,
@@ -167,10 +181,6 @@ def test_process_path_rows(mock_binaries: Path, mock_config, mock_aws_s3) -> Non
 
         # Output Base Name should be the full standard HLS ID
         assert outputs[OUTPUT_BASE_NAME] == full_id
-
-        # Verify files were downloaded to working dir via boto3
-        assert (mock_config.working_dir / ac_file).exists()
-        assert (mock_config.working_dir / sza_file).exists()
 
 
 def test_run_nbar(mock_binaries: Path, mock_config: EnvConfig) -> None:
@@ -261,10 +271,10 @@ def test_create_metadata(mock_binaries: Path, mock_config: EnvConfig) -> None:
 
 
 def test_create_manifest(mock_binaries: Path, mock_config: EnvConfig) -> None:
-    """Test manifest creation."""
+    """Test surface reflectance manifest creation."""
     output_basename = f"HLS.L30.T{MGRS}.2020001T101010.v2.0"
 
-    task = CreateManifest("test_manifest")
+    task = CreateSRManifest("test_manifest")
 
     outputs = task.run(
         {
@@ -276,8 +286,8 @@ def test_create_manifest(mock_binaries: Path, mock_config: EnvConfig) -> None:
         }
     )
 
-    assert outputs[MANIFEST_FILE].name == f"{output_basename}.json"
-    assert outputs[MANIFEST_FILE].exists()
+    assert outputs[SR_MANIFEST_FILE].name == f"{output_basename}.json"
+    assert outputs[SR_MANIFEST_FILE].exists()
 
 
 def test_process_gibs(mock_binaries: Path, mock_config: EnvConfig) -> None:
@@ -308,7 +318,7 @@ def test_process_vi(mock_binaries: Path, mock_config: EnvConfig) -> None:
     assert (vi_dir / "NDVI.tif").exists()
 
 
-def test_upload_all_production(mock_aws_s3, mock_config: EnvConfig) -> None:
+def test_upload_all_production(mock_binaries: Path, mock_aws_s3: S3Client, mock_config: EnvConfig) -> None:
     """Test production upload logic."""
     s3: S3Client = boto3.client("s3", region_name="us-east-1")
     s3.create_bucket(Bucket=BUCKET_OUT)
@@ -323,11 +333,14 @@ def test_upload_all_production(mock_aws_s3, mock_config: EnvConfig) -> None:
 
     # Dummy GIBS
     gibs_dir = mock_config.working_dir / "gibs"
-    gibs_dir.mkdir()
-    (gibs_dir / "id1").mkdir()
-    (gibs_dir / "id1" / "gibs.tif").touch()
-    (gibs_dir / "id1" / "gibs.xml").touch()
-    (gibs_dir / "id1" / "gibs.json").touch()  # Manifest
+    gibs_manifest_files = []
+    for gibs_id in ["id1"]:
+        (gibs_dir / gibs_id).mkdir(parents=True)
+        (gibs_dir / gibs_id / "gibs.tif").touch()
+        (gibs_dir / gibs_id / "gibs.xml").touch()
+        gibs_manifest_file = (gibs_dir / gibs_id / "gibs.json")
+        gibs_manifest_file.touch()
+        gibs_manifest_files.append(gibs_manifest_file)
 
     # Dummy VI
     vi_dir = mock_config.working_dir / "vi"
@@ -342,9 +355,11 @@ def test_upload_all_production(mock_aws_s3, mock_config: EnvConfig) -> None:
             CONFIG: mock_config,
             OUTPUT_BASE_NAME: granule_id,
             GIBS_DIR: gibs_dir,
-            VI_DIR: vi_dir,
+            GIBS_MANIFEST_FILES: gibs_manifest_files,
             GRIDDED_HDF: Path("dummy"),
-            MANIFEST_FILE: mock_config.working_dir / f"{granule_id}.json",
+            SR_MANIFEST_FILE: mock_config.working_dir / f"{granule_id}.json",
+            VI_DIR: vi_dir,
+            VI_MANIFEST_FILE: mock_config.working_dir / f"{granule_id}_vi.json",
         }
     )
 

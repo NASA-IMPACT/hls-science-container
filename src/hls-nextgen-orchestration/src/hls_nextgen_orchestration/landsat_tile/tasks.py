@@ -11,7 +11,13 @@ from typing import TYPE_CHECKING, Any
 
 import boto3
 
-from hls_nextgen_orchestration.base import Asset, DataSource, Task, TaskFailure
+from hls_nextgen_orchestration.base import (
+    Asset,
+    AssetBundle,
+    DataSource,
+    Task,
+    TaskFailure,
+)
 from hls_nextgen_orchestration.granules import HlsGranule
 from hls_nextgen_orchestration.utils import validate_command
 
@@ -95,7 +101,7 @@ class EnvSource(DataSource):
     )
     purge_working_dir: bool = True
 
-    def fetch(self) -> dict[Asset, Any]:
+    def fetch(self) -> AssetBundle:
         """
         Fetch configuration from environment variables.
 
@@ -145,7 +151,7 @@ class DownloadPathRows(Task):
     requires = (CONFIG,)
     provides = (PATHROW_IMAGES,)
 
-    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         config: EnvConfig = inputs[CONFIG]
         os.chdir(config.working_dir)
 
@@ -156,7 +162,9 @@ class DownloadPathRows(Task):
         year, month, day = date_str.split("-")
 
         # Download loop
-        pathrows_to_images = {pr: [] for pr in config.pathrow_list}
+        pathrows_to_images: dict[str, list[Path]] = {
+            pr: [] for pr in config.pathrow_list
+        }
         for pathrow in pathrows_to_images:
             input_key = f"{year}-{month}-{day}/{pathrow}"
 
@@ -196,14 +204,16 @@ class LocalPathRows(Task):
 
     local_pathrows_dir: Path
 
-    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         config: EnvConfig = inputs[CONFIG]
 
         date_str = config.date.strftime("%Y-%m-%d")
         year, month, day = date_str.split("-")
 
         # Find data
-        pathrows_to_images = {pr: [] for pr in config.pathrow_list}
+        pathrows_to_images: dict[str, list[Path]] = {
+            pr: [] for pr in config.pathrow_list
+        }
         for pathrow in pathrows_to_images:
             images = list(self.local_pathrows_dir.glob(f"{date_str}_{pathrow}*"))
             logger.info(f"Copying {len(images)} for {pathrow=} to {config.working_dir}")
@@ -230,7 +240,7 @@ class ProcessPathRows(Task):
         validate_command("landsat-tile")
         validate_command("landsat-angle-tile")
 
-    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         config: EnvConfig = inputs[CONFIG]
 
         os.chdir(config.working_dir)
@@ -347,7 +357,7 @@ class RunNbar(Task):
     def __post_init__(self) -> None:
         validate_command("landsat-nbar")
 
-    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         config: EnvConfig = inputs[CONFIG]
         nbar_input: Path = inputs[NBAR_INPUT]
         nbar_angle: Path = inputs[NBAR_ANGLE]
@@ -408,7 +418,7 @@ class ConvertToCogs(Task):
     def __post_init__(self) -> None:
         validate_command("hdf_to_cog")
 
-    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         config: EnvConfig = inputs[CONFIG]
         output_hdf: Path = inputs[OUTPUT_HDF]
         angle_hdf: Path = inputs[ANGLE_HDF]
@@ -453,7 +463,7 @@ class CreateThumbnail(Task):
     def __post_init__(self) -> None:
         validate_command("create_thumbnail")
 
-    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         config: EnvConfig = inputs[CONFIG]
         granule_id: str = inputs[OUTPUT_BASE_NAME]
         thumb_name = f"{granule_id}.jpg"
@@ -489,7 +499,7 @@ class CreateMetadata(Task):
         validate_command("create_metadata")
         validate_command("cmr_to_stac_item")
 
-    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         config: EnvConfig = inputs[CONFIG]
         output_hdf: Path = inputs[OUTPUT_HDF]
         granule_id: str = inputs[OUTPUT_BASE_NAME]
@@ -541,12 +551,7 @@ class CreateSRManifest(Task):
     def __post_init__(self) -> None:
         validate_command("create_manifest")
 
-    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
-        # Dependencies to ensure previous steps are done
-        _ = inputs[COGS_CREATED]
-        _ = inputs[THUMBNAIL_FILE]
-        _ = inputs[CMR_XML]
-
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         config: EnvConfig = inputs[CONFIG]
         granule_id: str = inputs[OUTPUT_BASE_NAME]
         bucket_key = f"s3://{config.output_bucket}/L30/data/{config.year}{config.day_of_year}/{granule_id}"
@@ -584,7 +589,7 @@ class ProcessGibs(Task):
         validate_command("granule_to_gibs")
         validate_command("create_manifest")
 
-    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         config: EnvConfig = inputs[CONFIG]
         granule_id: str = inputs[OUTPUT_BASE_NAME]
 
@@ -650,7 +655,7 @@ class ProcessVi(Task):
         validate_command("vi_generate_stac_items")
         validate_command("create_manifest")
 
-    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         config: EnvConfig = inputs[CONFIG]
         granule_id: str = inputs[OUTPUT_BASE_NAME]
 
@@ -727,6 +732,7 @@ class UploadAll(Task):
         CONFIG,
         OUTPUT_BASE_NAME,
         GIBS_DIR,
+        GIBS_MANIFEST_FILES,
         GRIDDED_HDF,
         SR_MANIFEST_FILE,
         VI_DIR,
@@ -738,7 +744,7 @@ class UploadAll(Task):
         # Needed for debug mode
         validate_command("hdf_to_cog")
 
-    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         config: EnvConfig = inputs[CONFIG]
         granule_id: str = inputs[OUTPUT_BASE_NAME]
         gibs_dir: Path = inputs[GIBS_DIR]
