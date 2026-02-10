@@ -1,5 +1,11 @@
 [tool.ruff]
+line-length = 88
+target-version = "py312"
 include = ["packages/**/*.py", "packages/**/*.pyi"]
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "UP"]
+ignore = ["E501"]
 
 [tool.ruff.lint.isort]
 known-first-party = [
@@ -9,6 +15,7 @@ known-first-party = [
 
 [tool.mypy]
 strict = true
+python_version = "3.13"
 namespace_packages = true
 explicit_package_bases = true
 

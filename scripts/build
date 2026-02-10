@@ -6,6 +6,7 @@ set -e
 # 🛠️  CONFIGURATION
 # ==============================================================================
 IMAGE_NAME="${IMAGE_NAME:-hls-atmospheric-correction}"
+TARGET=${TARGET:-dev}
 REGION="us-west-2"
 CACHE_TAG="cache"
 USE_CACHE=false
@@ -55,7 +56,8 @@ export DOCKER_BUILDKIT=1
 
 # Initialize build arguments
 BUILD_ARGS=(
-    --tag "$IMAGE_NAME:latest"
+    --target "${TARGET}"
+    --tag "$IMAGE_NAME:$TARGET"
     --file Dockerfile
     .
 )
@@ -84,7 +86,7 @@ DURATION=$((END_TIME - START_TIME))
 echo ""
 echo "---------------------------------------------------"
 if [ $BUILD_EXIT_CODE -eq 0 ]; then
-    echo "✅ SUCCESS: Image tagged as [$IMAGE_NAME:latest]"
+    echo "✅ SUCCESS: Image tagged as [$IMAGE_NAME:$TARGET]"
     echo "⏱️  Total time: ${DURATION}s"
     echo "🎉 Happy coding!"
 else

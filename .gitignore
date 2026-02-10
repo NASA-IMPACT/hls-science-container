@@ -5,6 +5,8 @@
 # No package / installers
 **/Fmask*install
 
+**/.DS_Store
+
 # ===== Github default Python.gitignore below
 # Byte-compiled / optimized / DLL files
 __pycache__/

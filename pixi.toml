@@ -12,8 +12,7 @@ espa-surface-reflectance = { path = "packages/espa-surface-reflectance" }
 hls-libs = { path = "packages/hls-libs" }
 
 [pypi-dependencies]
-# Local packages
-hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = true }
+hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = false}
 # Remote repositories
 hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", tag = "v1.8"}
 hls-cmr_stac = { git = "https://github.com/NASA-IMPACT/hls-cmr_stac", tag = "v1.8" }
@@ -25,6 +24,7 @@ hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", tag = "v
 hls-vi = { url = "https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz" }
 
 [dependencies]
+# Dependencies we source via Conda for easier install
 python = ">=3.13,<3.14"
 awscliv2 = "~=2"
 gdal = "*"
@@ -41,8 +41,8 @@ ruff = "*"
 mypy = "*"
 pytest = "*"
 
-[feature.orchestration.pypi-dependencies]
-hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = true }
+[feature.dev.pypi-dependencies]
+hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = true, extras = ["dev"] }
 
 [environments]
-dev = { features = ["dev", "orchestration"], no-default-feature = true }
+dev = { features = ["dev"], no-default-feature = true }

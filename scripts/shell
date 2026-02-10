@@ -4,8 +4,7 @@ set -e
 
 export IMAGE_NAME=${IMAGE_NAME:-hls-atmospheric-correction}
 
-BUILD=$(dirname "$0")/build
-${BUILD}
+TARGET=${TARGET:-dev}
 
 docker run \
     -v "$(pwd)/pixi.toml":/app/pixi.toml \
@@ -16,5 +15,5 @@ docker run \
     -e LASRC_AUX_DIR=/app/data/lasrc_aux/ \
     -v "${HOME}/.aws/:/root/.aws" \
     -e "AWS_PROFILE=${AWS_PROFILE:-default}" \
-    -it "${IMAGE_NAME}":latest \
+    -it "${IMAGE_NAME}":${TARGET} \
     /bin/bash

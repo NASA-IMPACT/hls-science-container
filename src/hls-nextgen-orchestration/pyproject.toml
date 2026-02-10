@@ -6,17 +6,51 @@ readme = "README.md"
 authors = [
     { name = "Chris Holden", email = "ceholden@gmail.com" }
 ]
-requires-python = ">=3.12"
-dependencies = []
+requires-python = ">=3.13"
+dependencies = [
+    "boto3>=1.42.34",
+]
 
 [project.scripts]
 hls-nextgen-orchestration = "hls_nextgen_orchestration:main"
 
 [build-system]
-requires = ["uv_build>=0.9.10,<0.10.0"]
-build-backend = "uv_build"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.optional-dependencies]
+dev = [
+    "boto3-stubs[s3]>=1.36.0",
+    "moto[s3]>=5.0.0",
+    "mypy>=1.14.0",
+    "pytest>=9.0.2",
+    "ruff>=0.9.0",
+]
 
 [dependency-groups]
-dev = [
-    "pytest>=9.0.2",
-]
+dev = ["hls-nextgen-orchestration[dev]"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["hls_nextgen_orchestration"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+
+[tool.pixi.package]
+name = "hls-nextgen-orchestration"
+
+[tool.pixi.package.host-dependencies]
+hatchling = "*"
+
+[tool.pixi.package.build]
+# Use the pixi-build-python backend for Python packages
+backend = { name = "pixi-build-python", version = "*" }

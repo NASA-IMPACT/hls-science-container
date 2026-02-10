@@ -3,7 +3,26 @@
 # Exit on any error
 set -o errexit
 
+# Setup local development debug
+if [[ -z "$AWS_BATCH_JOB_ID" ]]; then
+    export GRANULE=LC08_L1TP_116030_20260107_20260107_02_RT
+    export INPUT_BUCKET=usgs-landsat
+    export PREFIX=collection02/level-1/standard/oli-tirs/2026/116/030/LC08_L1TP_116030_20260107_20260107_02_RT
+    export OUTPUT_BUCKET=hls-mcp-development-viirs-landsat-intermediate-output
+    export REPLACE_EXISTING=replace
+    export VIIRS_AUX_STARTING_DATE=20210101
+fi
+
+python -m "hls_nextgen_orchestration.landsat_ac.workflow"
+exit $?
+
+
+# =============================================================================
+# NEW ORCHESTRATION ABOVE
+# =============================================================================
+
 jobid="$AWS_BATCH_JOB_ID"
+
 # shellcheck disable=2153
 granule="$GRANULE"
 bucket="$OUTPUT_BUCKET"
