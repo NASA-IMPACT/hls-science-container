@@ -2,4 +2,4 @@
 
 export PIXI_FROZEN=true
 
-pixi run -e dev pytest
+pixi run -e dev pytest $@
