@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 import boto3
 
-from hls_nextgen_orchestration.base import DataSource, Task, TaskFailure
+from hls_nextgen_orchestration.base import Asset, DataSource, Task, TaskFailure
 from hls_nextgen_orchestration.granules import HlsGranule
 from hls_nextgen_orchestration.utils import validate_command
 
@@ -21,17 +21,20 @@ from .assets import (
     COGS_CREATED,
     CONFIG,
     GIBS_DIR,
+    GIBS_MANIFEST_FILES,
     GRIDDED_HDF,
-    MANIFEST_FILE,
     NBAR_ANGLE,
     NBAR_INPUT,
     OUTPUT_BASE_NAME,
     OUTPUT_HDF,
+    PATHROW_IMAGES,
     SCENE_TIME,
+    SR_MANIFEST_FILE,
     STAC_JSON,
     THUMBNAIL_FILE,
     UPLOAD_COMPLETE,
     VI_DIR,
+    VI_MANIFEST_FILE,
     EnvConfig,
 )
 
@@ -90,8 +93,9 @@ class EnvSource(DataSource):
     working_dir: Path | None = field(
         default_factory=lambda: Path(d) if (d := os.getenv("WORKING_DIR")) else None
     )
+    purge_working_dir: bool = True
 
-    def fetch(self) -> dict[Any, Any]:
+    def fetch(self) -> dict[Asset, Any]:
         """
         Fetch configuration from environment variables.
 
@@ -121,6 +125,10 @@ class EnvSource(DataSource):
             debug_bucket=os.environ.get("DEBUG_BUCKET"),
         )
 
+        if config.working_dir.exists() and self.purge_working_dir:
+            logger.info(f"Deleting pre-existing {config.working_dir=}")
+            shutil.rmtree(config.working_dir)
+
         if not config.working_dir.exists():
             config.working_dir.mkdir(parents=True, exist_ok=True)
 
@@ -128,38 +136,28 @@ class EnvSource(DataSource):
 
 
 # --- Tasks ---
-
-
 @dataclass(frozen=True)
-class ProcessPathRows(Task):
+class DownloadPathRows(Task):
     """
-    Downloads input data for each pathrow, extracts scene time,
-    and runs landsat-tile / landsat-angle-tile.
+    Downloads all tile inputs for path/rows
     """
 
     requires = (CONFIG,)
-    provides = (NBAR_INPUT, NBAR_ANGLE, SCENE_TIME, OUTPUT_BASE_NAME)
+    provides = (PATHROW_IMAGES,)
 
-    def __post_init__(self) -> None:
-        validate_command("extract_landsat_hms.py")
-        validate_command("landsat-tile")
-        validate_command("landsat-angle-tile")
-
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
         config: EnvConfig = inputs[CONFIG]
         os.chdir(config.working_dir)
 
         s3: S3Client = boto3.client("s3")
+
         # Format date for S3 keys and filenames
         date_str = config.date.strftime("%Y-%m-%d")
         year, month, day = date_str.split("-")
-        scene_time_str = ""
 
-        # Download and Process Loop
-        for idx, pathrow in enumerate(config.pathrow_list):
-            basename = f"{date_str}_{pathrow}"
-            landsat_ac = f"{basename}.hdf"
-            landsat_sz_angle = f"{basename}_SZA.img"
+        # Download loop
+        pathrows_to_images = {pr: [] for pr in config.pathrow_list}
+        for pathrow in pathrows_to_images:
             input_key = f"{year}-{month}-{day}/{pathrow}"
 
             logger.info(
@@ -181,8 +179,72 @@ class ProcessPathRows(Task):
                     filename = Path(key).name
                     dest_path = config.working_dir / filename
 
-                    if not dest_path.exists():
-                        s3.download_file(config.input_bucket, key, str(dest_path))
+                    s3.download_file(config.input_bucket, key, str(dest_path))
+                    pathrows_to_images[pathrow].append(dest_path)
+
+        return {PATHROW_IMAGES: pathrows_to_images}
+
+
+@dataclass(frozen=True)
+class LocalPathRows(Task):
+    """
+    Locate pre-downloaded Landsat path/row granules
+    """
+
+    requires = (CONFIG,)
+    provides = (PATHROW_IMAGES,)
+
+    local_pathrows_dir: Path
+
+    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+        config: EnvConfig = inputs[CONFIG]
+
+        date_str = config.date.strftime("%Y-%m-%d")
+        year, month, day = date_str.split("-")
+
+        # Find data
+        pathrows_to_images = {pr: [] for pr in config.pathrow_list}
+        for pathrow in pathrows_to_images:
+            images = list(self.local_pathrows_dir.glob(f"{date_str}_{pathrow}*"))
+            logger.info(f"Copying {len(images)} for {pathrow=} to {config.working_dir}")
+            for image in images:
+                dest = config.working_dir / image.name
+                shutil.copy(image, dest)
+                pathrows_to_images[pathrow].append(dest)
+
+        return {PATHROW_IMAGES: pathrows_to_images}
+
+
+@dataclass(frozen=True)
+class ProcessPathRows(Task):
+    """
+    Extracts scene time and runs landsat-tile / landsat-angle-tile.
+    """
+
+    requires = (CONFIG, PATHROW_IMAGES)
+    provides = (NBAR_INPUT, NBAR_ANGLE, SCENE_TIME, OUTPUT_BASE_NAME)
+
+    def __post_init__(self) -> None:
+        # FIXME: import "extract_landsat_hms" as Python function to run
+        validate_command("extract_landsat_hms.py")
+        validate_command("landsat-tile")
+        validate_command("landsat-angle-tile")
+
+    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
+        config: EnvConfig = inputs[CONFIG]
+
+        os.chdir(config.working_dir)
+
+        # Format date for S3 keys and filenames
+        date_str = config.date.strftime("%Y-%m-%d")
+        year, month, day = date_str.split("-")
+        scene_time_str = ""
+
+        # Download and Process Loop
+        for idx, pathrow in enumerate(config.pathrow_list):
+            basename = f"{date_str}_{pathrow}"
+            landsat_ac = f"{basename}.hdf"
+            landsat_sz_angle = f"{basename}_SZA.img"
 
             if idx == 0:
                 # Extract scene time from the first image
@@ -285,7 +347,7 @@ class RunNbar(Task):
     def __post_init__(self) -> None:
         validate_command("landsat-nbar")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
         config: EnvConfig = inputs[CONFIG]
         nbar_input: Path = inputs[NBAR_INPUT]
         nbar_angle: Path = inputs[NBAR_ANGLE]
@@ -346,7 +408,7 @@ class ConvertToCogs(Task):
     def __post_init__(self) -> None:
         validate_command("hdf_to_cog")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
         config: EnvConfig = inputs[CONFIG]
         output_hdf: Path = inputs[OUTPUT_HDF]
         angle_hdf: Path = inputs[ANGLE_HDF]
@@ -385,13 +447,13 @@ class CreateThumbnail(Task):
     Creates a thumbnail image for the product.
     """
 
-    requires = (CONFIG, OUTPUT_BASE_NAME)
+    requires = (CONFIG, COGS_CREATED, OUTPUT_BASE_NAME)
     provides = (THUMBNAIL_FILE,)
 
     def __post_init__(self) -> None:
         validate_command("create_thumbnail")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
         config: EnvConfig = inputs[CONFIG]
         granule_id: str = inputs[OUTPUT_BASE_NAME]
         thumb_name = f"{granule_id}.jpg"
@@ -420,14 +482,14 @@ class CreateMetadata(Task):
     Generates CMR XML and STAC JSON metadata.
     """
 
-    requires = (CONFIG, OUTPUT_HDF, OUTPUT_BASE_NAME)
+    requires = (CONFIG, COGS_CREATED, OUTPUT_HDF, OUTPUT_BASE_NAME)
     provides = (CMR_XML, STAC_JSON)
 
     def __post_init__(self) -> None:
         validate_command("create_metadata")
         validate_command("cmr_to_stac_item")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
         config: EnvConfig = inputs[CONFIG]
         output_hdf: Path = inputs[OUTPUT_HDF]
         granule_id: str = inputs[OUTPUT_BASE_NAME]
@@ -462,9 +524,9 @@ class CreateMetadata(Task):
 
 
 @dataclass(frozen=True)
-class CreateManifest(Task):
+class CreateSRManifest(Task):
     """
-    Generates the product manifest file.
+    Generates the HLS surface reflectance product manifest file.
     """
 
     requires = (
@@ -474,12 +536,12 @@ class CreateManifest(Task):
         THUMBNAIL_FILE,
         CMR_XML,
     )
-    provides = (MANIFEST_FILE,)
+    provides = (SR_MANIFEST_FILE,)
 
     def __post_init__(self) -> None:
         validate_command("create_manifest")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
         # Dependencies to ensure previous steps are done
         _ = inputs[COGS_CREATED]
         _ = inputs[THUMBNAIL_FILE]
@@ -506,7 +568,7 @@ class CreateManifest(Task):
             ],
             check=True,
         )
-        return {MANIFEST_FILE: config.working_dir / manifest_name}
+        return {SR_MANIFEST_FILE: config.working_dir / manifest_name}
 
 
 @dataclass(frozen=True)
@@ -515,14 +577,14 @@ class ProcessGibs(Task):
     Generates GIBS browse subtiles and manifests.
     """
 
-    requires = (CONFIG, OUTPUT_BASE_NAME)
-    provides = (GIBS_DIR,)
+    requires = (CONFIG, COGS_CREATED, SR_MANIFEST_FILE, OUTPUT_BASE_NAME)
+    provides = (GIBS_DIR, GIBS_MANIFEST_FILES)
 
     def __post_init__(self) -> None:
         validate_command("granule_to_gibs")
         validate_command("create_manifest")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
         config: EnvConfig = inputs[CONFIG]
         granule_id: str = inputs[OUTPUT_BASE_NAME]
 
@@ -540,6 +602,7 @@ class ProcessGibs(Task):
         )
 
         # Iterate through generated dirs
+        gibs_manifest_files = []
         for gibs_id_dir in gibs_dir.iterdir():
             if gibs_id_dir.is_dir():
                 gibs_id = gibs_id_dir.name
@@ -567,8 +630,9 @@ class ProcessGibs(Task):
                     ],
                     check=True,
                 )
+                gibs_manifest_files.append(subtile_manifest)
 
-        return {GIBS_DIR: gibs_dir}
+        return {GIBS_DIR: gibs_dir, GIBS_MANIFEST_FILES: gibs_manifest_files}
 
 
 @dataclass(frozen=True)
@@ -577,8 +641,8 @@ class ProcessVi(Task):
     Generates Vegetation Index (VI) files and metadata.
     """
 
-    requires = (CONFIG, OUTPUT_BASE_NAME)
-    provides = (VI_DIR,)
+    requires = (CONFIG, COGS_CREATED, THUMBNAIL_FILE, OUTPUT_BASE_NAME)
+    provides = (VI_DIR, VI_MANIFEST_FILE)
 
     def __post_init__(self) -> None:
         validate_command("vi_generate_indices")
@@ -586,7 +650,7 @@ class ProcessVi(Task):
         validate_command("vi_generate_stac_items")
         validate_command("create_manifest")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
         config: EnvConfig = inputs[CONFIG]
         granule_id: str = inputs[OUTPUT_BASE_NAME]
 
@@ -650,7 +714,7 @@ class ProcessVi(Task):
             check=True,
         )
 
-        return {VI_DIR: vi_dir}
+        return {VI_DIR: vi_dir, VI_MANIFEST_FILE: vi_manifest}
 
 
 @dataclass(frozen=True)
@@ -663,19 +727,24 @@ class UploadAll(Task):
         CONFIG,
         OUTPUT_BASE_NAME,
         GIBS_DIR,
-        VI_DIR,
         GRIDDED_HDF,
-        MANIFEST_FILE,
+        SR_MANIFEST_FILE,
+        VI_DIR,
+        VI_MANIFEST_FILE,
     )
     provides = (UPLOAD_COMPLETE,)
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def __post_init__(self) -> None:
+        # Needed for debug mode
+        validate_command("hdf_to_cog")
+
+    def run(self, inputs: dict[Asset, Any]) -> dict[Asset, Any]:
         config: EnvConfig = inputs[CONFIG]
         granule_id: str = inputs[OUTPUT_BASE_NAME]
         gibs_dir: Path = inputs[GIBS_DIR]
         vi_dir: Path = inputs[VI_DIR]
         gridded_hdf: Path = inputs[GRIDDED_HDF]
-        manifest_file: Path = inputs[MANIFEST_FILE]
+        manifest_file: Path = inputs[SR_MANIFEST_FILE]
 
         s3: S3Client = boto3.client("s3")
 
@@ -684,8 +753,6 @@ class UploadAll(Task):
                 s3, config, granule_id, gibs_dir, vi_dir, manifest_file
             )
         else:
-            # Check debug dependency here since we only use it in this branch
-            validate_command("hdf_to_cog")
             self._upload_debug(s3, config, granule_id, gridded_hdf)
 
         return {UPLOAD_COMPLETE: True}

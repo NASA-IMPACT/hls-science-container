@@ -65,6 +65,9 @@ class EnvConfig:
 
 CONFIG = Asset("config_object", EnvConfig)
 
+# Inputs from Landsat atmospheric correction workflow
+PATHROW_IMAGES = Asset("pathrow_images", dict)
+
 # Intermediate outputs from the tiling loop
 NBAR_INPUT = Asset("nbar_input_hdf", Path)
 NBAR_ANGLE = Asset("nbar_angle_hdf", Path)
@@ -81,11 +84,13 @@ COGS_CREATED = Asset("cogs_created_flag", bool)
 THUMBNAIL_FILE = Asset("thumbnail_file", Path)
 CMR_XML = Asset("cmr_metadata_xml", Path)
 STAC_JSON = Asset("stac_metadata_json", Path)
-MANIFEST_FILE = Asset("manifest_file", Path)
+SR_MANIFEST_FILE = Asset("manifest_file", Path)
 
 # GIBS and VI Outputs
 GIBS_DIR = Asset("gibs_output_directory", Path)
+GIBS_MANIFEST_FILES = Asset("gibs_manifest_files", list)
 VI_DIR = Asset("vi_output_directory", Path)
+VI_MANIFEST_FILE = Asset("vi_manifest_file", Path)
 
 # Final Flag
 UPLOAD_COMPLETE = Asset("upload_complete_flag", bool)
