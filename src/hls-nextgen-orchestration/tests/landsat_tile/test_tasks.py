@@ -49,17 +49,17 @@ from hls_nextgen_orchestration.landsat_tile.tasks import (
 
 # --- Test Data Constants ---
 JOB_ID = "job-tile-123"
-PATHROW_LIST = "025030"
+PATHROW_LIST = ["025030"]
 DATE = dt.date(2020, 1, 1)
+DATE_STR_YYYYMMDD = DATE.strftime("%Y-%m-%d")
+DATE_STR_YYYYDOY = DATE.strftime("%Y%j")
+SCENE_TIME_STR = "101010"
 MGRS = "12ABC"
 MGRS_ULX = "100"
 MGRS_ULY = "200"
 BUCKET_IN = "input-bucket"
 BUCKET_OUT = "output-bucket"
 BUCKET_GIBS = "gibs-bucket"
-
-# Mocked output of extract_landsat_hms.py
-MOCKED_SCENE_TIME = "101010"
 
 
 @pytest.fixture
@@ -69,7 +69,7 @@ def mock_config(tmp_path: Path) -> Generator[EnvConfig, None, None]:
     """
     config = EnvConfig(
         job_id=JOB_ID,
-        pathrow_list=PATHROW_LIST.split(","),
+        pathrow_list=PATHROW_LIST,
         date=DATE,
         mgrs=MGRS,
         mgrs_ulx=MGRS_ULX,
@@ -88,7 +88,7 @@ def mock_config(tmp_path: Path) -> Generator[EnvConfig, None, None]:
 def test_env_source(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Test environment variable parsing."""
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
-    monkeypatch.setenv("PATHROW_LIST", PATHROW_LIST)
+    monkeypatch.setenv("PATHROW_LIST", ",".join(PATHROW_LIST))
     monkeypatch.setenv("DATE", DATE.isoformat())
     monkeypatch.setenv("MGRS", MGRS)
     monkeypatch.setenv("MGRS_ULX", MGRS_ULX)
@@ -119,12 +119,13 @@ def test_download_pathrows(mock_config: EnvConfig, mock_aws_s3: S3Client) -> Non
     s3.create_bucket(Bucket=BUCKET_IN)
 
     # Prefix based on config date/pathrow: 2020-01-01/025030
-    prefix = "2020-01-01/025030"
+    prefix = f"{DATE_STR_YYYYMMDD}/{PATHROW_LIST[0]}"
 
     # Create dummy files that would exist in the source bucket
     # landsat_ac name format derived in task: {date}_{pathrow}.hdf
-    ac_file = "2020-01-01_025030.hdf"
-    sza_file = "2020-01-01_025030_SZA.img"
+    date_pr = f"{DATE_STR_YYYYMMDD}_{PATHROW_LIST[0]}"
+    ac_file = f"{date_pr}.hdf"
+    sza_file = f"{date_pr}_SZA.img"
 
     s3.put_object(Bucket=BUCKET_IN, Key=f"{prefix}/{ac_file}", Body="dummy content")
     s3.put_object(Bucket=BUCKET_IN, Key=f"{prefix}/{sza_file}", Body="dummy content")
@@ -150,7 +151,7 @@ def test_process_path_rows(mock_binaries: Path, mock_config: EnvConfig) -> None:
         def side_effect(cmd: str, **kwargs: Any) -> MagicMock:
             if cmd[0] == "extract_landsat_hms.py":
                 # Mock return of scene time
-                return MagicMock(stdout=f"{MOCKED_SCENE_TIME}\n")
+                return MagicMock(stdout=f"{SCENE_TIME_STR}\n")
             elif cmd[0] == "landsat-tile":
                 # Simulate output creation
                 # cmd[-1] is output nbar input hdf
@@ -168,13 +169,12 @@ def test_process_path_rows(mock_binaries: Path, mock_config: EnvConfig) -> None:
 
         # Expected ID components
         # Full ID uses 'T' separator for time: T123456
-        full_id = f"HLS.L30.T{MGRS}.2020001T{MOCKED_SCENE_TIME}.v2.0"
+        full_id = f"HLS.L30.T{MGRS}.{DATE_STR_YYYYDOY}T{SCENE_TIME_STR}.v2.0"
         # Legacy/NBAR input uses '.' separator for time: 123456
-        nbar_legacy_time = MOCKED_SCENE_TIME
-        nbar_legacy_base = f"{MGRS}.2020001.{nbar_legacy_time}.v2.0"
+        nbar_legacy_base = f"{MGRS}.{DATE_STR_YYYYDOY}.{SCENE_TIME_STR}.v2.0"
 
         # Verify assets produced
-        assert outputs[SCENE_TIME] == MOCKED_SCENE_TIME
+        assert outputs[SCENE_TIME] == SCENE_TIME_STR
         # Check that NBAR input uses legacy naming with dots
         assert outputs[NBAR_INPUT].name == f"HLS.L30.{nbar_legacy_base}.hdf"
         assert outputs[NBAR_ANGLE].name == f"L8ANGLE.{nbar_legacy_base}.hdf"
@@ -185,13 +185,12 @@ def test_process_path_rows(mock_binaries: Path, mock_config: EnvConfig) -> None:
 
 def test_run_nbar(mock_binaries: Path, mock_config: EnvConfig) -> None:
     """Test NBAR execution and renaming."""
-    scene_time = MOCKED_SCENE_TIME
     # Use a valid HLS ID for the input, as RunNbar now parses it
-    full_id = f"HLS.L30.T{MGRS}.2020001T{scene_time}.v2.0"
+    full_id = f"HLS.L30.T{MGRS}.{DATE_STR_YYYYDOY}T{SCENE_TIME_STR}.v2.0"
     output_basename = full_id
 
     # Setup Inputs using Legacy naming (dots)
-    nbar_legacy_base = f"{MGRS}.2020001.{scene_time}.v2.0"
+    nbar_legacy_base = f"{MGRS}.{DATE_STR_YYYYDOY}.{SCENE_TIME_STR}.v2.0"
     nbar_input = mock_config.working_dir / f"HLS.L30.{nbar_legacy_base}.hdf"
     nbar_input.touch()
     nbar_angle = mock_config.working_dir / f"L8ANGLE.{nbar_legacy_base}.hdf"
@@ -204,7 +203,7 @@ def test_run_nbar(mock_binaries: Path, mock_config: EnvConfig) -> None:
             CONFIG: mock_config,
             NBAR_INPUT: nbar_input,
             NBAR_ANGLE: nbar_angle,
-            SCENE_TIME: scene_time,
+            SCENE_TIME: SCENE_TIME_STR,
             OUTPUT_BASE_NAME: output_basename,
         }
     )
@@ -241,7 +240,7 @@ def test_convert_to_cogs(mock_binaries: Path, mock_config: EnvConfig) -> None:
 def test_create_thumbnail(mock_binaries: Path, mock_config: EnvConfig) -> None:
     """Test thumbnail generation."""
     # Use full ID
-    output_basename = f"HLS.L30.T{MGRS}.2020001T101010.v2.0"
+    output_basename = f"HLS.L30.T{MGRS}.{DATE_STR_YYYYDOY}T{SCENE_TIME_STR}.v2.0"
 
     task = CreateThumbnail("test_thumb")
 
@@ -255,7 +254,7 @@ def test_create_thumbnail(mock_binaries: Path, mock_config: EnvConfig) -> None:
 def test_create_metadata(mock_binaries: Path, mock_config: EnvConfig) -> None:
     """Test CMR/STAC metadata generation."""
     output_hdf = mock_config.working_dir / "output.hdf"
-    output_basename = f"HLS.L30.T{MGRS}.2020001T101010.v2.0"
+    output_basename = f"HLS.L30.T{MGRS}.{DATE_STR_YYYYDOY}T{SCENE_TIME_STR}.v2.0"
 
     task = CreateMetadata("test_meta")
 
@@ -272,7 +271,7 @@ def test_create_metadata(mock_binaries: Path, mock_config: EnvConfig) -> None:
 
 def test_create_manifest(mock_binaries: Path, mock_config: EnvConfig) -> None:
     """Test surface reflectance manifest creation."""
-    output_basename = f"HLS.L30.T{MGRS}.2020001T101010.v2.0"
+    output_basename = f"HLS.L30.T{MGRS}.{DATE_STR_YYYYDOY}T{SCENE_TIME_STR}.v2.0"
 
     task = CreateSRManifest("test_manifest")
 
@@ -326,7 +325,7 @@ def test_upload_all_production(
     s3.create_bucket(Bucket=BUCKET_OUT)
     s3.create_bucket(Bucket=BUCKET_GIBS)
 
-    granule_id = f"HLS.L30.T{MGRS}.2020001T101010.v2.0"
+    granule_id = f"HLS.L30.T{MGRS}.{DATE_STR_YYYYDOY}T{SCENE_TIME_STR}.v2.0"
     vi_id = granule_id.replace("HLS.L30", "HLS-VI.L30")
 
     # Create dummy files to upload
@@ -369,9 +368,9 @@ def test_upload_all_production(
 
     # Verify S3 Contents
     # 1. Main Product
-    # Key structure: L30/data/2020001/{granule_id}/product.tif
+    # Key structure: L30/data/{DATE_STR_YYYYDOY}/{granule_id}/product.tif
     main_objs = s3.list_objects(
-        Bucket=BUCKET_OUT, Prefix=f"L30/data/2020001/{granule_id}"
+        Bucket=BUCKET_OUT, Prefix=f"L30/data/{DATE_STR_YYYYDOY}/{granule_id}"
     )
     main_keys = [o["Key"] for o in main_objs.get("Contents", [])]
     assert any("product.tif" in k for k in main_keys)
@@ -379,14 +378,18 @@ def test_upload_all_production(
     assert any(f"{granule_id}.json" in k for k in main_keys)
 
     # 2. GIBS
-    # Key: L30/data/2020001/id1/gibs.tif
-    gibs_objs = s3.list_objects(Bucket=BUCKET_GIBS, Prefix="L30/data/2020001")
+    # Key: L30/data/{DATE_STR_YYYYDOY}/id1/gibs.tif
+    gibs_objs = s3.list_objects(
+        Bucket=BUCKET_GIBS, Prefix=f"L30/data/{DATE_STR_YYYYDOY}"
+    )
     gibs_keys = [o["Key"] for o in gibs_objs.get("Contents", [])]
     assert any("id1/gibs.tif" in k for k in gibs_keys)
 
     # 3. VI
-    # Key: L30_VI/data/2020001/{vi_id}/vi.tif
-    vi_objs = s3.list_objects(Bucket=BUCKET_OUT, Prefix=f"L30_VI/data/2020001/{vi_id}")
+    # Key: L30_VI/data/{DATE_STR_YYYYDOY}/{vi_id}/vi.tif
+    vi_objs = s3.list_objects(
+        Bucket=BUCKET_OUT, Prefix=f"L30_VI/data/{DATE_STR_YYYYDOY}/{vi_id}"
+    )
     vi_keys = [o["Key"] for o in vi_objs.get("Contents", [])]
     assert any("vi.tif" in k for k in vi_keys)
     # Check manifest upload
