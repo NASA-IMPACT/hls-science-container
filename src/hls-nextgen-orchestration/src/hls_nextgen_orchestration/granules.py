@@ -88,9 +88,81 @@ class LandsatGranule:
 
 
 @dataclass
-class HlsGranule:
+class Sentinel2Granule:
+    """Represents a Sentinel-2 L1C SAFE Granule ID.
+
+    Example: S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841
+
+    Attributes
+    ----------
+    mission : str
+        The mission identifier (e.g., 'S2A', 'S2B').
+    product_level : str
+        The product level (e.g., 'MSIL1C').
+    acquisition_time : dt.datetime
+        The sensing start time.
+    processing_baseline : str
+        The processing baseline (e.g., 'N0208').
+    relative_orbit : str
+        The relative orbit number (e.g., 'R065').
+    tile_id : str
+        The MGRS tile identifier (e.g., '32TQM').
+    product_time : dt.datetime
+        The product generation time.
     """
-    Represents an HLS v2 Granule ID.
+
+    mission: str
+    product_level: str
+    acquisition_time: dt.datetime
+    processing_baseline: str
+    relative_orbit: str
+    tile_id: str
+    product_time: dt.datetime
+
+    @classmethod
+    def from_str(cls, granule_id: str) -> Sentinel2Granule:
+        """Parse a Sentinel-2 L1C SAFE ID string."""
+        parts = granule_id.split("_")
+        if len(parts) != 7:
+            raise ValueError(f"Invalid Sentinel-2 ID format: {granule_id}")
+
+        return cls(
+            mission=parts[0],
+            product_level=parts[1],
+            acquisition_time=dt.datetime.strptime(parts[2], "%Y%m%dT%H%M%S"),
+            processing_baseline=parts[3],
+            relative_orbit=parts[4],
+            tile_id=parts[5].lstrip("T"),
+            product_time=dt.datetime.strptime(parts[6], "%Y%m%dT%H%M%S"),
+        )
+
+    def to_str(self) -> str:
+        """
+        Reconstruct the Sentinel-2 SAFE ID string.
+
+        Returns
+        -------
+        str
+            The formatted Sentinel-2 SAFE ID.
+        """
+        return "_".join(
+            [
+                self.mission,
+                self.product_level,
+                self.acquisition_time.strftime("%Y%m%dT%H%M%S"),
+                self.processing_baseline,
+                self.relative_orbit,
+                f"T{self.tile_id}",
+                self.product_time.strftime("%Y%m%dT%H%M%S"),
+            ]
+        )
+
+
+@dataclass
+class HlsGranule:
+    """Represents an HLS v2 Granule ID.
+
+    Example: HLS.S30.T18TYL.2020001T153621.v2.0
 
     Attributes
     ----------
