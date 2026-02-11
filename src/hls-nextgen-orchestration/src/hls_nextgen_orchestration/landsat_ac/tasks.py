@@ -62,9 +62,7 @@ class EnvSource(DataSource):
         job_id = os.environ.get("AWS_BATCH_JOB_ID", "local_job")
         granule = os.environ["GRANULE"]
 
-        working_dir = (
-            self.working_dir if self.working_dir else self.scratch_dir / job_id
-        )
+        working_dir = self.working_dir or self.scratch_dir / job_id
         granule_dir = self.granule_dir or working_dir / granule
 
         config = EnvConfig(
