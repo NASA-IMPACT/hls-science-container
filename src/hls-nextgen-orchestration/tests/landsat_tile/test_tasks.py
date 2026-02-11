@@ -137,7 +137,7 @@ def test_download_pathrows(mock_config: EnvConfig, mock_aws_s3: S3Client) -> Non
     assert (mock_config.working_dir / sza_file).exists()
 
 
-def process_path_rows(mock_binaries: Path, mock_config: EnvConfig) -> None:
+def test_process_path_rows(mock_binaries: Path, mock_config: EnvConfig) -> None:
     """
     Test running landsat-tile tools. Should produce NBAR inputs and scene time.
     """
