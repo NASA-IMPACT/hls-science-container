@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -24,13 +25,16 @@ def s3_setup(s3_client: S3Client) -> S3Client:
 
 
 def test_landsat_pipeline_end_to_end(
-    mock_binaries, s3_setup: S3Client, monkeypatch, tmp_path
-):
+    mock_binaries: Path,
+    s3_setup: S3Client,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
     monkeypatch.setenv("GRANULE", GRANULE)
     monkeypatch.setenv("INPUT_BUCKET", IN_BUCKET)
     monkeypatch.setenv("OUTPUT_BUCKET", OUT_BUCKET)
-    monkeypatch.setenv("PREFIX", "L8")
+    monkeypatch.setenv("PREFIX", "L30")
     monkeypatch.setenv("ACCODE", "LaSRC")
     monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
 
