@@ -4,14 +4,11 @@ import os
 import stat
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import boto3
 import pytest
 from moto import mock_aws
-
-if TYPE_CHECKING:
-    from mypy_boto3_s3 import S3Client
+from mypy_boto3_s3 import S3Client
 
 
 @pytest.fixture
