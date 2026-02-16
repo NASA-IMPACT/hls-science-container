@@ -9,6 +9,30 @@ from typing import Any, ClassVar, TypeVar
 logger = logging.getLogger(__name__)
 
 
+@dataclass(frozen=True, kw_only=True)
+class HlsVersion:
+    """HLS product version"""
+
+    major: int = 2
+    minor: int = 0
+
+    def to_str(self) -> str:
+        """Convert into a string (e.g., v2.0)"""
+        return f"v{self.major}.{self.minor}"
+
+    @classmethod
+    def from_str(cls, version: str) -> HlsVersion:
+        """Parse from a string (e.g., v2.0)"""
+        parts = version.lstrip("v").split(".")
+        return cls(
+            major=int(parts[0]),
+            minor=int(parts[1]),
+        )
+
+
+HLS_VERSION = HlsVersion(major=2, minor=0)
+
+
 class TaskFailure(Exception):
     """Exception raised by a task indicating a specific exit code."""
 

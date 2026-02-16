@@ -71,10 +71,7 @@ def get_nbar_names(granule: HlsGranule) -> dict[str, str]:
     year_doy = granule.acquisition_time.strftime("%Y%j")
 
     # Format: T12ABC.2022001.123456.v2.0
-    basename = (
-        f"{granule.tile_id}.{year_doy}.{time_str}."
-        f"{granule.version_major}.{granule.version_minor}"
-    )
+    basename = f"{granule.tile_id}.{year_doy}.{time_str}.{granule.version.to_str()}"
 
     return {
         "product": f"HLS.L30.{basename}.hdf",

@@ -3,6 +3,8 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass
 
+from .base import HLS_VERSION, HlsVersion
+
 
 @dataclass
 class LandsatGranule:
@@ -89,9 +91,34 @@ class LandsatGranule:
 
 @dataclass
 class Sentinel2Granule:
-    """Represents a Sentinel-2 L1C SAFE Granule ID.
+    """Represents a Sentinel-2 L1C Granule ID.
 
-    Example: S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841
+    Examples
+    --------
+    S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841
+
+    Notes
+    -----
+    The SAFE (Standard Archive Format for Europe) product format layout
+    looks like (abbre)
+
+    {PRODUCT_ID}/
+        DATASTRIP/*
+        GRANULE/
+            {GRANULE_ID}/
+                AUX_DATA/
+                IMG_DATA/
+                QI_DATA/
+                MTD_TL.xml
+        HTML/*
+        INSPIRE.xml
+        manifest.safe
+        MTD_MSIL1C.xml
+
+    By convention within the HLS project we call the "product ID" (outer ID) the
+    "granule ID" and ignore the "inner" granule identifier. When this format
+    was originally released there would be multiple granules within each product,
+    but now there's only 1 granule within the product so they are one-to-one.
 
     Attributes
     ----------
@@ -184,8 +211,7 @@ class HlsGranule:
     sensor: str
     tile_id: str
     acquisition_time: dt.datetime
-    version_major: str = "v2"
-    version_minor: str = "0"
+    version: HlsVersion = HLS_VERSION
 
     def __post_init__(self) -> None:
         """Validate granule attributes"""
@@ -229,8 +255,7 @@ class HlsGranule:
             sensor=parts[1],
             tile_id=raw_tile_id,
             acquisition_time=acq_time,
-            version_major=parts[4],
-            version_minor=parts[5],
+            version=HlsVersion.from_str(f"{parts[4]}.{parts[5]}"),
         )
 
     def to_str(self) -> str:
@@ -248,7 +273,6 @@ class HlsGranule:
                 self.sensor,
                 f"T{self.tile_id}",
                 self.acquisition_time.strftime("%Y%jT%H%M%S"),
-                self.version_major,
-                self.version_minor,
+                self.version.to_str(),
             ]
         )

@@ -142,8 +142,8 @@ class TestHlsGranule:
         assert granule.tile_id == "18TYL"
         # 2020 day 1 at 15:36:21
         assert granule.acquisition_time == dt.datetime(2020, 1, 1, 15, 36, 21)
-        assert granule.version_major == "v2"
-        assert granule.version_minor == "0"
+        assert granule.version.major == 2
+        assert granule.version.minor == 0
 
     def test_from_str_valid_l30(self) -> None:
         """
