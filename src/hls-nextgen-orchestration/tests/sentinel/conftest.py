@@ -11,36 +11,15 @@ from hls_nextgen_orchestration.granules import Sentinel2Granule
 from hls_nextgen_orchestration.sentinel.assets import EnvConfig
 
 # --- Mock CLI Scripts for Sentinel-2 ---
-
-FMASK_SENTINEL = """#!/bin/bash
-# usage: fmask_sentinel -i input_dir -o output_file
-while getopts "i:o:" opt; do
-  case $opt in
-    i) input_dir="$OPTARG" ;;
-    o) output_file="$OPTARG" ;;
-  esac
-done
-touch "$output_file"
-echo "Fmask 4 complete for $input_dir"
+CHECK_SZA = """#!/bin/bash
+echo "valid"
 """
 
-DO_LASRC_SENTINEL = """#!/bin/bash
-# usage: do_lasrc_sentinel.py --xml mtd_file
-mkdir -p lasrc_out
-touch lasrc_out/lasrc_processed.hdf
-echo "LaSRC complete"
+RUN_FMASK_SH = """#!/bin/bash
+# usage: run_Fmask.sh (runs in cwd)
+touch "foo_Fmask4.tif"
+echo "Fmask run complete"
 """
-
-# MOCK_UNZIP = """#!/bin/bash
-# # usage: unzip -q file.zip -d dest_dir
-# dest="$4"
-# mkdir -p "$dest"
-# # Create a dummy SAFE structure
-# SAFE_NAME=$(basename "$2" .zip).SAFE
-# mkdir -p "$dest/$SAFE_NAME/GRANULE/G1"
-# touch "$dest/$SAFE_NAME/MTD_MSIL1C.xml"
-# echo "Unzipped $2 to $dest"
-# """
 
 SENTINEL_DERIVE_ANGLE = """#!/bin/bash
 # usage: sentinel-derive-angle ... output
@@ -53,17 +32,17 @@ touch "$out"
 echo "Derive angles complete: $out"
 """
 
-RUN_FMASK_SH = """#!/bin/bash
-# usage: run_Fmask.sh (runs in cwd)
-touch "foo_Fmask4.tif"
-echo "Fmask run complete"
-"""
 
 GDAL_TRANSLATE = """#!/bin/bash
 # usage: gdal_translate ... input output
 out="${@: -1}"
 touch "$out"
 echo "GDAL translate complete: $out"
+"""
+
+APPLY_S2_QUALITY_MASK = """#!/bin/bash
+# usage: apply_s2_quality_mask directory
+echo "Applied S2 quality mask in $1"
 """
 
 UNPACKAGE_S2 = """#!/bin/bash
@@ -77,6 +56,13 @@ touch "S2A_TEST.xml"
 echo "Convert to ESPA complete"
 """
 
+DO_LASRC_SENTINEL = """#!/bin/bash
+# usage: do_lasrc_sentinel.py --xml mtd_file
+touch $(pwd)/S2A_TEST_sr_aerosol_qa.img
+touch $(pwd)/S2A_TEST_sr_band5.img
+echo "LaSRC complete"
+"""
+
 CREATE_SR_HDF_XML = """#!/bin/bash
 # usage: create_sr_hdf_xml xml hls_xml suffix
 touch "$2"
@@ -87,10 +73,11 @@ CONVERT_ESPA_TO_HDF = """#!/bin/bash
 # usage: convert_espa_to_hdf --xml=x --hdf=h
 for arg in "$@"; do
   if [[ $arg == --hdf=* ]]; then
-    touch "${arg#*=}"
+    hdf="${arg#*=}"
+    touch $hdf
   fi
 done
-echo "Convert ESPA to HDF complete"
+echo "Convert ESPA to HDF complete for $hdf"
 """
 
 SENTINEL_TWOHDF2ONE = """#!/bin/bash
@@ -116,6 +103,7 @@ echo "Trim complete: $1"
 SENTINEL_CREATE_S2AT30M = """#!/bin/bash
 # usage: sentinel-create-s2at30m in out
 touch "$2"
+touch "${2%.*}.hdf.hdr"
 echo "Resample complete: $2"
 """
 
@@ -126,14 +114,16 @@ echo "NBAR derive complete"
 
 SENTINEL_L8_LIKE = """#!/bin/bash
 # usage: sentinel-l8-like param input
-echo "L8-like complete"
+# this updates the `input` in place
+input=$2
+if [[ -f $input ]]; then
+    echo "L8-like complete for $input"
+    touch $input
+else
+    echo "Cannot find input!"
+    exit 1
+fi
 """
-
-APPLY_S2_QUALITY_MASK = """#!/bin/bash
-# usage: apply_s2_quality_mask directory
-echo "Applied S2 quality mask in $1"
-"""
-
 
 HDF_TO_COG = """#!/bin/bash
 # usage: hdf_to_cog input --output-dir dir ...
@@ -190,10 +180,11 @@ while getopts "i:o:s:" opt; do
   esac
 done
 mkdir -p "$output_dir"
-touch "$output_dir/${base_name}.tif"
+touch "$output_dir/${base_name}_NDVI.tif"
 echo "Generated VI indices"
 """
 
+# FIXME: generate metadata
 VI_GENERATE_METADATA = """#!/bin/bash
 # usage: vi_generate_metadata -i in -o out
 while getopts "i:o:" opt; do
@@ -201,17 +192,8 @@ while getopts "i:o:" opt; do
     o) output_dir="$OPTARG" ;;
   esac
 done
-# We assume the python code looks for specific files, but the task constructs names.
-# The Mock VI task constructs names like base_name.cmr.xml inside the python code
-# before calling this script? actually script generates them.
-# We will just touch a dummy here, but python task expects explicit path existence
-# usually via side effect or it constructing path.
-# The python task constructs path: vi_dir / f"{vi_base_name}.cmr.xml"
-# Let's ensure we find the base name? The mock is simple.
+
 echo "Generated VI metadata"
-# Rely on Python task Side-Effects or specific file touches if assertions fail.
-# For now, we manually touch the expected file in the test or assume this script does nothing
-# significant for file existence if python code creates paths.
 """
 
 VI_GENERATE_STAC_ITEMS = """#!/bin/bash
@@ -223,23 +205,24 @@ echo "Generated VI STAC: $output"
 
 
 SENTINEL_SCRIPTS = {
-    "fmask_sentinel": FMASK_SENTINEL,
-    "do_lasrc_sentinel.py": DO_LASRC_SENTINEL,
-    # "unzip": MOCK_UNZIP,
+    # ----- sentinel_granule.sh
+    "check_solar_zenith_sentinel": CHECK_SZA,
+    "gdal_translate": GDAL_TRANSLATE,
+    "apply_s2_quality_mask": APPLY_S2_QUALITY_MASK,
     "sentinel-derive-angle": SENTINEL_DERIVE_ANGLE,
     "run_Fmask.sh": RUN_FMASK_SH,
-    "gdal_translate": GDAL_TRANSLATE,
     "unpackage_s2.py": UNPACKAGE_S2,
     "convert_sentinel_to_espa": CONVERT_SENTINEL_TO_ESPA,
+    "do_lasrc_sentinel.py": DO_LASRC_SENTINEL,
     "create_sr_hdf_xml": CREATE_SR_HDF_XML,
     "convert_espa_to_hdf": CONVERT_ESPA_TO_HDF,
     "sentinel-twohdf2one": SENTINEL_TWOHDF2ONE,
     "sentinel-add-fmask-sds": SENTINEL_ADD_FMASK_SDS,
     "sentinel-trim": SENTINEL_TRIM,
+    # ----- sentinel.sh
     "sentinel-create-s2at30m": SENTINEL_CREATE_S2AT30M,
     "sentinel-derive-nbar": SENTINEL_DERIVE_NBAR,
     "sentinel-l8-like": SENTINEL_L8_LIKE,
-    "apply_s2_quality_mask": APPLY_S2_QUALITY_MASK,
     "hdf_to_cog": HDF_TO_COG,
     "create_thumbnail": CREATE_THUMBNAIL,
     "create_metadata": CREATE_METADATA,
@@ -264,14 +247,15 @@ def mock_binaries(install_mock_binaries: Callable[[dict[str, str]], Path]) -> Pa
 @pytest.fixture
 def sentinel_config(tmp_path: Path) -> EnvConfig:
     """Provides a valid EnvConfig for testing."""
+    granule_id = "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
     working_dir = tmp_path / "working"
     working_dir.mkdir()
-    granule_dir = working_dir / "S2A_MSIL1C_TEST"
+    granule_dir = working_dir / granule_id
     granule_dir.mkdir()
 
     return EnvConfig(
         job_id="test-job",
-        granule="S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841",
+        granule=granule_id,
         input_bucket="test-input-bucket",
         output_bucket="test-output-bucket",
         gibs_bucket="test-gibs-bucket",

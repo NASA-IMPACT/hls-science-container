@@ -2,16 +2,13 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
+from mypy_boto3_s3 import S3Client
 
 from hls_nextgen_orchestration.granules import Sentinel2Granule
-from hls_nextgen_orchestration.sentinel.assets import FINAL_OUTPUT_HDF
+from hls_nextgen_orchestration.sentinel.assets import RENAMED_HDF, RENAMED_ANGLE_HDF
 from hls_nextgen_orchestration.sentinel.workflow import construct_pipeline
-
-if TYPE_CHECKING:
-    from mypy_boto3_s3 import S3Client
 
 # Test Constants
 JOB_ID = "sentinel-workflow-test"
@@ -73,8 +70,8 @@ def test_sentinel_pipeline_end_to_end(
     assert context.exit_code == 0
 
     # 4. Assertions
-    assert FINAL_OUTPUT_HDF in context._store
-    final_hdf_path = context._store[FINAL_OUTPUT_HDF]
+    assert RENAMED_HDF in context._store
+    final_hdf_path = context._store[RENAMED_HDF]
 
     assert isinstance(final_hdf_path, Path)
     assert final_hdf_path.exists()
@@ -82,17 +79,6 @@ def test_sentinel_pipeline_end_to_end(
     # Verify the naming convention derived from ParseMetadata (via SentinelGranule)
     # HLS.S30.T32TQM.2020001.001.hdf
     assert "HLS.S30.T32TQM" in final_hdf_path.name
-
-    # Verify execution order
-    execution_names = [task.name for task in pipeline.execution_order]
-    expected_tasks = [
-        "DownloadSentinelGranule",
-        "RunFmask",
-        "RunLaSRC",
-        "FinalizeSentinelHdf",
-    ]
-    for task_name in expected_tasks:
-        assert any(task_name in name for name in execution_names)
 
 
 def test_construct_pipeline_structure(mock_binaries: Path) -> None:

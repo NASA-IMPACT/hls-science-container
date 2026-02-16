@@ -4,21 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from hls_nextgen_orchestration.base import Asset
-from hls_nextgen_orchestration.common.assets import ProcessingMetadata
 from hls_nextgen_orchestration.granules import Sentinel2Granule
-
-
-@dataclass(frozen=True)
-class SentinelMetadata(ProcessingMetadata):
-    """
-    Sentinel-2 specific metadata.
-    """
-
-    tile_id: str
-    year: str
-    doy: str
-    obs_index: str
-    hls_ver: str
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -41,14 +27,19 @@ class EnvConfig:
 
     @property
     def sentinel_granule(self) -> Sentinel2Granule:
-        """Get the parsed SentinelGranule object."""
+        """Get the primary SentinelGranule object.
+
+        For the twin granule scenario we still need a primary source of
+        reference for things like the processing timestamp.
+        """
         return Sentinel2Granule.from_str(self.granule)
 
 
 # Input Assets
 CONFIG = Asset("sentinel_config", EnvConfig)
 SAFE_DIR = Asset("safe_directory", Path)
-SAFE_GRANULE_INNER_DIR = Asset("safe_granule_inner_dir", Path)
+SAFE_PRODUCT_GRANULE_DIR = Asset("safe_product_graunle_dir", Path)
+GRANULE_MTD_TL = Asset("MTD_TL.xml", Path)
 
 # Intermediate Processing Assets
 SOLAR_VALID = Asset("solar_valid_flag", bool)
@@ -58,7 +49,7 @@ ANGLE_HDF = Asset("angle_hdf", Path)
 FMASK_BIN = Asset("fmask_binary", Path)
 MASKED_SAFE_ZIP = Asset("masked_safe_zip", Path)
 ESPA_XML = Asset("espa_xml", Path)
-LASRC_OUTPUT_DIR = Asset("lasrc_output_dir", Path)
+LASRC_AEROSOL_QA = Asset("lasrc_output_dir", Path)
 SPLIT_HDF_PARTS = Asset("split_hdf_parts", list)
 COMBINED_SR_HDF = Asset("combined_sr_hdf", Path)
 FINAL_SR_HDF = Asset("final_sr_hdf", Path)  # After adding Fmask and Trimming

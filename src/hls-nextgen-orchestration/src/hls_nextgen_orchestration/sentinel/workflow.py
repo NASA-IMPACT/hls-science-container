@@ -17,14 +17,14 @@ from .tasks import (
     DownloadSentinelGranule,
     EnvSource,
     FindS2Footprint,
-    GetS2GranuleDir,
+    GetGranuleDir,
     LocalSentinelGranule,
     PrepareEspaInput,
     ProcessHdfParts,
     RenameS2Outputs,
     Resample30m,
-    RunS2Fmask,
-    RunS2LaSRC,
+    RunLaSRC,
+    RunFmask,
     S2ConvertToCogs,
     S2CreateManifest,
     S2CreateMetadata,
@@ -56,15 +56,16 @@ def construct_pipeline(
     builder = (
         PipelineBuilder()
         .add(EnvSource("EnvConfig", working_dir=working_dir))
+        # Per-granule tasks
         .add(granule_task)
-        .add(GetS2GranuleDir("GetInnerDir"))
+        .add(GetGranuleDir("GetInnerDir"))
         .add(CheckSolarZenith("CheckSolar"))
         .add(FindS2Footprint(name="FindFootprint"))
         .add(ApplyS2QualityMask(name="ApplyMask"))
         .add(DeriveS2Angles(name="DeriveAngles"))
-        .add(RunS2Fmask("Fmask"))
+        .add(RunFmask("Fmask"))
         .add(PrepareEspaInput("PrepareEspa"))
-        .add(RunS2LaSRC("LaSRC"))
+        .add(RunLaSRC("LaSRC"))
         .add(ProcessHdfParts("ProcessHdfParts"))
         .add(CombineS2Hdf("CombineParts"))
         .add(AddS2FmaskSds("AddFmaskSds"))
