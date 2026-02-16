@@ -11,17 +11,16 @@ from typing import TYPE_CHECKING
 import boto3
 
 from hls_nextgen_orchestration.base import (
-    HLS_VERSION,
     Asset,
     AssetBundle,
     DataSource,
-    HlsVersion,
     Task,
     TaskFailure,
 )
 from hls_nextgen_orchestration.common.commands import run_hdf_to_cog
 from hls_nextgen_orchestration.granules import HlsGranule, Sentinel2Granule
 from hls_nextgen_orchestration.utils import validate_command
+from hls_nextgen_orchestration.version import HLS_VERSION, HlsVersion
 
 from .assets import (
     ANGLE_HDF,

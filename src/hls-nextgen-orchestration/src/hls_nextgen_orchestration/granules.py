@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass
 
-from .base import HLS_VERSION, HlsVersion
+from .version import HLS_VERSION, HlsVersion
 
 
 @dataclass
