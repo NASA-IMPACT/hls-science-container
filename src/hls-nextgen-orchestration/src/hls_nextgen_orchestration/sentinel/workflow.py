@@ -12,6 +12,7 @@ from .tasks import (
     BandpassCorrection,
     CheckSolarZenith,
     CombineS2Hdf,
+    ConsolidateGranules,
     DeriveNbar,
     DeriveS2Angles,
     DownloadSentinelGranule,
@@ -23,8 +24,8 @@ from .tasks import (
     ProcessHdfParts,
     RenameS2Outputs,
     Resample30m,
-    RunLaSRC,
     RunFmask,
+    RunLaSRC,
     S2ConvertToCogs,
     S2CreateManifest,
     S2CreateMetadata,
@@ -35,44 +36,76 @@ from .tasks import (
     UploadAll,
 )
 
+logger = logging.getLogger(__name__)
 
+
+# FIXME: docstring
 def construct_pipeline(
+    granule_list: list[str] = None,
     working_dir: Path | None = None,
-    local_granule_zip: Path | None = None,
+    local_granule_zips: list[Path] | None = None,
     upload: bool = True,
 ) -> Pipeline:
-    """
-    Constructs the Sentinel-2 (S30) Preprocessing Pipeline.
-    Combines logic from sentinel_granule.sh (AC) and sentinel.sh (Resample/NBAR).
-    """
-    granule_task: LocalSentinelGranule | DownloadSentinelGranule
-    if local_granule_zip:
-        granule_task = LocalSentinelGranule(
-            "LocalGranule", local_granule_zip=local_granule_zip
-        )
-    else:
-        granule_task = DownloadSentinelGranule("Download")
+    """Constructs the Sentinel-2 (S30) Preprocessing Pipeline.
 
+    Parameters
+    ----------
+    TODO
+    """
+    # Parse input granule list
+    if granule_list:
+        logger.info("Using granule list from function input...")
+    elif granule_list_str := os.getenv("GRANULE_LIST"):
+        logger.info("")
+        granule_list = granule_list_str.split(",")
+    else:
+        raise ValueError("Must define input granules as input or envvar.")
+
+    # If exists, validate and form pairing of IDs to local granules
+    if local_granule_zips:
+        if len(local_granule_zips) != len(granule_list):
+            raise ValueError("Mismatch in number of granules to local ZIP paths")
+        local_granule_ids_to_zips = dict(zip(granule_list, local_granule_zips))
+
+    # Build pipeline based on granules
+    builder = PipelineBuilder().add(EnvSource("EnvConfig", working_dir=working_dir))
+
+    # Map each granule to all steps in sub-workflow sequentially
+    for granule_id in granule_list:
+        granule_zip_task: LocalSentinelGranule | DownloadSentinelGranule
+        if local_granule_ids_to_zips:
+            granule_zip_task = LocalSentinelGranule.map(granule_id)(
+                "LocalGranule", local_granule_zip=local_granule_ids_to_zips[granule_id],
+            )
+        else:
+            granule_zip_task = DownloadSentinelGranule.map(granule_id)("Download")
+
+        builder = (
+            builder
+            # Per-granule tasks
+            .add(granule_zip_task)
+            .add(GetGranuleDir.map(granule_id)("GetInnerDir"))
+            .add(CheckSolarZenith.map(granule_id)("CheckSolar"))
+            .add(FindS2Footprint.map(granule_id)(name="FindFootprint"))
+            .add(ApplyS2QualityMask.map(granule_id)(name="ApplyMask"))
+            .add(DeriveS2Angles.map(granule_id)(name="DeriveAngles"))
+            .add(RunFmask.map(granule_id)("Fmask"))
+            .add(PrepareEspaInput.map(granule_id)("PrepareEspa"))
+            .add(RunLaSRC.map(granule_id)("LaSRC"))
+            .add(ProcessHdfParts.map(granule_id)("ProcessHdfParts"))
+            .add(CombineS2Hdf.map(granule_id)("CombineParts"))
+            .add(AddS2FmaskSds.map(granule_id)("AddFmaskSds"))
+            .add(TrimS2Hdf.map(granule_id)("Trim"))
+            .add(Resample30m.map(granule_id)("Resample"))
+            .add(DeriveNbar.map(granule_id)("Nbar"))
+            .add(BandpassCorrection.map(granule_id)("Bandpass"))
+        )
+
+    # FIXME: don't consolidate if just 1 granule
+
+    # P
     builder = (
-        PipelineBuilder()
-        .add(EnvSource("EnvConfig", working_dir=working_dir))
-        # Per-granule tasks
-        .add(granule_task)
-        .add(GetGranuleDir("GetInnerDir"))
-        .add(CheckSolarZenith("CheckSolar"))
-        .add(FindS2Footprint(name="FindFootprint"))
-        .add(ApplyS2QualityMask(name="ApplyMask"))
-        .add(DeriveS2Angles(name="DeriveAngles"))
-        .add(RunFmask("Fmask"))
-        .add(PrepareEspaInput("PrepareEspa"))
-        .add(RunLaSRC("LaSRC"))
-        .add(ProcessHdfParts("ProcessHdfParts"))
-        .add(CombineS2Hdf("CombineParts"))
-        .add(AddS2FmaskSds("AddFmaskSds"))
-        .add(TrimS2Hdf("Trim"))
-        .add(Resample30m("Resample"))
-        .add(DeriveNbar("Nbar"))
-        .add(BandpassCorrection("Bandpass"))
+        buider
         # Post-Processing
         .add(RenameS2Outputs(name="RenameOutputs"))
         .add(S2ConvertToCogs(name="ConvertToCogs"))

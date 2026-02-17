@@ -1,3 +1,8 @@
+"""Sentinel-2 processing tasks
+
+These mirror the "sentinel.sh" script
+"""
+
 from __future__ import annotations
 
 import logging
@@ -14,8 +19,9 @@ from hls_nextgen_orchestration.base import (
     Asset,
     AssetBundle,
     DataSource,
+    MappedTask,
+    MergeTask,
     Task,
-    TaskFailure,
 )
 from hls_nextgen_orchestration.common.commands import run_hdf_to_cog
 from hls_nextgen_orchestration.granules import HlsGranule, Sentinel2Granule
@@ -23,39 +29,29 @@ from hls_nextgen_orchestration.utils import validate_command
 from hls_nextgen_orchestration.version import HLS_VERSION, HlsVersion
 
 from .assets import (
-    ANGLE_HDF,
     CMR_XML,
     COGS_CREATED,
-    COMBINED_SR_HDF,
     CONFIG,
-    DETFOO_FILE,
-    ESPA_XML,
+    CONSOLIDATED_ANGLE_HDF,
+    CONSOLIDATED_SR_HDF,
     FINAL_OUTPUT_HDF,
-    FINAL_SR_HDF,
-    FMASK_BIN,
     GIBS_DIR,
     GIBS_MANIFEST_FILES,
-    GRANULE_MTD_TL,
-    LASRC_AEROSOL_QA,
     NBAR_HDF,
     NBAR_INPUT_HDF,
     OUTPUT_BASE_NAME,
-    QUALITY_MASK_APPLIED,
     RENAMED_ANGLE_HDF,
     RENAMED_HDF,
     RESAMPLED_HDF,
-    SAFE_DIR,
-    SAFE_PRODUCT_GRANULE_DIR,
-    SOLAR_VALID,
-    SPLIT_HDF_PARTS,
     SR_MANIFEST_FILE,
     STAC_JSON,
     THUMBNAIL_FILE,
-    TRIMMED_HDF,
     UPLOAD_COMPLETE,
     VI_DIR,
     VI_MANIFEST_FILE,
     EnvConfig,
+    angle_hdf_asset,
+    trimmed_hdf_asset,
 )
 
 if TYPE_CHECKING:
@@ -144,458 +140,52 @@ class EnvSource(DataSource):
 
 # ----- Tasks from sentinel.sh
 @dataclass(frozen=True, kw_only=True)
-class DownloadSentinelGranule(Task):
-    """
-    Downloads the Sentinel-2 .zip granule and unzips it.
-    Ports: aws s3 cp ... && unzip ...
-    """
+class ConsolidateGranules(MergeTask):
+    """Consolidate two "twin"" Sentinel-2 granules"""
 
-    requires = (CONFIG,)
-    provides = (SAFE_DIR,)
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        config = bundle[CONFIG]
-        granule_id = config.granule
-        zip_path = config.granule_dir / f"{granule_id}.zip"
-
-        logger.info(f"Downloading s3://{config.input_bucket}/{granule_id}.zip")
-        s3 = boto3.client("s3")
-        s3.download_file(config.input_bucket, f"{granule_id}.zip", str(zip_path))
-
-        logger.info(f"Unzipping {zip_path}")
-        subprocess.run(
-            ["unzip", "-q", str(zip_path), "-d", str(config.granule_dir)], check=True
-        )
-
-        safe_dir = config.granule_dir / f"{granule_id}.SAFE"
-        return {SAFE_DIR: safe_dir}
-
-
-@dataclass(frozen=True, kw_only=True)
-class LocalSentinelGranule(Task):
-    """Handles a pre-downloaded Sentinel-2 .zip granule.
-
-    Useful for local testing or custom orchestration where data is already present.
-    """
-
-    requires = (CONFIG,)
-    provides = (SAFE_DIR,)
-
-    local_granule_zip: Path
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        config = bundle[CONFIG]
-        granule_id = config.granule
-        dest_zip = config.granule_dir / f"{granule_id}.zip"
-
-        if not self.local_granule_zip.exists():
-            raise TaskFailure(f"Local ZIP not found at {self.local_granule_zip}")
-
-        logger.info(f"Using local granule ZIP: {self.local_granule_zip}")
-        shutil.copy(self.local_granule_zip, dest_zip)
-
-        logger.info(f"Unzipping {dest_zip}")
-        subprocess.run(
-            ["unzip", "-q", str(dest_zip), "-d", str(config.granule_dir)], check=True
-        )
-
-        safe_dir = config.granule_dir / f"{granule_id}.SAFE"
-        return {SAFE_DIR: safe_dir}
-
-
-@dataclass(frozen=True, kw_only=True)
-class GetGranuleDir(Task):
-    """Locates the granule directory within the unzipped SAFE directory.
-
-    Ports: get_s2_granule_dir
-    """
-
-    requires = (SAFE_DIR,)
-    provides = (SAFE_PRODUCT_GRANULE_DIR, GRANULE_MTD_TL)
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        safe_dir = bundle[SAFE_DIR]
-        granule_root = safe_dir / "GRANULE"
-
-        # Find the first subdirectory - there should be just 1 granule
-        subdirs = [d for d in granule_root.iterdir() if d.is_dir()]
-        if not subdirs:
-            raise TaskFailure(f"No subdirectory found in {granule_root}")
-        granule_dir = subdirs[0]
-
-        # Find SAFE metadata file inside granule directory
-        #   1. newer SAFE `MTD_TL.xml`
-        #   2. older format `S2[A|B|C]_OPER_MTD_*.xml`
-        xmls = list(granule_dir.glob("*.xml"))
-        if not xmls:
-            raise TaskFailure(f"No MTD_TL.xml file within {granule_dir}")
-        mtd_tl_xml = xmls[0]
-
-        return {SAFE_PRODUCT_GRANULE_DIR: granule_dir, GRANULE_MTD_TL: mtd_tl_xml}
-
-
-@dataclass(frozen=True, kw_only=True)
-class CheckSolarZenith(Task):
-    """Checks solar zenith angle validity.
-
-    If the solar zenith angle is below the threshold this task will
-    exit with exit code 3. This exit code is translated into an expected
-    failure case by the job monitoring part of our workflow orchestration.
-    """
-
-    requires = (GRANULE_MTD_TL,)
-    provides = (SOLAR_VALID,)
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        mtd_tl = bundle[GRANULE_MTD_TL]
-
-        logger.info("Checking solar zenith angle")
-        result = subprocess.run(
-            ["check_solar_zenith_sentinel", str(mtd_tl)],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        if result.stdout.strip() == "invalid":
-            raise TaskFailure("Invalid solar zenith angle", exit_code=3)
-
-        return {SOLAR_VALID: True}
-
-
-@dataclass(frozen=True, kw_only=True)
-class FindS2Footprint(Task):
-    """Locate the detector footprint for B06.
-
-    Prior to baseline 04.00 the detector footprint was distributed in
-    "GML" (Geography Markup Language) format. Since baseline 04.00 release
-    the detector footprint ("detfoo") has been formatted as JPEG2000.
-
-    This task handles finding the detector footprint file and potentially
-    converting it into a format usable by the HLS production code.
-    """
-
-    requires = (SAFE_DIR, CONFIG)
-    provides = (DETFOO_FILE,)
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        safe_dir = bundle[SAFE_DIR]
-        config = bundle[CONFIG]
-
-        # Locate detector footprint for B06
-        # Searching recursively in SAFE_DIR for MSK_DETFOO_B06.jp2 or .gml
-        # This usually resides in the QI_DATA directory
-        detfoo_candidates = list(safe_dir.rglob("MSK_DETFOO_B06.*"))
-
-        # Filter for jp2 or gml
-        detfoo06 = next(
-            (f for f in detfoo_candidates if f.suffix in {".jp2", ".gml"}), None
-        )
-        if not detfoo06:
-            raise TaskFailure("MSK_DETFOO_B06 (jp2/gml) not found in SAFE directory")
-
-        # Convert JPEG2000 format to binary for HLS programs
-        if detfoo06.suffix == ".jp2":
-            detfoo06_bin = config.granule_dir / "MSK_DETFOO_B06.bin"
-            logger.info(f"Converting {detfoo06} to {detfoo06_bin}")
-            subprocess.run(
-                ["gdal_translate", "-of", "ENVI", str(detfoo06), str(detfoo06_bin)],
-                check=True,
-            )
-            detfoo06 = detfoo06_bin
-
-        return {DETFOO_FILE: detfoo06}
-
-
-@dataclass(frozen=True, kw_only=True)
-class ApplyS2QualityMask(Task):
-    """Applies ESA's pixel-level quality mask.
-
-    Ports: apply_s2_quality_mask
-    """
-
-    requires = (SAFE_PRODUCT_GRANULE_DIR,)
-    provides = (QUALITY_MASK_APPLIED,)
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        inner_dir = bundle[SAFE_PRODUCT_GRANULE_DIR]
-        logger.info(f"Applying quality mask in {inner_dir}")
-        subprocess.run(["apply_s2_quality_mask", str(inner_dir)], check=True)
-        return {QUALITY_MASK_APPLIED: True}
-
-
-@dataclass(frozen=True, kw_only=True)
-class DeriveS2Angles(Task):
-    """Generates the angle HDF file.
-
-    Ports: sentinel-derive-angle (with output args)
-    """
-
-    requires = (
-        GRANULE_MTD_TL,
-        CONFIG,
-        SOLAR_VALID,
-        DETFOO_FILE,
-        QUALITY_MASK_APPLIED,
+    requires_factory = lambda gid: (trimmed_hdf_asset(gid), angle_hdf_asset(gid))
+    provides = (
+        CONSOLIDATED_SR_HDF,
+        CONSOLIDATED_ANGLE_HDF,
     )
-    provides = (ANGLE_HDF,)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        mtd_tl = bundle[GRANULE_MTD_TL]
         config = bundle[CONFIG]
-        detfoo06 = bundle[DETFOO_FILE]
-        angle_output = config.granule_dir / "angle.hdf"
 
-        detfoo_temp = config.granule_dir / "detfoo.hdf"
-        logger.info("Running sentinel-derive-angle")
-        subprocess.run(
-            [
-                "sentinel-derive-angle",
-                str(mtd_tl),
-                str(detfoo06),
-                str(detfoo_temp),
-                str(angle_output),
-            ],
-            check=True,
-        )
+        sr_list = [str(bundle[trimmed_hdf_asset(gid)]) for gid in self.granule_ids]
+        angle_list = [str(bundle[angle_hdf_asset(gid)]) for gid in self.granule_ids]
 
-        # The detfoo output is an unnecessary legacy output
-        if detfoo_temp.exists():
-            detfoo_temp.unlink()
-
-        return {ANGLE_HDF: angle_output}
-
-
-# FIXME: refactor this to use Landsat version
-@dataclass(frozen=True, kw_only=True)
-class RunFmask(Task):
-    """Runs Fmask on the Sentinel granule.
-
-    Ports: run_Fmask.sh and gdal_translate
-    """
-
-    requires = (SAFE_PRODUCT_GRANULE_DIR, CONFIG)
-    provides = (FMASK_BIN,)
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        safe_inner_dir = bundle[SAFE_PRODUCT_GRANULE_DIR]
-        config = bundle[CONFIG]
-        fmask_bin = config.granule_dir / "fmask.bin"
-
-        # Script logic: cd to inner dir, run Fmask, capture output filename
-        logger.info(f"Running Fmask in {safe_inner_dir}")
-
-        # In python we can pass cwd to subprocess
-        with open(safe_inner_dir / "fmask_out.txt", "w") as outfile:
-            subprocess.run(
-                ["run_Fmask.sh"], cwd=safe_inner_dir, stdout=outfile, check=True
+        n_granules = len(self.granule_ids)
+        if len(sr_list) != len(angle_list) != n_granules:
+            raise ValueError(
+                f"Expected {n_granules} SR/angle outputs, but got {sr_list=} & {angle_list}"
             )
 
-        # Find the generated TIF (script parses fmask_out.txt, we can just glob)
-        fmask_tif = next(safe_inner_dir.glob("*_Fmask4.tif"))
+        if len(self.granule_ids) == 1:
+            consolidated_sr = sr_list[0]
+            consolidated_angle = angle_list[0]
+        else:
+            logger.info(f"Consolidating {len(self.granule_ids)} granules")
 
-        logger.info(f"Converting {fmask_tif} to {fmask_bin}")
-        subprocess.run(
-            ["gdal_translate", "-of", "ENVI", str(fmask_tif), str(fmask_bin)],
-            check=True,
-        )
+            consolidated_sr = config.working_dir / "consolidated_sr.hdf"
+            consolidated_angle = config.working_dir / "consolidated_angle.hdf"
 
-        return {FMASK_BIN: fmask_bin}
-
-
-@dataclass(frozen=True, kw_only=True)
-class PrepareEspaInput(Task):
-    """Unpackages S2 and converts to ESPA format.
-
-    Ports: unpackage_s2.py, convert_sentinel_to_espa
-    """
-
-    requires = (SAFE_DIR, CONFIG)
-    provides = (ESPA_XML,)
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        safe_dir = bundle[SAFE_DIR]
-        config = bundle[CONFIG]
-
-        # Script re-zips the masked directory. Skipping zip overhead for local processing
-        # if unpackage_s2.py accepts directory, but script passes zip.
-        # Assuming unpackage_s2.py needs a zip:
-        masked_zip = config.granule_dir / "masked.zip"
-        shutil.make_archive(str(masked_zip.with_suffix("")), "zip", safe_dir)
-
-        subprocess.run(
-            ["unpackage_s2.py", "-i", str(masked_zip), "-o", str(config.granule_dir)],
-            check=True,
-        )
-        # FIXME: delete the original SAFE zip
-
-        subprocess.run(["convert_sentinel_to_espa"], cwd=safe_dir, check=True)
-
-        # FIXME: if not debug, delete JP2 files to save space
-
-        # Find ESPA XML
-        xmls = list(safe_dir.glob("*.xml"))
-        ignore = {"MTD_TL.xml", "MTD_MSIL1C.xml"}
-        espa_xml = next((f for f in xmls if f.name not in ignore), None)
-
-        if not espa_xml:
-            raise TaskFailure("ESPA XML not found")
-
-        return {ESPA_XML: espa_xml}
-
-
-@dataclass(frozen=True, kw_only=True)
-class RunLaSRC(Task):
-    """Runs LaSRC for Sentinel."""
-
-    requires = (ESPA_XML,)
-    provides = (LASRC_AEROSOL_QA,)
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        espa_xml = bundle[ESPA_XML]
-        # The script runs in the directory of the XML
-        output_dir = espa_xml.parent
-
-        subprocess.run(
-            ["do_lasrc_sentinel.py", "--xml", str(espa_xml)], cwd=output_dir, check=True
-        )
-
-        espa_id = espa_xml.stem
-        aerosol_qa = output_dir / f"{espa_id}_sr_aerosol_qa.img"
-
-        if not aerosol_qa.exists():
-            raise TaskFailure(
-                f"Cannot find the LaSRC aerosol QA output (expected {aerosol_qa})"
-            )
-
-        return {LASRC_AEROSOL_QA: output_dir}
-
-
-@dataclass(frozen=True, kw_only=True)
-class ProcessHdfParts(Task):
-    """
-    Splits XMLs and converts to HDF parts (One/Two).
-    Ports: create_sr_hdf_xml, convert_espa_to_hdf
-    """
-
-    requires = (ESPA_XML, CONFIG, LASRC_AEROSOL_QA)
-    provides = (SPLIT_HDF_PARTS,)
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        espa_xml = bundle[ESPA_XML]
-        config = bundle[CONFIG]
-        espa_id = espa_xml.stem
-
-        parts = []
-        for part, suffix in [("one", "1"), ("two", "2")]:
-            hls_xml = config.granule_dir / f"{espa_id}_{suffix}_hls.xml"
-            out_hdf = config.granule_dir / f"{espa_id}_sr_{suffix}.hdf"
-
-            # create_sr_hdf_xml "$espa_xml" "$hls_espa_one_xml" one
             subprocess.run(
-                ["create_sr_hdf_xml", str(espa_xml), str(hls_xml), part], check=True
+                ["sentinel-consolidate", *sr_list, str(consolidated_sr)], check=True
             )
-
-            # convert_espa_to_hdf --xml="$hls_espa_one_xml" --hdf="$sr_hdf_one"
             subprocess.run(
-                ["convert_espa_to_hdf", f"--xml={hls_xml}", f"--hdf={out_hdf}"],
+                ["sentinel-consolidate-angle", *angle_list, str(consolidated_angle)],
                 check=True,
             )
-            parts.append(out_hdf)
 
-        return {SPLIT_HDF_PARTS: parts}
-
-
-@dataclass(frozen=True, kw_only=True)
-class CombineS2Hdf(Task):
-    """Combine split hdf files and resample 10M SR bands back to 20M and 60M.
-
-    Ports: sentinel-twohdf2one
-    """
-
-    requires = (ESPA_XML, SPLIT_HDF_PARTS, CONFIG)
-    provides = (COMBINED_SR_HDF,)
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        espa_xml = bundle[ESPA_XML]
-        parts = bundle[SPLIT_HDF_PARTS]
-        config = bundle[CONFIG]
-
-        espa_id = espa_xml.stem
-        combined_hdf = config.granule_dir / f"{espa_id}_sr_combined.hdf"
-
-        # sentinel-twohdf2one "$sr_hdf_one" "$sr_hdf_two" MTD_MSIL1C.xml MTD_TL.xml "$ACCODE" "$hls_sr_combined_hdf"
-        subprocess.run(
-            [
-                "sentinel-twohdf2one",
-                parts[0],
-                parts[1],
-                "MTD_MSIL1C.xml",
-                "MTD_TL.xml",
-                config.ac_code,
-                str(combined_hdf),
-            ],
-            check=True,
-        )
-
-        return {COMBINED_SR_HDF: combined_hdf}
+        return {
+            CONSOLIDATED_SR_HDF: consolidated_sr,
+            CONSOLIDATED_ANGLE_HDF: consolidated_angle,
+        }
 
 
 @dataclass(frozen=True, kw_only=True)
-class AddS2FmaskSds(Task):
-    """
-    Adds Fmask SDS to HDF.
-    Ports: sentinel-add-fmask-sds
-    """
-
-    requires = (COMBINED_SR_HDF, LASRC_AEROSOL_QA, FMASK_BIN, CONFIG)
-    provides = (FINAL_SR_HDF,)
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        combined_hdf = bundle[COMBINED_SR_HDF]
-        aerosol_qa = bundle[LASRC_AEROSOL_QA]
-        fmask_bin = bundle[FMASK_BIN]
-        config = bundle[CONFIG]
-
-        final_sr = config.granule_dir / "sr.hdf"
-
-        # sentinel-add-fmask-sds "$hls_sr_combined_hdf" "$fmaskbin" \
-        #   "$aerosol_qa" MTD_MSIL1C.xml MTD_TL.xml \
-        #   "$ACCODE" "$hls_sr_output_hdf"
-        subprocess.run(
-            [
-                "sentinel-add-fmask-sds",
-                str(combined_hdf),
-                str(fmask_bin),
-                str(aerosol_qa),
-                "MTD_MSIL1C.xml",
-                "MTD_TL.xml",
-                config.ac_code,
-                str(final_sr),
-            ],
-            check=True,
-        )
-        return {FINAL_SR_HDF: final_sr}
-
-
-@dataclass(frozen=True, kw_only=True)
-class TrimS2Hdf(Task):
-    """
-    Trims edge pixels.
-    Ports: sentinel-trim
-    """
-
-    requires = (FINAL_SR_HDF,)
-    provides = (TRIMMED_HDF,)
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        hdf = bundle[FINAL_SR_HDF]
-        subprocess.run(["sentinel-trim", str(hdf)], check=True)
-        return {TRIMMED_HDF: hdf}
-
-
-# ----- Tasks from sentinel.sh
-@dataclass(frozen=True, kw_only=True)
-class Resample30m(Task):
+class Resample30m(MappedTask):
     """Resamples S2 to 30m.
 
     Ports: sentinel-create-s2at30m
@@ -607,7 +197,7 @@ class Resample30m(Task):
     mode because subsequent steps modify `NBAR_INPUT_HDF` in-place.
     """
 
-    requires = (TRIMMED_HDF, CONFIG)
+    requires = (CONSOLIDATED_SR_HDF, CONFIG)
     provides = (RESAMPLED_HDF, NBAR_INPUT_HDF)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
@@ -651,7 +241,7 @@ class DeriveNbar(Task):
 
     # FIXME: do we need to pass along the `cfactor.hdf`?
 
-    requires = (NBAR_INPUT_HDF, ANGLE_HDF, CONFIG)
+    requires = (NBAR_INPUT_HDF, CONSOLIDATED_ANGLE_HDF, CONFIG)
     provides = (NBAR_HDF,)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
@@ -696,7 +286,7 @@ class RenameS2Outputs(Task):
     Mirrors `set_output_names` and `mv` commands in sentinel.sh.
     """
 
-    requires = (CONFIG, FINAL_OUTPUT_HDF, ANGLE_HDF)
+    requires = (CONFIG, FINAL_OUTPUT_HDF, CONSOLIDATED_ANGLE_HDF)
     provides = (OUTPUT_BASE_NAME, RENAMED_HDF, RENAMED_ANGLE_HDF)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
