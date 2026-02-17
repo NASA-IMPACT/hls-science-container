@@ -42,7 +42,6 @@ from .tasks import (
 logger = logging.getLogger(__name__)
 
 
-# FIXME: docstring
 def construct_pipeline(
     granule_ids: list[str] | None = None,
     working_dir: Path | None = None,
@@ -53,7 +52,18 @@ def construct_pipeline(
 
     Parameters
     ----------
-    TODO
+    granule_ids
+        Granule ID(s) to process. Usually this will be just 1, except
+        for twin granule cases. We need to know this ahead of time to
+        build the pipeline correctly. If not provided, the `GRANULE_LIST`
+        environment variable must be defined.
+    working_dir
+        Override local processing directory
+    local_granule_zips
+        If provided, assume there is a pre-downloaded Sentinel-2 granule(s)
+        to process in this directory.
+    upload
+        If True (default), upload to output bucket.
     """
     # Parse input granule list
     if granule_ids:
