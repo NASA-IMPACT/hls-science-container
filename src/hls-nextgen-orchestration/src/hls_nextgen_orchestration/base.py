@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, ClassVar, TypeVar
 
@@ -160,6 +161,61 @@ class Task(NodeBase):
                     f"{self.name} failed to provide promised output: {asset.key}"
                 )
             context.put(asset, outputs[asset])
+
+
+TMapped = TypeVar("TMapped", bound="MappedTask")
+TMerge = TypeVar("TMerge", bound="MergeTask")
+
+
+@dataclass(frozen=True)
+class MappedTask(Task):
+    """A Task mapped across granule(s)"""
+
+    granule_id: ClassVar[str]
+    requires_factory: ClassVar[Callable[[str], Assets] | None] = None
+    provides_factory: ClassVar[Callable[[str], Assets] | None] = None
+
+    @classmethod
+    def map(cls: type[TMapped], granule_id: str) -> type[TMapped]:
+        """Build a unique Task to process this granule ID"""
+        requires = (
+            cls.requires_factory(granule_id) if cls.requires_factory else cls.requires
+        )
+        provides = (
+            cls.provides_factory(granule_id) if cls.provides_factory else cls.provides
+        )
+        return type(
+            f"{cls.__name__}-{granule_id}",
+            (cls,),
+            {"granule_id": granule_id, "requires": requires, "provides": provides},
+        )
+
+
+@dataclass(frozen=True)
+class MergeTask(Task):
+    """A Task merges outputs from granule(s)"""
+
+    granule_ids: ClassVar[list[str]]
+    # Called per _granule_id_
+    requires_factory: ClassVar[Callable[[str], Assets] | None] = None
+
+    @classmethod
+    def merge(cls: type[TMerge], granule_ids: list[str]) -> type[TMerge]:
+        """Build a unique Task to process this granule ID"""
+        if cls.requires_factory:
+            requires = tuple(
+                require
+                for granule_id in granule_ids
+                for require in cls.requires_factory(granule_id)
+            )
+        else:
+            requires = cls.requires
+
+        return type(
+            f"{cls.__name__}-Merged",
+            (cls,),
+            {"granule_ids": granule_ids, "requires": requires},
+        )
 
 
 @dataclass(frozen=True)
