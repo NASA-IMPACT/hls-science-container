@@ -327,8 +327,8 @@ class RenameS2Outputs(Task):
 
 @dataclass(frozen=True, kw_only=True)
 class S2ConvertToCogs(Task):
-    """
-    Converts S2 HDF outputs to COG format.
+    """Converts S2 HDF outputs to COG format.
+
     Ports: hdf_to_cog
     """
 

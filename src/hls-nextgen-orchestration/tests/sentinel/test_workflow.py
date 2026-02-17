@@ -12,7 +12,9 @@ from hls_nextgen_orchestration.sentinel.workflow import construct_pipeline
 
 # Test Constants
 JOB_ID = "sentinel-workflow-test"
-GRANULE_ID = "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
+GRANULE_ID_1 = "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
+GRANULE_ID_2 = "S2A_MSIL1C_20200101T123456_N0208_R065_T32TQM_20200101T123456"
+GRANULE_IDS = [GRANULE_ID_1, GRANULE_ID_2]
 
 IN_BUCKET = "hls-sentinel-inputs"
 OUT_BUCKET = "hls-products"
@@ -30,34 +32,25 @@ def s3_setup(
     s3_client.create_bucket(Bucket=OUT_BUCKET)
     s3_client.create_bucket(Bucket=GIBS_BUCKET)
 
-    granule = Sentinel2Granule.from_str(GRANULE_ID)
-    safe_zip = populate_sentinel_safe(tmp_path, granule)
+    for granule_id in GRANULE_IDS:
+        granule = Sentinel2Granule.from_str(granule_id)
+        safe_zip = populate_sentinel_safe(tmp_path, granule)
 
-    # Create a dummy zip file to "download"
-    s3_client.upload_file(
-        Filename=str(safe_zip), Bucket=IN_BUCKET, Key=f"{GRANULE_ID}.zip"
-    )
+        # Create a dummy zip file to "download"
+        s3_client.upload_file(
+            Filename=str(safe_zip), Bucket=IN_BUCKET, Key=f"{granule_id}.zip"
+        )
+
     return s3_client
 
 
-def test_sentinel_pipeline_end_to_end(
-    mock_binaries: Path,
-    s3_setup: S3Client,
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    """
-    End-to-end test of the Sentinel-2 pipeline using root conftest mocks.
-    """
-    # 1. Setup Environment
+@pytest.fixture
+def container_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """Setup common envvars and working directory for this pretend container"""
     working_dir = tmp_path / "working"
     working_dir.mkdir()
 
-    GRANULE_IDS = [GRANULE_ID]
-
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
-    monkeypatch.setenv("GRANULE", GRANULE_ID)
-    monkeypatch.setenv("GRANULE_LIST", ",".join(GRANULE_IDS))
     monkeypatch.setenv("PREFIX", "S30")
     monkeypatch.setenv("INPUT_BUCKET", IN_BUCKET)
     monkeypatch.setenv("OUTPUT_BUCKET", OUT_BUCKET)
@@ -65,20 +58,43 @@ def test_sentinel_pipeline_end_to_end(
     monkeypatch.setenv("ACCODE", "LaSRC")
     monkeypatch.setenv("SCRATCH_DIR", str(working_dir))
 
-    # 2. Construct Pipeline
+    return working_dir
+
+
+@pytest.mark.parametrize("granule_ids", [[GRANULE_ID_1], GRANULE_IDS])
+def test_sentinel_pipeline_end_to_end_single(
+    granule_ids: list[str],
+    mock_binaries: Path,
+    s3_setup: S3Client,
+    container_setup: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """End-to-end test for single and twin granules"""
+    monkeypatch.setenv("GRANULE_LIST", ",".join(granule_ids))
+
     pipeline = construct_pipeline()
 
-    # 3. Execute Pipeline
+    # --- Run
     context = pipeline.run()
     assert context.exit_code == 0
 
-    # 4. Assertions
+    # --- Check local files
     assert RENAMED_HDF in context._store
     final_hdf_path = context._store[RENAMED_HDF]
 
     assert isinstance(final_hdf_path, Path)
     assert final_hdf_path.exists()
 
-    # Verify the naming convention derived from ParseMetadata (via SentinelGranule)
     # HLS.S30.T32TQM.2020001.001.hdf
     assert "HLS.S30.T32TQM" in final_hdf_path.name
+
+    # Check upload
+    uploaded_keys = [
+        obj["Key"]
+        for obj in s3_setup.list_objects_v2(
+            Bucket=OUT_BUCKET,
+        )["Contents"]
+    ]
+    # expected data are defined in the HDF_TO_COG fake script
+    assert next(key for key in uploaded_keys if key.endswith("B05.tif"))
+    assert next(key for key in uploaded_keys if key.endswith("VZA.tif"))

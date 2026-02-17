@@ -160,8 +160,43 @@ fi
 """)
 
 HDF_TO_COG = make_script("""
-# usage: hdf_to_cog input --output-dir dir ...
-echo "Converting to COG: $1"
+# usage: hdf_to_cog <input> --output-dir=<dir> --product=<product>
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --output-dir)
+      output_dir="$2"
+      shift 2
+      ;;
+    --product)
+      product="$2"
+      shift 2
+      ;;
+    -*)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+    *)
+      # Everything else is treated as the <input>
+      input="$1"
+      shift
+      ;;
+  esac
+done
+
+echo "Converting to COG: $input"
+
+bname=$(basename $input .hdf)
+if [[ "$product" == "S30" ]]; then
+    band=B05
+elif [[ "$product" == "S30_ANGLES" ]]; then
+    band=VZA
+    # remove `.ANGLE` suffix
+    bname=$(basename $bname .ANGLE)
+else
+    echo "Unsupported product $product"
+    exit 1
+fi
+touch $output_dir/${bname}.${band}.tif
 """)
 
 CREATE_THUMBNAIL = make_script("""
