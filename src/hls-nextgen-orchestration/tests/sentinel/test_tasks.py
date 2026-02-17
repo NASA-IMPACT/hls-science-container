@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from hls_nextgen_orchestration.base import AssetBundle
+from hls_nextgen_orchestration.granules import Sentinel2Granule
 from hls_nextgen_orchestration.sentinel.assets import (
     CMR_XML,
     COGS_CREATED,
@@ -17,16 +18,16 @@ from hls_nextgen_orchestration.sentinel.assets import (
     RESAMPLED_HDF,
     SR_MANIFEST_FILE,
     EnvConfig,
-    trimmed_hdf_asset,
     angle_hdf_asset,
+    trimmed_hdf_asset,
 )
 from hls_nextgen_orchestration.sentinel.tasks import (
+    ConsolidateGranules,
     RenameS2Outputs,
     Resample30m,
     S2ConvertToCogs,
     S2CreateManifest,
     S2CreateMetadata,
-    ConsolidateGranules,
     sentinel_to_hls_granule,
 )
 
@@ -34,7 +35,7 @@ from hls_nextgen_orchestration.sentinel.tasks import (
 def test_consolidate_granules(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     """Test ConsolidateGranules works"""
     granule_ids = ["GRANULE_ID_1", "GRANULE_ID_2"]
-    assets = {CONFIG: sentinel_config}
+    assets: AssetBundle = {CONFIG: sentinel_config}
     for granule_id in granule_ids:
         granule_dir = sentinel_config.working_dir / granule_id
         granule_dir.mkdir(exist_ok=True, parents=True)
@@ -56,7 +57,7 @@ def test_consolidate_granules(sentinel_config: EnvConfig, mock_binaries: Path) -
 
 def test_resample(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     """Tests resampling to 30m."""
-    input_hdf = sentinel_config.granule_dir / "trimmed.hdf"
+    input_hdf = sentinel_config.working_dir / "trimmed.hdf"
     input_hdf.touch()
 
     task = Resample30m(name="resample")
@@ -69,7 +70,9 @@ def test_resample(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
 
 def test_get_s30_output_name() -> None:
     """Tests the parsing logic for Sentinel granule IDs."""
-    granule = "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
+    granule = Sentinel2Granule.from_str(
+        "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
+    )
     # 2020-01-01 is DOY 001. HMS is 102431 (from T102431)
     expected = "HLS.S30.T32TQM.2020001T102431.v2.0"
     assert sentinel_to_hls_granule(granule) == expected
@@ -78,9 +81,9 @@ def test_get_s30_output_name() -> None:
 def test_rename_outputs(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     """Verifies renaming of HDF files to Standard S30 format."""
     # Setup inputs
-    original_hdf = sentinel_config.granule_dir / "output.hdf"
+    original_hdf = sentinel_config.working_dir / "output.hdf"
     original_hdf.touch()
-    original_angle = sentinel_config.granule_dir / "angle.hdf"
+    original_angle = sentinel_config.working_dir / "angle.hdf"
     original_angle.touch()
 
     # Create dummy headers
@@ -110,8 +113,8 @@ def test_rename_outputs(sentinel_config: EnvConfig, mock_binaries: Path) -> None
 
 def test_convert_to_cogs(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     """Tests the HDF to COG conversion task."""
-    hdf = sentinel_config.granule_dir / "test.hdf"
-    angle = sentinel_config.granule_dir / "test.ANGLE.hdf"
+    hdf = sentinel_config.working_dir / "test.hdf"
+    angle = sentinel_config.working_dir / "test.ANGLE.hdf"
 
     task = S2ConvertToCogs(name="cogs")
     outputs = task.run(
@@ -123,7 +126,7 @@ def test_convert_to_cogs(sentinel_config: EnvConfig, mock_binaries: Path) -> Non
 
 def test_create_metadata(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     """Tests CMR and STAC metadata generation."""
-    hdf = sentinel_config.granule_dir / "test.hdf"
+    hdf = sentinel_config.working_dir / "test.hdf"
     base_name = "HLS.S30.TEST"
 
     task = S2CreateMetadata(name="meta")

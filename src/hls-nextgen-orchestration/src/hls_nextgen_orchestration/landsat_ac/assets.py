@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from hls_nextgen_orchestration.base import Asset
-from hls_nextgen_orchestration.common.assets import ProcessingMetadata
 from hls_nextgen_orchestration.granules import LandsatGranule
 
 
@@ -50,6 +49,16 @@ class EnvConfig:
     def landsat_granule(self) -> LandsatGranule:
         """Get the parsed LandsatGranule object."""
         return LandsatGranule.from_str(self.granule)
+
+
+@dataclass(frozen=True)
+class ProcessingMetadata:
+    """
+    Metadata derived from parsing the granule, used for naming outputs.
+    """
+
+    output_name: str
+    bucket_key: str
 
 
 CONFIG = Asset("config_object", EnvConfig)

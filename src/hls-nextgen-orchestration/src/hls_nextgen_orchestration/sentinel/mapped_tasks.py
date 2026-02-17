@@ -60,20 +60,25 @@ class DownloadSentinelGranule(MappedTask):
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config: EnvConfig = bundle[CONFIG]
-        granule_id = config.granule
-        zip_path = config.granule_dir / f"{granule_id}.zip"
+        granule_dir = config.working_dir / self.granule_id
 
-        logger.info(f"Downloading s3://{config.input_bucket}/{granule_id}.zip")
+        zip_path = granule_dir / f"{self.granule_id}.zip"
+        zip_path.parent.mkdir(exist_ok=True, parents=True)
+
+        logger.info(f"Downloading s3://{config.input_bucket}/{self.granule_id}.zip")
         s3 = boto3.client("s3")
-        s3.download_file(config.input_bucket, f"{granule_id}.zip", str(zip_path))
+        s3.download_file(config.input_bucket, f"{self.granule_id}.zip", str(zip_path))
 
         logger.info(f"Unzipping {zip_path}")
         subprocess.run(
-            ["unzip", "-q", str(zip_path), "-d", str(config.granule_dir)], check=True
+            ["unzip", "-q", str(zip_path), "-d", str(granule_dir)], check=True
         )
 
-        safe_dir = config.granule_dir / f"{granule_id}.SAFE"
-        return {self.provides[0]: safe_dir}
+        safe_dir = granule_dir / f"{self.granule_id}.SAFE"
+        if not safe_dir.exists():
+            raise FileExistsError(f"Cannot find expected SAFE directory, {safe_dir}")
+
+        return {safe_dir_asset(self.granule_id): safe_dir}
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -89,23 +94,28 @@ class LocalSentinelGranule(MappedTask):
     provides_factory = lambda granule_id: (safe_dir_asset(granule_id),)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        config = bundle[CONFIG]
-        granule_id = config.granule
-        dest_zip = config.granule_dir / f"{granule_id}.zip"
-
         if not self.local_granule_zip.exists():
             raise TaskFailure(f"Local ZIP not found at {self.local_granule_zip}")
 
-        logger.info(f"Using local granule ZIP: {self.local_granule_zip}")
-        shutil.copy(self.local_granule_zip, dest_zip)
+        config: EnvConfig = bundle[CONFIG]
+        granule_dir = config.working_dir / self.granule_id
 
-        logger.info(f"Unzipping {dest_zip}")
+        zip_path = granule_dir / f"{self.granule_id}.zip"
+        zip_path.parent.mkdir(exist_ok=True, parents=True)
+
+        logger.info(f"Using local granule ZIP: {self.local_granule_zip}")
+        shutil.copy(self.local_granule_zip, zip_path)
+
+        logger.info(f"Unzipping {zip_path}")
         subprocess.run(
-            ["unzip", "-q", str(dest_zip), "-d", str(config.granule_dir)], check=True
+            ["unzip", "-q", str(zip_path), "-d", str(granule_dir)], check=True
         )
 
-        safe_dir = config.granule_dir / f"{granule_id}.SAFE"
-        return {self.provides[0]: safe_dir}
+        safe_dir = granule_dir / f"{self.granule_id}.SAFE"
+        if not safe_dir.exists():
+            raise FileExistsError(f"Cannot find expected SAFE directory, {safe_dir}")
+
+        return {safe_dir_asset(self.granule_id): safe_dir}
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -186,7 +196,7 @@ class FindS2Footprint(MappedTask):
     provides_factory = lambda gid: (detfoo_file_asset(gid),)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        config = bundle[CONFIG]
+        config: EnvConfig = bundle[CONFIG]
         safe_dir = bundle[self.requires[1]]
 
         # Locate detector footprint for B06
@@ -203,7 +213,7 @@ class FindS2Footprint(MappedTask):
 
         # Convert JPEG2000 format to binary for HLS programs
         if detfoo06.suffix == ".jp2":
-            detfoo06_bin = config.granule_dir / "MSK_DETFOO_B06.bin"
+            detfoo06_bin = config.working_dir / self.granule_id / "MSK_DETFOO_B06.bin"
             logger.info(f"Converting {detfoo06} to {detfoo06_bin}")
             subprocess.run(
                 ["gdal_translate", "-of", "ENVI", str(detfoo06), str(detfoo06_bin)],
@@ -211,7 +221,7 @@ class FindS2Footprint(MappedTask):
             )
             detfoo06 = detfoo06_bin
 
-        return {self.provides[0]: detfoo06}
+        return {detfoo_file_asset(self.granule_id): detfoo06}
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -225,7 +235,7 @@ class ApplyS2QualityMask(MappedTask):
     provides_factory = lambda gid: (quality_mask_applied_asset(gid),)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        inner_dir = bundle[self.requires[0]]
+        inner_dir = bundle[granule_dir_asset(self.granule_id)]
         logger.info(f"Applying quality mask in {inner_dir}")
         subprocess.run(["apply_s2_quality_mask", str(inner_dir)], check=True)
         return {quality_mask_applied_asset(self.granule_id): True}
@@ -248,12 +258,13 @@ class DeriveS2Angles(MappedTask):
     provides_factory = lambda gid: (angle_hdf_asset(gid),)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        config = bundle[CONFIG]
+        config: EnvConfig = bundle[CONFIG]
         mtd_tl = bundle[mtd_tl_asset(self.granule_id)]
         detfoo06 = bundle[detfoo_file_asset(self.granule_id)]
-        angle_output = config.granule_dir / "angle.hdf"
 
-        detfoo_temp = config.granule_dir / "detfoo.hdf"
+        angle_output = config.working_dir / self.granule_id / "angle.hdf"
+        detfoo_temp = config.working_dir / self.granule_id / "detfoo.hdf"
+
         logger.info("Running sentinel-derive-angle")
         subprocess.run(
             [
@@ -285,7 +296,7 @@ class RunFmask(MappedTask):
     provides_factory = lambda gid: (fmask_bin_asset(gid),)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        config = bundle[CONFIG]
+        config: EnvConfig = bundle[CONFIG]
         safe_inner_dir = bundle[granule_dir_asset(self.granule_id)]
 
         logger.info(f"Running Fmask in {safe_inner_dir}")
@@ -298,7 +309,7 @@ class RunFmask(MappedTask):
 
         # Find the generated TIF (script parses fmask_out.txt, we can just glob)
         fmask_tif = next(safe_inner_dir.glob("*_Fmask4.tif"))
-        fmask_bin = config.granule_dir / "fmask.bin"
+        fmask_bin = config.working_dir / self.granule_id / "fmask.bin"
 
         logger.info(f"Converting {fmask_tif} to {fmask_bin}")
         subprocess.run(
@@ -306,7 +317,7 @@ class RunFmask(MappedTask):
             check=True,
         )
 
-        return {self.provides[0]: fmask_bin}
+        return {fmask_bin_asset(self.granule_id): fmask_bin}
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -320,17 +331,19 @@ class PrepareEspaInput(MappedTask):
     provides_factory = lambda gid: (espa_xml_asset(gid),)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        config = bundle[CONFIG]
+        config: EnvConfig = bundle[CONFIG]
         safe_dir = bundle[safe_dir_asset(self.granule_id)]
+
+        granule_dir = config.working_dir / self.granule_id
 
         # Script re-zips the masked directory. Skipping zip overhead for local processing
         # if unpackage_s2.py accepts directory, but script passes zip.
         # Assuming unpackage_s2.py needs a zip:
-        masked_zip = config.granule_dir / "masked.zip"
+        masked_zip = granule_dir / "masked.zip"
         shutil.make_archive(str(masked_zip.with_suffix("")), "zip", safe_dir)
 
         subprocess.run(
-            ["unpackage_s2.py", "-i", str(masked_zip), "-o", str(config.granule_dir)],
+            ["unpackage_s2.py", "-i", str(masked_zip), "-o", str(granule_dir)],
             check=True,
         )
         # FIXME: delete the original SAFE zip
@@ -380,8 +393,8 @@ class RunLaSRC(MappedTask):
 
 @dataclass(frozen=True, kw_only=True)
 class ProcessHdfParts(MappedTask):
-    """
-    Splits XMLs and converts to HDF parts (One/Two).
+    """Splits XMLs and converts to HDF parts (One/Two).
+
     Ports: create_sr_hdf_xml, convert_espa_to_hdf
     """
 
@@ -393,14 +406,16 @@ class ProcessHdfParts(MappedTask):
     provides_factory = lambda gid: (split_hdf_parts_asset(gid),)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        config = bundle[CONFIG]
+        config: EnvConfig = bundle[CONFIG]
         espa_xml = bundle[espa_xml_asset(self.granule_id)]
         espa_id = espa_xml.stem
 
+        granule_dir = config.working_dir / self.granule_id
+
         parts = Paths()
         for part, suffix in [("one", "1"), ("two", "2")]:
-            hls_xml = config.granule_dir / f"{espa_id}_{suffix}_hls.xml"
-            out_hdf = config.granule_dir / f"{espa_id}_sr_{suffix}.hdf"
+            hls_xml = granule_dir / f"{espa_id}_{suffix}_hls.xml"
+            out_hdf = granule_dir / f"{espa_id}_sr_{suffix}.hdf"
 
             # create_sr_hdf_xml "$espa_xml" "$hls_espa_one_xml" one
             subprocess.run(
@@ -432,12 +447,14 @@ class CombineS2Hdf(MappedTask):
     provides_factory = lambda gid: (combined_sr_hdf_asset(gid),)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        config = bundle[CONFIG]
+        config: EnvConfig = bundle[CONFIG]
         espa_xml = bundle[espa_xml_asset(self.granule_id)]
         parts = bundle[split_hdf_parts_asset(self.granule_id)]
 
         espa_id = espa_xml.stem
-        combined_hdf = config.granule_dir / f"{espa_id}_sr_combined.hdf"
+        combined_hdf = (
+            config.working_dir / self.granule_id / f"{espa_id}_sr_combined.hdf"
+        )
 
         # sentinel-twohdf2one "$sr_hdf_one" "$sr_hdf_two" MTD_MSIL1C.xml MTD_TL.xml "$ACCODE" "$hls_sr_combined_hdf"
         subprocess.run(
@@ -472,12 +489,12 @@ class AddS2FmaskSds(MappedTask):
     provides_factory = lambda gid: (final_sr_hdf_asset(gid),)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        config = bundle[CONFIG]
+        config: EnvConfig = bundle[CONFIG]
         combined_hdf = bundle[combined_sr_hdf_asset(self.granule_id)]
         aerosol_qa = bundle[lasrc_aerosol_qa_asset(self.granule_id)]
         fmask_bin = bundle[fmask_bin_asset(self.granule_id)]
 
-        final_sr = config.granule_dir / "sr.hdf"
+        final_sr = config.working_dir / self.granule_id / "sr.hdf"
 
         # sentinel-add-fmask-sds "$hls_sr_combined_hdf" "$fmaskbin" \
         #   "$aerosol_qa" MTD_MSIL1C.xml MTD_TL.xml \

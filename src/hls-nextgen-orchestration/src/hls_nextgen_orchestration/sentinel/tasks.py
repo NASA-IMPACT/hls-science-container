@@ -63,14 +63,13 @@ logger = logging.getLogger(__name__)
 
 
 # ----- Naming conventions
-def sentinel_to_hls_granule(sentinel_granule_id: str) -> str:
+def sentinel_to_hls_granule(granule: Sentinel2Granule) -> str:
     """Get the HLS product output name for a Sentinel-2 granule ID"""
-    s2_granule = Sentinel2Granule.from_str(sentinel_granule_id)
     hls_granule = HlsGranule(
         product="HLS",
         sensor="S30",
-        tile_id=s2_granule.tile_id,
-        acquisition_time=s2_granule.acquisition_time,
+        tile_id=granule.tile_id,
+        acquisition_time=granule.acquisition_time,
     )
     return hls_granule.to_str()
 
@@ -110,31 +109,26 @@ class EnvSource(DataSource):
         default_factory=lambda: Path(os.getenv("SCRATCH_DIR", "/var/scratch"))
     )
     working_dir: Path | None = None
-    granule_dir: Path | None = None
 
     def fetch(self) -> dict[Asset[EnvConfig], EnvConfig]:
         job_id = os.getenv("AWS_BATCH_JOB_ID", "local_job")
-        granule = os.environ["GRANULE"]
-
         working_dir = self.working_dir or self.scratch_dir / job_id
-        granule_dir = self.granule_dir or working_dir / granule
 
         config = EnvConfig(
             job_id=job_id,
-            granule=granule,
+            granule_ids=os.environ["GRANULE_LIST"].split(","),
             input_bucket=os.environ["INPUT_BUCKET"],
             output_bucket=os.environ["OUTPUT_BUCKET"],
             gibs_bucket=os.environ["GIBS_OUTPUT_BUCKET"],
             prefix=os.environ["PREFIX"],
             ac_code=os.environ["ACCODE"],
             working_dir=working_dir,
-            granule_dir=granule_dir,
             debug_bucket=os.getenv("DEBUG_BUCKET"),
             replace_existing=os.getenv("REPLACE_EXISTING", "false").lower() == "true",
         )
 
         # Ensure directory exists
-        config.granule_dir.mkdir(parents=True, exist_ok=True)
+        config.working_dir.mkdir(parents=True, exist_ok=True)
 
         return {CONFIG: config}
 
@@ -144,7 +138,11 @@ class EnvSource(DataSource):
 class ConsolidateGranules(MergeTask):
     """Consolidate two "twin"" Sentinel-2 granules"""
 
-    requires_factory = lambda gid: (CONFIG, trimmed_hdf_asset(gid), angle_hdf_asset(gid))
+    requires_factory = lambda gid: (
+        CONFIG,
+        trimmed_hdf_asset(gid),
+        angle_hdf_asset(gid),
+    )
     provides = (
         CONSOLIDATED_SR_HDF,
         CONSOLIDATED_ANGLE_HDF,
@@ -252,7 +250,7 @@ class DeriveNbar(Task):
         config = bundle[CONFIG]
 
         # cfactor.hdf is created as part of NBAR correction
-        cfactor = config.granule_dir / "cfactor.hdf"
+        cfactor = config.working_dir / "cfactor.hdf"
 
         subprocess.run(
             ["sentinel-derive-nbar", str(nbar_hdf), str(angle_hdf), str(cfactor)],
@@ -296,9 +294,9 @@ class RenameS2Outputs(Task):
         hdf_path = bundle[FINAL_OUTPUT_HDF]
         angle_path = bundle[CONSOLIDATED_ANGLE_HDF]
 
-        base_name = sentinel_to_hls_granule(config.granule)
-        renamed_hdf = config.granule_dir / f"{base_name}.hdf"
-        renamed_angle = config.granule_dir / f"{base_name}.ANGLE.hdf"
+        base_name = sentinel_to_hls_granule(config.sentinel_granule)
+        renamed_hdf = config.working_dir / f"{base_name}.hdf"
+        renamed_angle = config.working_dir / f"{base_name}.ANGLE.hdf"
 
         logger.info(f"Renaming outputs to {base_name}")
 

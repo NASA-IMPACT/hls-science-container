@@ -15,13 +15,11 @@ class EnvConfig:
     """
 
     job_id: str
-    granule: str
+    granule_ids: list[str]
     input_bucket: str
     output_bucket: str
     gibs_bucket: str
     working_dir: Path
-    # FIXME: remove this...!
-    granule_dir: Path
     prefix: str
     ac_code: str
     debug_bucket: str | None = None
@@ -34,12 +32,14 @@ class EnvConfig:
         For the twin granule scenario we still need a primary source of
         reference for things like the processing timestamp.
         """
-        return Sentinel2Granule.from_str(self.granule)
+        # FIXME: shouldn't this be deterministic? hls-sentinel script is NOT
+        return Sentinel2Granule.from_str(self.granule_ids[0])
 
 
 # ----- Asset definitions and factories
 #  Assets
 CONFIG = Asset("sentinel_config", EnvConfig)
+
 
 # --- Per granule tasks
 # These functions create unique Asset instances for each granule ID.
@@ -47,47 +47,62 @@ CONFIG = Asset("sentinel_config", EnvConfig)
 def safe_dir_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"safe_dir_{granule_id}", Path)
 
+
 def granule_dir_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"granule_dir_{granule_id}", Path)
+
 
 def mtd_tl_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"MTD_TL_{granule_id}", Path)
 
+
 def solar_valid_asset(granule_id: str) -> Asset[bool]:
     return Asset(f"solar_valid_flag_{granule_id}", bool)
+
 
 def detfoo_file_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"detfoo_file_{granule_id}", Path)
 
+
 def quality_mask_applied_asset(granule_id: str) -> Asset[bool]:
     return Asset(f"quality_mask_applied_{granule_id}", bool)
+
 
 def angle_hdf_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"angle_hdf_{granule_id}", Path)
 
+
 def fmask_bin_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"fmask_binary_{granule_id}", Path)
+
 
 def masked_safe_zip_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"masked_safe_zip_{granule_id}", Path)
 
+
 def espa_xml_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"espa_xml_{granule_id}", Path)
+
 
 def lasrc_aerosol_qa_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"lasrc_aerosol_qa_{granule_id}", Path)
 
+
 def split_hdf_parts_asset(granule_id: str) -> Asset[Paths]:
     return Asset(f"split_hdf_parts_{granule_id}", Paths)
+
 
 def combined_sr_hdf_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"combined_sr_hdf_{granule_id}", Path)
 
+
 def final_sr_hdf_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"final_sr_hdf_{granule_id}", Path)
 
+
 def trimmed_hdf_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"trimmed_hdf_{granule_id}", Path)
+
 
 # --- Consolidated & Post-Processing Assets (sentinel.sh)
 
