@@ -107,6 +107,34 @@ touch "${2%.*}.hdf.hdr"
 echo "Resample complete: $2"
 """
 
+CONSOLIDATE_SR = """#!/bin/bash
+# usage: sentinel-consolidate *input-sr output-sr
+inputs=("${@:1:$#-1}")
+output="${!#}"
+for file in "${inputs[@]}"; do
+    if [[ ! -f "$file" ]]; then
+        echo "Input file $file doesn't exist."
+        exit 1
+    fi
+done
+touch "$out"
+echo "Consolidated SR to $out"
+"""
+
+CONSOLIDATE_ANGLE = """#!/bin/bash
+# usage: sentinel-consolidate-angle *input-angles output-angle
+inputs=("${@:1:$#-1}")
+output="${!#}"
+for file in "${inputs[@]}"; do
+    if [[ ! -f "$file" ]]; then
+        echo "Input file $file doesn't exist."
+        exit 1
+    fi
+done
+touch "$out"
+echo "Consolidated angles to $out"
+"""
+
 SENTINEL_DERIVE_NBAR = """#!/bin/bash
 # usage: sentinel-derive-nbar inp angle cfactor
 echo "NBAR derive complete"
@@ -220,6 +248,8 @@ SENTINEL_SCRIPTS = {
     "sentinel-add-fmask-sds": SENTINEL_ADD_FMASK_SDS,
     "sentinel-trim": SENTINEL_TRIM,
     # ----- sentinel.sh
+    "sentinel-consolidate": CONSOLIDATE_SR,
+    "sentinel-consolidate-angle": CONSOLIDATE_ANGLE,
     "sentinel-create-s2at30m": SENTINEL_CREATE_S2AT30M,
     "sentinel-derive-nbar": SENTINEL_DERIVE_NBAR,
     "sentinel-l8-like": SENTINEL_L8_LIKE,

@@ -19,6 +19,7 @@ from hls_nextgen_orchestration.base import (
     MappedTask,
     TaskFailure,
 )
+from hls_nextgen_orchestration.common import Paths
 
 from .assets import (
     CONFIG,
@@ -319,8 +320,8 @@ class PrepareEspaInput(MappedTask):
     provides_factory = lambda gid: (espa_xml_asset(gid),)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        config = bundle[safe_dir_asset(self.granule_id)]
-        safe_dir = bundle[SAFE_DIR]
+        config = bundle[CONFIG]
+        safe_dir = bundle[safe_dir_asset(self.granule_id)]
 
         # Script re-zips the masked directory. Skipping zip overhead for local processing
         # if unpackage_s2.py accepts directory, but script passes zip.
@@ -396,7 +397,7 @@ class ProcessHdfParts(MappedTask):
         espa_xml = bundle[espa_xml_asset(self.granule_id)]
         espa_id = espa_xml.stem
 
-        parts = []
+        parts = Paths()
         for part, suffix in [("one", "1"), ("two", "2")]:
             hls_xml = config.granule_dir / f"{espa_id}_{suffix}_hls.xml"
             out_hdf = config.granule_dir / f"{espa_id}_sr_{suffix}.hdf"

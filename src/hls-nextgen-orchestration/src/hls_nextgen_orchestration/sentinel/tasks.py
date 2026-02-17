@@ -23,6 +23,7 @@ from hls_nextgen_orchestration.base import (
     MergeTask,
     Task,
 )
+from hls_nextgen_orchestration.common import Paths
 from hls_nextgen_orchestration.common.commands import run_hdf_to_cog
 from hls_nextgen_orchestration.granules import HlsGranule, Sentinel2Granule
 from hls_nextgen_orchestration.utils import validate_command
@@ -143,7 +144,7 @@ class EnvSource(DataSource):
 class ConsolidateGranules(MergeTask):
     """Consolidate two "twin"" Sentinel-2 granules"""
 
-    requires_factory = lambda gid: (trimmed_hdf_asset(gid), angle_hdf_asset(gid))
+    requires_factory = lambda gid: (CONFIG, trimmed_hdf_asset(gid), angle_hdf_asset(gid))
     provides = (
         CONSOLIDATED_SR_HDF,
         CONSOLIDATED_ANGLE_HDF,
@@ -152,8 +153,8 @@ class ConsolidateGranules(MergeTask):
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config = bundle[CONFIG]
 
-        sr_list = [str(bundle[trimmed_hdf_asset(gid)]) for gid in self.granule_ids]
-        angle_list = [str(bundle[angle_hdf_asset(gid)]) for gid in self.granule_ids]
+        sr_list = [bundle[trimmed_hdf_asset(gid)] for gid in self.granule_ids]
+        angle_list = [bundle[angle_hdf_asset(gid)] for gid in self.granule_ids]
 
         n_granules = len(self.granule_ids)
         if len(sr_list) != len(angle_list) != n_granules:
@@ -201,13 +202,14 @@ class Resample30m(MappedTask):
     provides = (RESAMPLED_HDF, NBAR_INPUT_HDF)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        input_hdf = bundle[TRIMMED_HDF]
         config: EnvConfig = bundle[CONFIG]
+        sr_hdf = bundle[CONSOLIDATED_SR_HDF]
+
         resampled_output = config.working_dir / "resample30m.hdf"
         resampled_output_hdr = resampled_output.with_suffix(".hdf.hdr")
 
         subprocess.run(
-            ["sentinel-create-s2at30m", str(input_hdf), str(resampled_output)],
+            ["sentinel-create-s2at30m", str(sr_hdf), str(resampled_output)],
             check=True,
         )
 
@@ -241,19 +243,19 @@ class DeriveNbar(Task):
 
     # FIXME: do we need to pass along the `cfactor.hdf`?
 
-    requires = (NBAR_INPUT_HDF, CONSOLIDATED_ANGLE_HDF, CONFIG)
+    requires = (CONFIG, NBAR_INPUT_HDF, CONSOLIDATED_ANGLE_HDF)
     provides = (NBAR_HDF,)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         nbar_hdf = bundle[NBAR_INPUT_HDF]
-        angle = bundle[ANGLE_HDF]
+        angle_hdf = bundle[CONSOLIDATED_ANGLE_HDF]
         config = bundle[CONFIG]
 
         # cfactor.hdf is created as part of NBAR correction
         cfactor = config.granule_dir / "cfactor.hdf"
 
         subprocess.run(
-            ["sentinel-derive-nbar", str(nbar_hdf), str(angle), str(cfactor)],
+            ["sentinel-derive-nbar", str(nbar_hdf), str(angle_hdf), str(cfactor)],
             check=True,
         )
         return {NBAR_HDF: nbar_hdf}
@@ -292,7 +294,7 @@ class RenameS2Outputs(Task):
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config = bundle[CONFIG]
         hdf_path = bundle[FINAL_OUTPUT_HDF]
-        angle_path = bundle[ANGLE_HDF]
+        angle_path = bundle[CONSOLIDATED_ANGLE_HDF]
 
         base_name = sentinel_to_hls_granule(config.granule)
         renamed_hdf = config.granule_dir / f"{base_name}.hdf"
@@ -503,7 +505,7 @@ class S2ProcessGibs(Task):
             check=True,
         )
 
-        manifests = []
+        manifests = Paths()
         for gibs_id_path in gibs_dir.iterdir():
             if gibs_id_path.is_dir():
                 gibs_id = gibs_id_path.name

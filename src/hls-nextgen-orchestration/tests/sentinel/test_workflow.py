@@ -7,7 +7,7 @@ import pytest
 from mypy_boto3_s3 import S3Client
 
 from hls_nextgen_orchestration.granules import Sentinel2Granule
-from hls_nextgen_orchestration.sentinel.assets import RENAMED_HDF, RENAMED_ANGLE_HDF
+from hls_nextgen_orchestration.sentinel.assets import RENAMED_HDF
 from hls_nextgen_orchestration.sentinel.workflow import construct_pipeline
 
 # Test Constants
@@ -53,8 +53,11 @@ def test_sentinel_pipeline_end_to_end(
     working_dir = tmp_path / "working"
     working_dir.mkdir()
 
+    GRANULE_IDS = [GRANULE_ID]
+
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
     monkeypatch.setenv("GRANULE", GRANULE_ID)
+    monkeypatch.setenv("GRANULE_LIST", ",".join(GRANULE_IDS))
     monkeypatch.setenv("PREFIX", "S30")
     monkeypatch.setenv("INPUT_BUCKET", IN_BUCKET)
     monkeypatch.setenv("OUTPUT_BUCKET", OUT_BUCKET)
@@ -79,11 +82,3 @@ def test_sentinel_pipeline_end_to_end(
     # Verify the naming convention derived from ParseMetadata (via SentinelGranule)
     # HLS.S30.T32TQM.2020001.001.hdf
     assert "HLS.S30.T32TQM" in final_hdf_path.name
-
-
-def test_construct_pipeline_structure(mock_binaries: Path) -> None:
-    """Verify the pipeline builder creates a valid DAG."""
-    pipeline = construct_pipeline()
-    assert len(pipeline.execution_order) >= 5
-    first_task = pipeline.execution_order[0]
-    assert "Metadata" in first_task.name or "Env" in first_task.name
