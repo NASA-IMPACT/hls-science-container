@@ -36,7 +36,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["F", "E", "W", "I", "UP"]
-ignore = ["E501"]
+ignore = ["E501", "E731"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["hls_nextgen_orchestration"]
