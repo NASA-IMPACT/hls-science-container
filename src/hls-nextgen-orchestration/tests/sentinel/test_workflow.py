@@ -8,6 +8,7 @@ from mypy_boto3_s3 import S3Client
 
 from hls_nextgen_orchestration.granules import Sentinel2Granule
 from hls_nextgen_orchestration.sentinel.assets import RENAMED_HDF
+from hls_nextgen_orchestration.sentinel.tasks import EnvSource, UploadAll
 from hls_nextgen_orchestration.sentinel.workflow import construct_pipeline
 
 # Test Constants
@@ -60,8 +61,45 @@ def container_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return working_dir
 
 
+def test_sentinel_pipeline_ordering(
+    mock_binaries: Path,
+    container_setup: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify the ordering of the tasks within the workflow DAG"""
+    granule_ids = ["ABC", "XYZ"]
+    monkeypatch.setenv("GRANULE_LIST", ",".join(granule_ids))
+
+    pipeline = construct_pipeline()
+
+    # --- Pipeline start/end
+    # Parsing of envvars is first
+    assert isinstance(pipeline.execution_order[0], EnvSource)
+    # Upload happens last
+    assert isinstance(pipeline.execution_order[-1], UploadAll)
+
+    # --- Verify parallel execution of each granule
+    mapped_tasks: dict[str, dict[int, str]] = {
+        granule_id: {} for granule_id in granule_ids
+    }
+    for idx, node in enumerate(pipeline.execution_order):
+        node_name = node.__class__.__name__
+        for granule_id in granule_ids:
+            if node_name.endswith(granule_id):
+                mapped_tasks[granule_id][idx] = node_name
+
+    # Same count
+    assert len(mapped_tasks[granule_ids[0]]) == len(mapped_tasks[granule_ids[1]])
+
+    # Parallel, not interleaved
+    if min(mapped_tasks[granule_ids[0]]) < min(mapped_tasks[granule_ids[1]]):
+        assert max(mapped_tasks[granule_ids[0]]) < min(mapped_tasks[granule_ids[1]])
+    else:
+        assert min(mapped_tasks[granule_ids[0]]) > max(mapped_tasks[granule_ids[1]])
+
+
 @pytest.mark.parametrize("granule_ids", [[GRANULE_ID_1], GRANULE_IDS])
-def test_sentinel_pipeline_end_to_end_single(
+def test_sentinel_pipeline_end_to_end(
     granule_ids: list[str],
     mock_binaries: Path,
     s3_setup: S3Client,
