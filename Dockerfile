@@ -32,7 +32,7 @@ RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
 
 
 # ===== Development installation
-FROM --platform=${PLATFORM} debian:bookworm-slim AS dev
+FROM build AS dev
 
 # Enforce v1.0.0 for STAC specification within PySTAC
 ENV PYSTAC_STAC_VERSION_OVERRIDE=1.0.0
