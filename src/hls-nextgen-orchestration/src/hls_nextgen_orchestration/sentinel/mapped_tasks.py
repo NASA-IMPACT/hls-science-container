@@ -60,6 +60,9 @@ class DownloadSentinelGranule(MappedTask):
     requires = (CONFIG,)
     provides_factory = lambda granule_id: (safe_dir_asset(granule_id),)
 
+    def __post_init__(self) -> None:
+        validate_command("unzip")
+
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config: EnvConfig = bundle[CONFIG]
         granule_dir = config.working_dir / self.granule_id
@@ -94,6 +97,9 @@ class LocalSentinelGranule(MappedTask):
 
     requires = (CONFIG,)
     provides_factory = lambda granule_id: (safe_dir_asset(granule_id),)
+
+    def __post_init__(self) -> None:
+        validate_command("unzip")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         if not self.local_granule_zip.exists():
@@ -175,6 +181,9 @@ class CheckSolarZenith(MappedTask):
     requires_factory = lambda gid: (mtd_tl_asset(gid),)
     provides_factory = lambda gid: (solar_valid_asset(gid),)
 
+    def __post_init__(self) -> None:
+        validate_command("check_solar_zenith_sentinel")
+
     def run(self, bundle: AssetBundle) -> AssetBundle:
         mtd_tl = bundle[self.requires[0]]
 
@@ -188,7 +197,7 @@ class CheckSolarZenith(MappedTask):
         if result.stdout.strip() == "invalid":
             raise TaskFailure("Invalid solar zenith angle", exit_code=3)
 
-        return {self.provides[0]: True}
+        return {solar_valid_asset(self.granule_id): True}
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -206,8 +215,12 @@ class FindS2Footprint(MappedTask):
     requires_factory = lambda gid: (
         CONFIG,
         safe_dir_asset(gid),
+        solar_valid_asset(gid),
     )
     provides_factory = lambda gid: (detfoo_file_asset(gid),)
+
+    def __post_init__(self) -> None:
+        validate_command("gdal_translate")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config: EnvConfig = bundle[CONFIG]
@@ -245,8 +258,11 @@ class ApplyS2QualityMask(MappedTask):
     Ports: apply_s2_quality_mask
     """
 
-    requires_factory = lambda gid: (granule_dir_asset(gid),)
+    requires_factory = lambda gid: (granule_dir_asset(gid), solar_valid_asset(gid))
     provides_factory = lambda gid: (quality_mask_applied_asset(gid),)
+
+    def __post_init__(self) -> None:
+        validate_command("apply_s2_quality_mask")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         inner_dir = bundle[granule_dir_asset(self.granule_id)]
@@ -266,10 +282,12 @@ class DeriveS2Angles(MappedTask):
         CONFIG,
         mtd_tl_asset(gid),
         detfoo_file_asset(gid),
-        solar_valid_asset(gid),
         quality_mask_applied_asset(gid),
     )
     provides_factory = lambda gid: (angle_hdf_asset(gid),)
+
+    def __post_init__(self) -> None:
+        validate_command("sentinel-derive-angle")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config: EnvConfig = bundle[CONFIG]
@@ -394,8 +412,12 @@ class PrepareEspaInput(MappedTask):
     Ports: unpackage_s2.py, convert_sentinel_to_espa
     """
 
-    requires_factory = lambda gid: (CONFIG, safe_dir_asset(gid))
+    requires_factory = lambda gid: (CONFIG, safe_dir_asset(gid), fmask_bin_asset(gid))
     provides_factory = lambda gid: (espa_xml_asset(gid),)
+
+    def __post_init__(self) -> None:
+        validate_command("unpackage_s2.py")
+        validate_command("convert_sentinel_to_espa")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config: EnvConfig = bundle[CONFIG]
@@ -437,6 +459,9 @@ class RunLaSRC(MappedTask):
     requires_factory = lambda gid: (espa_xml_asset(gid),)
     provides_factory = lambda gid: (lasrc_aerosol_qa_asset(gid),)
 
+    def __post_init__(self) -> None:
+        validate_command("do_lasrc_sentinel.py")
+
     def run(self, bundle: AssetBundle) -> AssetBundle:
         espa_xml = bundle[espa_xml_asset(self.granule_id)]
 
@@ -471,6 +496,10 @@ class ProcessHdfParts(MappedTask):
         lasrc_aerosol_qa_asset(gid),
     )
     provides_factory = lambda gid: (split_hdf_parts_asset(gid),)
+
+    def __post_init__(self) -> None:
+        validate_command("create_sr_hdf_xml")
+        validate_command("convert_sentinel_to_espa")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config: EnvConfig = bundle[CONFIG]
@@ -512,6 +541,9 @@ class CombineS2Hdf(MappedTask):
         split_hdf_parts_asset(gid),
     )
     provides_factory = lambda gid: (combined_sr_hdf_asset(gid),)
+
+    def __post_init__(self) -> None:
+        validate_command("sentinel-twohdf2one")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config: EnvConfig = bundle[CONFIG]
@@ -555,6 +587,9 @@ class AddS2FmaskSds(MappedTask):
     )
     provides_factory = lambda gid: (final_sr_hdf_asset(gid),)
 
+    def __post_init__(self) -> None:
+        validate_command("sentinel-add-fmask-sds")
+
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config: EnvConfig = bundle[CONFIG]
         combined_hdf = bundle[combined_sr_hdf_asset(self.granule_id)]
@@ -591,6 +626,9 @@ class TrimS2Hdf(MappedTask):
 
     requires_factory = lambda gid: (final_sr_hdf_asset(gid),)
     provides_factory = lambda gid: (trimmed_hdf_asset(gid),)
+
+    def __post_init__(self) -> None:
+        validate_command("sentinel-trim")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         hdf = bundle[final_sr_hdf_asset(self.granule_id)]

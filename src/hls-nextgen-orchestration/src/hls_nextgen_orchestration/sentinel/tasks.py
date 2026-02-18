@@ -19,7 +19,6 @@ from hls_nextgen_orchestration.base import (
     Asset,
     AssetBundle,
     DataSource,
-    MappedTask,
     MergeTask,
     Task,
 )
@@ -101,8 +100,6 @@ class EnvSource(DataSource):
     Matches variables found in sentinel.sh and sentinel_granule.sh.
     """
 
-    # FIXME: ughhh twin graule
-
     provides = (CONFIG,)
 
     scratch_dir: Path = field(
@@ -152,6 +149,10 @@ class ConsolidateGranules(MergeTask):
         CONSOLIDATED_SR_HDF,
         CONSOLIDATED_ANGLE_HDF,
     )
+
+    def __post_init__(self) -> None:
+        validate_command("sentinel-consolidate")
+        validate_command("sentinel-consolidate-angle")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config = bundle[CONFIG]
@@ -204,6 +205,9 @@ class Resample30m(Task):
     requires = (CONSOLIDATED_SR_HDF, CONFIG)
     provides = (RESAMPLED_HDF, NBAR_INPUT_HDF)
 
+    def __post_init__(self) -> None:
+        validate_command("sentinel-create-s2at30m")
+
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config: EnvConfig = bundle[CONFIG]
         sr_hdf = bundle[CONSOLIDATED_SR_HDF]
@@ -244,10 +248,11 @@ class DeriveNbar(Task):
     Note: This step modifies the input IN PLACE.
     """
 
-    # FIXME: do we need to pass along the `cfactor.hdf`?
-
     requires = (CONFIG, NBAR_INPUT_HDF, CONSOLIDATED_ANGLE_HDF)
     provides = (NBAR_HDF,)
+
+    def __post_init__(self) -> None:
+        validate_command("sentinel-derive-nbar")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         nbar_hdf = bundle[NBAR_INPUT_HDF]
@@ -273,6 +278,9 @@ class BandpassCorrection(Task):
 
     requires = (NBAR_HDF, CONFIG)
     provides = (FINAL_OUTPUT_HDF,)
+
+    def __post_init__(self) -> None:
+        validate_command("sentinel-l8-like")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         nbar_hdf = bundle[NBAR_HDF]
@@ -550,6 +558,8 @@ class S2ProcessVi(Task):
 
     def __post_init__(self) -> None:
         validate_command("vi_generate_indices")
+        validate_command("vi_generate_metadata")
+        validate_command("vi_generate_stac_items")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config = bundle[CONFIG]

@@ -21,8 +21,8 @@ from hls_nextgen_orchestration.sentinel.assets import (
     fmask_bin_asset,
     granule_dir_asset,
     lasrc_aerosol_qa_asset,
-    mtd_tl_asset,
     mtd_msil1c_asset,
+    mtd_tl_asset,
     quality_mask_applied_asset,
     safe_dir_asset,
     solar_valid_asset,
@@ -183,11 +183,13 @@ def test_run_fmask(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     mtd_msil1c.touch()
 
     task = RunFmask.map(granule_id)(name="fmask")
-    outputs = task.run({
-        granule_dir_asset(granule_id): inner,
-        mtd_msil1c_asset(granule_id): mtd_msil1c,
-        CONFIG: sentinel_config
-    })
+    outputs = task.run(
+        {
+            granule_dir_asset(granule_id): inner,
+            mtd_msil1c_asset(granule_id): mtd_msil1c,
+            CONFIG: sentinel_config,
+        }
+    )
 
     assert outputs[fmask_bin_asset(granule_id)].exists()
 

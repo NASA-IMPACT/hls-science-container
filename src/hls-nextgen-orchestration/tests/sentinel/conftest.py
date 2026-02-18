@@ -38,7 +38,7 @@ echo "Fmask 4.7 finished (0.42 minutes)\nfor S2C_SCENE with 1.2% clear pixels\n"
 
 PARSE_FMASK = make_script("""
 # usage: parse_fmask <text>
-clear=$(echo $@ | sed -n 's/.*with \([0-9.]*\).*/\\1/p')
+clear=$(echo $@ | sed -n 's/.*with \\([0-9.]*\\).*/\\1/p')
 if [[ $clear < 2 ]]; then
     echo "invalid"
 else
