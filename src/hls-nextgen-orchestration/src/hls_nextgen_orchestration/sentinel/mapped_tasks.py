@@ -6,6 +6,7 @@ These mirror the "sentinel_granule.sh" script
 from __future__ import annotations
 
 import logging
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -316,7 +317,6 @@ class DeriveS2Angles(MappedTask):
         return {angle_hdf_asset(self.granule_id): angle_output}
 
 
-# FIXME: refactor this to use Landsat version
 @dataclass(frozen=True, kw_only=True)
 class RunFmask(MappedTask):
     """Runs Fmask on the Sentinel granule.
@@ -354,8 +354,10 @@ class RunFmask(MappedTask):
         if invalid:
             raise TaskFailure("Fmask reports no clear pixels. Exiting now", exit_code=4)
 
-        # Find the generated TIF (script parses fmask_out.txt, we can just glob)
-        fmask_tif = next(safe_inner_dir.glob("*_Fmask4.tif"))
+        # Find the generated TIF - it should be inside the "granule dir" like,
+        # {WORKING_DIR}/{GRANULE_ID}.SAFE/GRANULE/{GRANULE_ID}/FMASK_DATA/{GRANULE_ID}_Fmask4.tif
+        # This is complicated, so it's easier to recursively glob for it.
+        fmask_tif = next(safe_inner_dir.rglob("*_Fmask4.tif"))
         fmask_bin = config.working_dir / self.granule_id / "fmask.bin"
 
         logger.info(f"Converting {fmask_tif} to {fmask_bin}")
@@ -425,18 +427,26 @@ class PrepareEspaInput(MappedTask):
 
         granule_dir = config.working_dir / self.granule_id
 
+        # Delete the original SAFE zip to save disk space
+        (config.working_dir / self.granule_id / f"{self.granule_id}.zip").unlink()
+
         # Script re-zips the masked directory. Skipping zip overhead for local processing
         # if unpackage_s2.py accepts directory, but script passes zip.
         # Assuming unpackage_s2.py needs a zip:
         masked_zip = granule_dir / "masked.zip"
-        shutil.make_archive(str(masked_zip.with_suffix("")), "zip", safe_dir)
+        shutil.make_archive(
+            base_name=str(masked_zip.with_suffix("")),
+            format="zip",
+            root_dir=safe_dir.parent,
+            # ZIP needs to contain the SAFE zip as a folder so `unpackage_s2.py`
+            # can figure out the product ID
+            base_dir=safe_dir.name,
+        )
 
         subprocess.run(
             ["unpackage_s2.py", "-i", str(masked_zip), "-o", str(granule_dir)],
             check=True,
         )
-        # FIXME: delete the original SAFE zip
-
         subprocess.run(["convert_sentinel_to_espa"], cwd=safe_dir, check=True)
 
         # FIXME: if not debug, delete JP2 files to save space
@@ -480,7 +490,7 @@ class RunLaSRC(MappedTask):
                 f"Cannot find the LaSRC aerosol QA output (expected {aerosol_qa})"
             )
 
-        return {lasrc_aerosol_qa_asset(self.granule_id): output_dir}
+        return {lasrc_aerosol_qa_asset(self.granule_id): aerosol_qa}
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -506,21 +516,27 @@ class ProcessHdfParts(MappedTask):
         espa_xml = bundle[espa_xml_asset(self.granule_id)]
         espa_id = espa_xml.stem
 
-        granule_dir = config.working_dir / self.granule_id
+        # NOTE: the programs below do NOT work with fully qualified file
+        #       paths, only with relative paths.
+        os.chdir(espa_xml.parent)
 
         parts = Paths()
         for part, suffix in [("one", "1"), ("two", "2")]:
-            hls_xml = granule_dir / f"{espa_id}_{suffix}_hls.xml"
-            out_hdf = granule_dir / f"{espa_id}_sr_{suffix}.hdf"
+            hls_xml = espa_xml.parent / f"{espa_id}_{suffix}_hls.xml"
+            out_hdf = espa_xml.parent / f"{espa_id}_sr_{suffix}.hdf"
 
             # create_sr_hdf_xml "$espa_xml" "$hls_espa_one_xml" one
             subprocess.run(
-                ["create_sr_hdf_xml", str(espa_xml), str(hls_xml), part], check=True
+                ["create_sr_hdf_xml", espa_xml.name, hls_xml.name, part], check=True
             )
 
             # convert_espa_to_hdf --xml="$hls_espa_one_xml" --hdf="$sr_hdf_one"
             subprocess.run(
-                ["convert_espa_to_hdf", f"--xml={hls_xml}", f"--hdf={out_hdf}"],
+                [
+                    "convert_espa_to_hdf",
+                    f"--xml={hls_xml.name}",
+                    f"--hdf={out_hdf.name}",
+                ],
                 check=True,
             )
             parts.append(out_hdf)
@@ -551,20 +567,20 @@ class CombineS2Hdf(MappedTask):
         parts = bundle[split_hdf_parts_asset(self.granule_id)]
 
         espa_id = espa_xml.stem
-        combined_hdf = (
-            config.working_dir / self.granule_id / f"{espa_id}_sr_combined.hdf"
-        )
+        combined_hdf = espa_xml.parent / f"{espa_id}_sr_combined.hdf"
+
+        os.chdir(espa_xml.parent)
 
         # sentinel-twohdf2one "$sr_hdf_one" "$sr_hdf_two" MTD_MSIL1C.xml MTD_TL.xml "$ACCODE" "$hls_sr_combined_hdf"
         subprocess.run(
             [
                 "sentinel-twohdf2one",
-                parts[0],
-                parts[1],
+                parts[0].name,
+                parts[1].name,
                 "MTD_MSIL1C.xml",
                 "MTD_TL.xml",
                 config.ac_code,
-                str(combined_hdf),
+                combined_hdf.name,
             ],
             check=True,
         )
@@ -581,6 +597,8 @@ class AddS2FmaskSds(MappedTask):
 
     requires_factory = lambda gid: (
         CONFIG,
+        mtd_msil1c_asset(gid),
+        mtd_tl_asset(gid),
         combined_sr_hdf_asset(gid),
         lasrc_aerosol_qa_asset(gid),
         fmask_bin_asset(gid),
@@ -598,6 +616,10 @@ class AddS2FmaskSds(MappedTask):
 
         final_sr = config.working_dir / self.granule_id / "sr.hdf"
 
+        # FIXME: we can't use the below because they've been moved post-re-unzip
+        # mtd_msil1c = bundle[mtd_msil1c_asset(self.granule_id)]
+        # mtd_tl = bundle[mtd_tl_asset(self.granule_id)]
+
         # sentinel-add-fmask-sds "$hls_sr_combined_hdf" "$fmaskbin" \
         #   "$aerosol_qa" MTD_MSIL1C.xml MTD_TL.xml \
         #   "$ACCODE" "$hls_sr_output_hdf"
@@ -607,20 +629,21 @@ class AddS2FmaskSds(MappedTask):
                 str(combined_hdf),
                 str(fmask_bin),
                 str(aerosol_qa),
-                "MTD_MSIL1C.xml",
-                "MTD_TL.xml",
+                str(mtd_msil1c),
+                str(mtd_tl),
                 config.ac_code,
                 str(final_sr),
             ],
             check=True,
         )
+
         return {final_sr_hdf_asset(self.granule_id): final_sr}
 
 
 @dataclass(frozen=True, kw_only=True)
 class TrimS2Hdf(MappedTask):
-    """
-    Trims edge pixels.
+    """Trims edge pixels.
+
     Ports: sentinel-trim
     """
 
@@ -633,4 +656,5 @@ class TrimS2Hdf(MappedTask):
     def run(self, bundle: AssetBundle) -> AssetBundle:
         hdf = bundle[final_sr_hdf_asset(self.granule_id)]
         subprocess.run(["sentinel-trim", str(hdf)], check=True)
+        # FIXME: cleanup .SAFE directory if not debug mode
         return {trimmed_hdf_asset(self.granule_id): hdf}
