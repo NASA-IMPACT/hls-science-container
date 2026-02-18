@@ -51,7 +51,6 @@ def container_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     working_dir.mkdir()
 
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
-    monkeypatch.setenv("PREFIX", "S30")
     monkeypatch.setenv("INPUT_BUCKET", IN_BUCKET)
     monkeypatch.setenv("OUTPUT_BUCKET", OUT_BUCKET)
     monkeypatch.setenv("GIBS_OUTPUT_BUCKET", GIBS_BUCKET)

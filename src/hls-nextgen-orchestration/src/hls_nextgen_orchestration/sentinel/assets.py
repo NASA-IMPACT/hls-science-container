@@ -20,7 +20,6 @@ class EnvConfig:
     output_bucket: str
     gibs_bucket: str
     working_dir: Path
-    prefix: str
     ac_code: str
     debug_bucket: str | None = None
     replace_existing: bool = False

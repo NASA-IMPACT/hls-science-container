@@ -120,7 +120,6 @@ class EnvSource(DataSource):
             input_bucket=os.environ["INPUT_BUCKET"],
             output_bucket=os.environ["OUTPUT_BUCKET"],
             gibs_bucket=os.environ["GIBS_OUTPUT_BUCKET"],
-            prefix=os.environ["PREFIX"],
             ac_code=os.environ["ACCODE"],
             working_dir=working_dir,
             debug_bucket=os.getenv("DEBUG_BUCKET"),
