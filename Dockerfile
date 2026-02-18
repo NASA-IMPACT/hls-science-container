@@ -43,6 +43,12 @@ ENV FMASK_PREFIX=/opt/fmask
 # Set variable defining LaSRC version used in HLS product metadata
 ENV ACCODE="LaSRC v3.5.1.0"
 
+# install libxt for MCR / Fmask
+RUN apt update && \
+    apt install -y --no-install-recommends \
+        libxt6 && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN --mount=type=cache,target=/root/.cache/rattler/cache \
     pixi install --frozen -e dev
 
