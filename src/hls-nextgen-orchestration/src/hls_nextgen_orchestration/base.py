@@ -304,23 +304,36 @@ class PipelineBuilder:
         return self
 
     def build(self) -> Pipeline:
+        """Build the pipeline into a DAG"""
         logger.info("Building Pipeline...")
 
         # Topological Sort (Kahn's Algorithm)
         # We work on a copy of in-degrees to avoid mutating the builder state permanently
         in_degree = self._in_degree.copy()
 
-        queue = [n for n in self.nodes if in_degree[n] == 0]
+        # Use a stack (LIFO) instead of a queue (FIFO) to encourage Depth-First execution.
+        # This prevents interleaved execution of parallel branches.
+        # We reverse the initial list so that the first added node ends up at the
+        # top of the stack (Last In, First Out -> First In needs to be last pushed).
+        stack = [n for n in reversed(self.nodes) if in_degree[n] == 0]
         sorted_nodes = []
 
-        while queue:
-            current = queue.pop(0)
+        while stack:
+            current = stack.pop()
             sorted_nodes.append(current)
 
-            for dependent in self._adjacency[current]:
+            # Sort dependents to ensure deterministic execution order.
+            # We sort in descending order (reverse=True) because we are pushing to a stack;
+            # the last item pushed is the first one processed (LIFO).
+            # Example: [A, B] -> push B, push A -> pop A, pop B.
+            dependents = sorted(
+                self._adjacency[current], key=lambda n: n.name, reverse=True
+            )
+
+            for dependent in dependents:
                 in_degree[dependent] -= 1
                 if in_degree[dependent] == 0:
-                    queue.append(dependent)
+                    stack.append(dependent)
 
         # Cycle Detection
         if len(sorted_nodes) != len(self.nodes):
