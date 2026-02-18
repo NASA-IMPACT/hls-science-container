@@ -109,6 +109,7 @@ class EnvSource(DataSource):
         default_factory=lambda: Path(os.getenv("SCRATCH_DIR", "/var/scratch"))
     )
     working_dir: Path | None = None
+    purge_working_dir: bool = True
 
     def fetch(self) -> dict[Asset[EnvConfig], EnvConfig]:
         job_id = os.getenv("AWS_BATCH_JOB_ID", "local_job")
@@ -126,8 +127,13 @@ class EnvSource(DataSource):
             replace_existing=os.getenv("REPLACE_EXISTING", "false").lower() == "true",
         )
 
-        # Ensure directory exists
-        config.working_dir.mkdir(parents=True, exist_ok=True)
+        if working_dir.exists() and self.purge_working_dir:
+            logger.info(f"Deleting pre-existing {working_dir=}")
+            shutil.rmtree(working_dir)
+
+        if not config.working_dir.exists():
+            logger.info(f"Creating {working_dir=}")
+            working_dir.mkdir(parents=True, exist_ok=True)
 
         return {CONFIG: config}
 
