@@ -118,7 +118,7 @@ def construct_pipeline(
     # Post-single granule workflow
     builder = (
         builder.add(ConsolidateGranules.merge(granule_ids)("ConsolidateGranules"))
-        .add(Resample30m.map(granule_id)("Resample"))
+        .add(Resample30m("Resample"))
         .add(DeriveNbar("Nbar"))
         .add(BandpassCorrection("Bandpass"))
         .add(RenameS2Outputs("RenameOutputs"))

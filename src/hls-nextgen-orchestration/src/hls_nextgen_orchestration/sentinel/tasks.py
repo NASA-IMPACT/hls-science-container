@@ -189,7 +189,7 @@ class ConsolidateGranules(MergeTask):
 
 
 @dataclass(frozen=True, kw_only=True)
-class Resample30m(MappedTask):
+class Resample30m(Task):
     """Resamples S2 to 30m.
 
     Ports: sentinel-create-s2at30m
