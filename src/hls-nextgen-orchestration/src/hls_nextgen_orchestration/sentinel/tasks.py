@@ -634,6 +634,7 @@ class UploadAll(Task):
         VI_DIR,
         VI_MANIFEST_FILE,
         SR_MANIFEST_FILE,
+        THUMBNAIL_FILE,
         # Intermediate assets needed for Debug Mode
         RESAMPLED_HDF,
         NBAR_HDF,  # This is the intermediate NBAR before L8Like
