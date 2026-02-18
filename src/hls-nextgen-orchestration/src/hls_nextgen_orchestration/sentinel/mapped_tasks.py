@@ -20,6 +20,7 @@ from hls_nextgen_orchestration.base import (
     TaskFailure,
 )
 from hls_nextgen_orchestration.common import Paths
+from hls_nextgen_orchestration.utils import validate_command
 
 from .assets import (
     CONFIG,
@@ -32,6 +33,7 @@ from .assets import (
     fmask_bin_asset,
     granule_dir_asset,
     lasrc_aerosol_qa_asset,
+    mtd_msil1c_asset,
     mtd_tl_asset,
     quality_mask_applied_asset,
     safe_dir_asset,
@@ -126,13 +128,21 @@ class GetGranuleDir(MappedTask):
     """
 
     requires_factory = lambda gid: (safe_dir_asset(gid),)
-    provides_factory = lambda gid: (granule_dir_asset(gid), mtd_tl_asset(gid))
+    provides_factory = lambda gid: (
+        granule_dir_asset(gid),
+        mtd_msil1c_asset(gid),
+        mtd_tl_asset(gid),
+    )
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         safe_dir = bundle[self.requires[0]]
-        granule_root = safe_dir / "GRANULE"
+
+        mtd_msil1c = safe_dir / "MTD_MSIL1C.xml"
+        if not mtd_msil1c.exists():
+            raise TaskFailure(f"No MTD_MSIL1C.xml file within {safe_dir}")
 
         # Find the first subdirectory - there should be just 1 granule
+        granule_root = safe_dir / "GRANULE"
         subdirs = [d for d in granule_root.iterdir() if d.is_dir()]
         if not subdirs:
             raise TaskFailure(f"No subdirectory found in {granule_root}")
@@ -146,7 +156,11 @@ class GetGranuleDir(MappedTask):
             raise TaskFailure(f"No MTD_TL.xml file within {granule_dir}")
         mtd_tl_xml = xmls[0]
 
-        return {self.provides[0]: granule_dir, self.provides[1]: mtd_tl_xml}
+        return {
+            granule_dir_asset(self.granule_id): granule_dir,
+            mtd_msil1c_asset(self.granule_id): mtd_msil1c,
+            mtd_tl_asset(self.granule_id): mtd_tl_xml,
+        }
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -292,20 +306,35 @@ class RunFmask(MappedTask):
     Ports: run_Fmask.sh and gdal_translate
     """
 
-    requires_factory = lambda gid: (CONFIG, granule_dir_asset(gid))
+    requires_factory = lambda gid: (
+        CONFIG,
+        granule_dir_asset(gid),
+        quality_mask_applied_asset(gid),
+        mtd_msil1c_asset(gid),
+    )
     provides_factory = lambda gid: (fmask_bin_asset(gid),)
+
+    def __post_init__(self) -> None:
+        validate_command("check_sentinel_clouds")
+        validate_command("run_Fmask.sh")
+        validate_command("parse_fmask")
+        validate_command("gdal_translate")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config: EnvConfig = bundle[CONFIG]
         safe_inner_dir = bundle[granule_dir_asset(self.granule_id)]
+        mtd_msil1c = bundle[mtd_msil1c_asset(self.granule_id)]
 
         logger.info(f"Running Fmask in {safe_inner_dir}")
-        with open(safe_inner_dir / "fmask_out.txt", "w") as outfile:
+        fmask_log = safe_inner_dir / "fmask_out.txt"
+        with open(fmask_log, "w") as outfile:
             subprocess.run(
                 ["run_Fmask.sh"], cwd=safe_inner_dir, stdout=outfile, check=True
             )
 
-        # FIXME: exit depending on `fmask.bin` output
+        invalid = self.check_invalid_cloud_cover(mtd_msil1c, fmask_log)
+        if invalid:
+            raise TaskFailure("Fmask reports no clear pixels. Exiting now", exit_code=4)
 
         # Find the generated TIF (script parses fmask_out.txt, we can just glob)
         fmask_tif = next(safe_inner_dir.glob("*_Fmask4.tif"))
@@ -318,6 +347,44 @@ class RunFmask(MappedTask):
         )
 
         return {fmask_bin_asset(self.granule_id): fmask_bin}
+
+    def check_invalid_cloud_cover(self, mtd_msil1c: Path, fmask_log: Path) -> bool:
+        """Check if the cloud cover is invalid
+
+        This check requires that both:
+        1. Fmask shows less than 2% clear
+        2. Sentinel-2 L1C metadata shows greater than 95% cloud cover.
+
+        Returns
+        -------
+        bool
+            True if invalid
+        """
+        # Check Sentinel-2 L1C metadata
+        logger.info("Checking Sentinel-2 metadata cloud cover...")
+        result = subprocess.run(
+            ["check_sentinel_clouds", str(mtd_msil1c)],
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        l1c_report = result.stdout.strip()
+        l1c_invalid = l1c_report == "invalid"
+
+        # Read 2nd to last line of Fmask output
+        with fmask_log.open() as src:
+            fmask_report = src.readlines()[-2]
+
+        result = subprocess.run(
+            ["parse_fmask", fmask_report],
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        fmask_result = result.stdout.strip()
+        fmask_invalid = fmask_result == "invalid"
+
+        return l1c_invalid and fmask_invalid
 
 
 @dataclass(frozen=True, kw_only=True)

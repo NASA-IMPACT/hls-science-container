@@ -22,17 +22,32 @@ set -eux
 
 CHECK_SZA = make_script('echo "valid"')
 
-RUN_FMASK_SH = make_script("""
+CHECK_SENTINEL_CLOUDS = make_script('echo "valid"')
+
+RUN_FMASK_SH_CLEAR = make_script("""
 # usage: run_Fmask.sh (runs in cwd)
-touch "foo_Fmask4.tif"
-echo "Fmask run complete"
+touch "granuleid_Fmask4.tif"
+echo "Fmask 4.7 finished (0.42 minutes)\nfor S2C_SCENE with 96.3% clear pixels\n"
+""")
+
+RUN_FMASK_SH_CLOUDY = make_script("""
+# usage: run_Fmask.sh (runs in cwd)
+touch "granuleid_Fmask4.tif"
+echo "Fmask 4.7 finished (0.42 minutes)\nfor S2C_SCENE with 1.2% clear pixels\n"
+""")
+
+PARSE_FMASK = make_script("""
+# usage: parse_fmask <text>
+clear=$(echo $@ | sed -n 's/.*with \([0-9.]*\).*/\\1/p')
+if [[ $clear < 2 ]]; then
+    echo "invalid"
+else
+    echo "valid"
+fi
 """)
 
 SENTINEL_DERIVE_ANGLE = make_script("""
 # usage: sentinel-derive-angle ... output
-if [[ "$1" == "--check" ]]; then
-    exit 0
-fi
 # Grab the last argument as the output file
 out="${@: -1}"
 touch "$out"
@@ -279,7 +294,9 @@ SENTINEL_SCRIPTS = {
     "gdal_translate": GDAL_TRANSLATE,
     "apply_s2_quality_mask": APPLY_S2_QUALITY_MASK,
     "sentinel-derive-angle": SENTINEL_DERIVE_ANGLE,
-    "run_Fmask.sh": RUN_FMASK_SH,
+    "check_sentinel_clouds": CHECK_SENTINEL_CLOUDS,
+    "run_Fmask.sh": RUN_FMASK_SH_CLEAR,
+    "parse_fmask": PARSE_FMASK,
     "unpackage_s2.py": UNPACKAGE_S2,
     "convert_sentinel_to_espa": CONVERT_SENTINEL_TO_ESPA,
     "do_lasrc_sentinel.py": DO_LASRC_SENTINEL,
@@ -328,7 +345,6 @@ def sentinel_config(tmp_path: Path) -> EnvConfig:
         gibs_bucket="test-gibs-bucket",
         granule_ids=["S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"],
         working_dir=working_dir,
-        prefix="S30",
         ac_code="LaSRC v3.5.1.8",
         replace_existing=False,
     )

@@ -51,6 +51,10 @@ def granule_dir_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"granule_dir_{granule_id}", Path)
 
 
+def mtd_msil1c_asset(granule_id: str) -> Asset[Path]:
+    return Asset(f"MTD_MSIL1C_{granule_id}", Path)
+
+
 def mtd_tl_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"MTD_TL_{granule_id}", Path)
 

@@ -22,6 +22,7 @@ from hls_nextgen_orchestration.sentinel.assets import (
     granule_dir_asset,
     lasrc_aerosol_qa_asset,
     mtd_tl_asset,
+    mtd_msil1c_asset,
     quality_mask_applied_asset,
     safe_dir_asset,
     solar_valid_asset,
@@ -76,6 +77,7 @@ def test_get_granule_dir(sentinel_config: EnvConfig, mock_binaries: Path) -> Non
     safe_dir = sentinel_config.working_dir / granule_id / "PRODUCT_ID.SAFE"
     inner = safe_dir / "GRANULE" / granule_id
     inner.mkdir(parents=True)
+    (safe_dir / "MTD_MSIL1C.xml").touch()
     xml = inner / "MTD_TL.xml"
     xml.touch()
 
@@ -169,16 +171,23 @@ def test_derive_s2_angles(sentinel_config: EnvConfig, mock_binaries: Path) -> No
     assert outputs[angle_hdf_asset(granule_id)].exists()
 
 
-def test_run_fmask_s2(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
+def test_run_fmask(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     """Tests Fmask execution and conversion."""
     granule_id = "GRANULE_ID"
-    inner = sentinel_config.working_dir / granule_id / "GRANULE" / granule_id
+    granule_dir = sentinel_config.working_dir / granule_id
+    safe_dir = granule_dir / f"{granule_id}.SAFE"
+    inner = safe_dir / "GRANULE" / granule_id
     inner.mkdir(parents=True)
-    # mock the TIF that fmask produces
-    (inner / "foo_Fmask4.tif").touch()
+
+    mtd_msil1c = safe_dir / "MTD_MSIL1C.xml"
+    mtd_msil1c.touch()
 
     task = RunFmask.map(granule_id)(name="fmask")
-    outputs = task.run({granule_dir_asset(granule_id): inner, CONFIG: sentinel_config})
+    outputs = task.run({
+        granule_dir_asset(granule_id): inner,
+        mtd_msil1c_asset(granule_id): mtd_msil1c,
+        CONFIG: sentinel_config
+    })
 
     assert outputs[fmask_bin_asset(granule_id)].exists()
 
