@@ -2,10 +2,27 @@
 # shellcheck disable=SC2153
 # shellcheck disable=SC1091
 
-set -x
 
+
+set -x
 # Exit on any error
 set -o errexit
+
+# Setup local development debug
+if [[ -z "$AWS_BATCH_JOB_ID" ]]; then
+    export GRANULE_LIST=S2C_MSIL1C_20250517T173921_N0511_R098_T13RDM_20250519T070142
+    export INPUT_BUCKET=hls-development-sentinel-input-files
+    export OUTPUT_BUCKET=hls-debug-output
+    export GIBS_OUTPUT_BUCKET=hls-development-gibs-intermediate-output
+    export REPLACE_EXISTING=replace
+    export VIIRS_AUX_STARTING_DATE=20210101
+fi
+
+python -m "hls_nextgen_orchestration.sentinel.workflow"
+exit $?
+
+
+# ----- OLD SCRIPT BELOW
 
 jobid="$AWS_BATCH_JOB_ID"
 granulelist="$GRANULE_LIST"
