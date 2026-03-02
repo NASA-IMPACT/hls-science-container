@@ -253,6 +253,10 @@ def test_add_fmask_sds(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     granule_dir = sentinel_config.working_dir / granule_id
     granule_dir.mkdir(exist_ok=True, parents=True)
 
+    mtd_tl = granule_dir / "MTD_TL.xml"
+    mtd_tl.touch()
+    mtd_msil1c = granule_dir / "MTD_MSIL1C.xml"
+    mtd_msil1c.touch()
     sr_hdf = granule_dir / "ESPA_ID_sr_combined.hdf"
     sr_hdf.touch()
     lasrc_aerosol_qa = granule_dir / "ESPA_ID_aerosol_qa.img"
@@ -264,6 +268,8 @@ def test_add_fmask_sds(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     output = task.run(
         {
             CONFIG: sentinel_config,
+            mtd_tl_asset(granule_id): mtd_tl,
+            mtd_msil1c_asset(granule_id): mtd_msil1c,
             combined_sr_hdf_asset(granule_id): sr_hdf,
             lasrc_aerosol_qa_asset(granule_id): lasrc_aerosol_qa,
             fmask_bin_asset(granule_id): fmask_bin,
