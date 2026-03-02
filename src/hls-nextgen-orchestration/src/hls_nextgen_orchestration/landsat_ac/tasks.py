@@ -11,7 +11,13 @@ from typing import TYPE_CHECKING, Any
 
 import boto3
 
-from hls_nextgen_orchestration.base import Asset, DataSource, Task, TaskFailure
+from hls_nextgen_orchestration.base import (
+    Asset,
+    AssetBundle,
+    DataSource,
+    Task,
+    TaskFailure,
+)
 from hls_nextgen_orchestration.utils import validate_command
 
 from .assets import (
@@ -101,7 +107,7 @@ class DownloadGranule(Task):
         # FIXME: import & run the Python code instead of calling via CLI
         validate_command("download_landsat")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Any], Any]:
+    def run(self, inputs: AssetBundle) -> dict[Asset[Any], Any]:
         config: EnvConfig = inputs[CONFIG]
 
         logger.info(f"Downloading {config.granule} from {config.input_bucket}...")
@@ -150,7 +156,7 @@ class LocalGranule(Task):
     def __post_init__(self) -> None:
         validate_command("download_landsat")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Any], Any]:
+    def run(self, inputs: AssetBundle) -> dict[Asset[Any], Any]:
         config: EnvConfig = inputs[CONFIG]
 
         mtl_paths = list(self.local_granule_dir.glob("*_MTL.txt"))
@@ -177,7 +183,7 @@ class ParseMetadata(Task):
     requires = (CONFIG,)
     provides = (METADATA,)
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         config: EnvConfig = inputs[CONFIG]
 
         # Use the Dataclass property from EnvConfig
@@ -210,7 +216,7 @@ class CheckSolarZenith(Task):
         # FIXME: import & run the Python code instead of calling via CLI
         validate_command("check_solar_zenith_landsat")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         mtl_path: Path = inputs[MTL_FILE]
         logger.info("Checking Solar Zenith...")
         result = subprocess.run(
@@ -237,7 +243,7 @@ class RunFmask(Task):
         validate_command("run_Fmask.sh")
         validate_command("gdal_translate")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Path], Path]:
+    def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
         # FIXME: this _could_ be reused for Sentinel-2 if we have an toggle
         # to check `fmask_out.txt` so we can check the output
         config: EnvConfig = inputs[CONFIG]
@@ -273,7 +279,7 @@ class ConvertScanline(Task):
     def __post_init__(self) -> None:
         validate_command("gdal_translate")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Asset[bool], bool]:
+    def run(self, inputs: AssetBundle) -> dict[Asset[bool], bool]:
         granule_dir: Path = inputs[GRANULE_DIR]
         tifs = list(granule_dir.glob("*.TIF"))
         logger.info(f"Converting {len(tifs)} TIFs to scanline...")
@@ -300,8 +306,7 @@ class ConvertToEspa(Task):
     def __post_init__(self) -> None:
         validate_command("convert_lpgs_to_espa")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Path], Path]:
-        _ = inputs[SCANLINE_DONE]
+    def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
         config: EnvConfig = inputs[CONFIG]
         mtl_path: Path = inputs[MTL_FILE]
         granule_dir: Path = inputs[GRANULE_DIR]
@@ -327,8 +332,7 @@ class RunLaSRC(Task):
     def __post_init__(self) -> None:
         validate_command("do_lasrc_landsat.py")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Asset[bool], bool]:
-        _ = inputs[SOLAR_VALID]
+    def run(self, inputs: AssetBundle) -> dict[Asset[bool], bool]:
         xml_file: Path = inputs[ESPA_XML]
         granule_dir = xml_file.parent
 
@@ -347,8 +351,7 @@ class RenameAngleBands(Task):
     requires = (CONFIG, METADATA, GRANULE_DIR, LASRC_DONE)
     provides = (RENAMED_ANGLES,)
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Asset[bool], bool]:
-        _ = inputs[LASRC_DONE]
+    def run(self, inputs: AssetBundle) -> dict[Asset[bool], bool]:
         config: EnvConfig = inputs[CONFIG]
         meta = inputs[METADATA]
         granule_dir: Path = inputs[GRANULE_DIR]
@@ -379,8 +382,7 @@ class CreateHlsXml(Task):
     def __post_init__(self) -> None:
         validate_command("create_landsat_sr_hdf_xml")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Path], Path]:
-        _ = inputs[RENAMED_ANGLES]
+    def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
         config: EnvConfig = inputs[CONFIG]
         espa_xml: Path = inputs[ESPA_XML]
         granule_dir = espa_xml.parent
@@ -408,7 +410,7 @@ class ConvertToHdf(Task):
     def __post_init__(self) -> None:
         validate_command("convert_espa_to_hdf")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Path], Path]:
+    def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
         xml: Path = inputs[HLS_XML]
         granule_dir = xml.parent
         sr_hdf = granule_dir / "sr.hdf"
@@ -435,7 +437,7 @@ class AddFmaskSds(Task):
     def __post_init__(self) -> None:
         validate_command("landsat-add-fmask-sds")
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Asset[Path], Path]:
+    def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
         config: EnvConfig = inputs[CONFIG]
         meta = inputs[METADATA]
         sr_hdf: Path = inputs[SR_HDF]
@@ -473,7 +475,7 @@ class UploadResults(Task):
     requires = (CONFIG, METADATA, FINAL_HDF, GRANULE_DIR)
     provides = (UPLOAD_COMPLETE,)
 
-    def run(self, inputs: dict[Any, Any]) -> dict[Any, Any]:
+    def run(self, inputs: AssetBundle) -> AssetBundle:
         """
         Uploads HDF and angle files to output bucket, or all files to debug bucket.
 

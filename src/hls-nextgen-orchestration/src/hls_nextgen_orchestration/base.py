@@ -41,6 +41,9 @@ class Asset[T]:
         return f"<{self.key} [{self.type_class.__name__}]>"
 
 
+type AssetBundle = dict[Asset[Any], Any]
+
+
 @dataclass
 class TaskContext:
     """
@@ -48,7 +51,7 @@ class TaskContext:
     """
 
     exit_code: int = 0
-    _store: dict[str, Any] = field(default_factory=dict)
+    _store: AssetBundle = field(default_factory=dict)
 
     def put(self, asset: Asset[T], value: T) -> None:
         """
@@ -67,16 +70,16 @@ class TaskContext:
             )
 
         logger.debug(f"          Value: {value}")
-        self._store[asset.key] = value
+        self._store[asset] = value
 
     def get(self, asset: Asset[T]) -> T:
         """
         Retrieve a value for an asset with type hinting.
         """
-        if asset.key not in self._store:
+        if asset not in self._store:
             raise ValueError(f"Missing dependency data for: {asset.key}")
 
-        val = self._store[asset.key]
+        val = self._store[asset]
         assert isinstance(val, asset.type_class)
         return val
 

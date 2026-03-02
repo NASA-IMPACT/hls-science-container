@@ -3,6 +3,22 @@
 # Exit on any error
 set -o errexit
 
+# Setup local development debug
+if [[ -z "$AWS_BATCH_JOB_ID" ]]; then
+    export PATHROW_LIST="116030,116031"
+    export DATE="2026-01-07"
+    export MGRS="52TDN"
+    export MGRS_ULX=399960
+    export MGRS_ULY=4800000
+    export OUTPUT_BUCKET="hls-dev-global-v2-forward"
+    export INPUT_BUCKET="hls-mcp-development-viirs-landsat-intermediate-output"
+    export GIBS_OUTPUT_BUCKET="hls-dev-browse-imagery-v2-forward"
+fi
+
+python -m "hls_nextgen_orchestration.landsat_tile.workflow"
+exit $?
+
+
 jobid="$AWS_BATCH_JOB_ID"
 pathrowlist="$PATHROW_LIST"
 # shellcheck disable=SC2153
