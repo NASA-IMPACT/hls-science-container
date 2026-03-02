@@ -202,7 +202,7 @@ class CheckSolarZenith(MappedTask):
 
 
 @dataclass(frozen=True, kw_only=True)
-class FindS2Footprint(MappedTask):
+class FindFootprint(MappedTask):
     """Locate the detector footprint for B06.
 
     Prior to baseline 04.00 the detector footprint was distributed in
@@ -253,7 +253,7 @@ class FindS2Footprint(MappedTask):
 
 
 @dataclass(frozen=True, kw_only=True)
-class ApplyS2QualityMask(MappedTask):
+class ApplyQualityMask(MappedTask):
     """Applies ESA's pixel-level quality mask.
 
     Ports: apply_s2_quality_mask
@@ -273,7 +273,7 @@ class ApplyS2QualityMask(MappedTask):
 
 
 @dataclass(frozen=True, kw_only=True)
-class DeriveS2Angles(MappedTask):
+class DeriveAngles(MappedTask):
     """Generates the angle HDF file.
 
     Ports: sentinel-derive-angle (with output args)
@@ -568,7 +568,7 @@ class ProcessHdfParts(MappedTask):
 
 
 @dataclass(frozen=True, kw_only=True)
-class CombineS2Hdf(MappedTask):
+class CombineHdf(MappedTask):
     """Combine split hdf files and resample 10M SR bands back to 20M and 60M.
 
     Ports: sentinel-twohdf2one
@@ -612,7 +612,7 @@ class CombineS2Hdf(MappedTask):
 
 
 @dataclass(frozen=True, kw_only=True)
-class AddS2FmaskSds(MappedTask):
+class AddFmaskSds(MappedTask):
     """
     Adds Fmask SDS to HDF.
     Ports: sentinel-add-fmask-sds
@@ -662,7 +662,7 @@ class AddS2FmaskSds(MappedTask):
 
 
 @dataclass(frozen=True, kw_only=True)
-class TrimS2Hdf(MappedTask):
+class TrimHdf(MappedTask):
     """Trims edge pixels.
 
     Ports: sentinel-trim

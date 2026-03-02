@@ -293,7 +293,7 @@ class BandpassCorrection(Task):
 
 
 @dataclass(frozen=True, kw_only=True)
-class RenameS2Outputs(Task):
+class RenameOutputs(Task):
     """
     Renames the final HDF and Angle HDF to the standard HLS S30 naming convention.
     Mirrors `set_output_names` and `mv` commands in sentinel.sh.
@@ -339,7 +339,7 @@ class RenameS2Outputs(Task):
 
 
 @dataclass(frozen=True, kw_only=True)
-class S2ConvertToCogs(Task):
+class ConvertToCogs(Task):
     """Converts S2 HDF outputs to COG format.
 
     Ports: hdf_to_cog
@@ -369,7 +369,7 @@ class S2ConvertToCogs(Task):
 
 
 @dataclass(frozen=True, kw_only=True)
-class S2CreateThumbnail(Task):
+class CreateThumbnail(Task):
     """
     Creates thumbnail for S30.
     Ports: create_thumbnail
@@ -403,7 +403,7 @@ class S2CreateThumbnail(Task):
 
 
 @dataclass(frozen=True, kw_only=True)
-class S2CreateMetadata(Task):
+class CreateMetadata(Task):
     """
     Generates CMR XML and STAC JSON.
     Ports: create_metadata, cmr_to_stac_item
@@ -445,7 +445,7 @@ class S2CreateMetadata(Task):
 
 
 @dataclass(frozen=True, kw_only=True)
-class S2CreateManifest(Task):
+class CreateManifest(Task):
     """
     Creates the main product manifest.
     Ports: create_manifest
@@ -487,7 +487,7 @@ class S2CreateManifest(Task):
 
 
 @dataclass(frozen=True, kw_only=True)
-class S2ProcessGibs(Task):
+class ProcessGibs(Task):
     """
     Generates GIBS tiles and manifests.
     Ports: granule_to_gibs, create_manifest
@@ -547,7 +547,7 @@ class S2ProcessGibs(Task):
 
 
 @dataclass(frozen=True, kw_only=True)
-class S2ProcessVi(Task):
+class ProcessVi(Task):
     """
     Generates Vegetation Indices.
     Ports: vi_generate_indices, vi_generate_metadata, vi_generate_stac_items

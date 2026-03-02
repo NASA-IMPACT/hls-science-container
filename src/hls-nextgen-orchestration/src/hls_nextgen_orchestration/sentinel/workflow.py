@@ -8,34 +8,34 @@ from pathlib import Path
 from hls_nextgen_orchestration.base import Pipeline, PipelineBuilder
 
 from .mapped_tasks import (
-    AddS2FmaskSds,
-    ApplyS2QualityMask,
+    AddFmaskSds,
+    ApplyQualityMask,
     CheckSolarZenith,
-    CombineS2Hdf,
-    DeriveS2Angles,
+    CombineHdf,
+    DeriveAngles,
     DownloadSentinelGranule,
-    FindS2Footprint,
+    FindFootprint,
     GetGranuleDir,
     LocalSentinelGranule,
     PrepareEspaInput,
     ProcessHdfParts,
     RunFmask,
     RunLaSRC,
-    TrimS2Hdf,
+    TrimHdf,
 )
 from .tasks import (
     BandpassCorrection,
     ConsolidateGranules,
+    ConvertToCogs,
+    CreateManifest,
+    CreateMetadata,
+    CreateThumbnail,
     DeriveNbar,
     EnvSource,
-    RenameS2Outputs,
+    ProcessGibs,
+    ProcessVi,
+    RenameOutputs,
     Resample30m,
-    S2ConvertToCogs,
-    S2CreateManifest,
-    S2CreateMetadata,
-    S2CreateThumbnail,
-    S2ProcessGibs,
-    S2ProcessVi,
     UploadAll,
 )
 
@@ -103,16 +103,16 @@ def construct_pipeline(
             .add(granule_zip_task)
             .add(GetGranuleDir.map(granule_id)("GetInnerDir"))
             .add(CheckSolarZenith.map(granule_id)("CheckSolar"))
-            .add(FindS2Footprint.map(granule_id)(name="FindFootprint"))
-            .add(ApplyS2QualityMask.map(granule_id)(name="ApplyMask"))
-            .add(DeriveS2Angles.map(granule_id)(name="DeriveAngles"))
+            .add(FindFootprint.map(granule_id)(name="FindFootprint"))
+            .add(ApplyQualityMask.map(granule_id)(name="ApplyMask"))
+            .add(DeriveAngles.map(granule_id)(name="DeriveAngles"))
             .add(RunFmask.map(granule_id)("Fmask"))
             .add(PrepareEspaInput.map(granule_id)("PrepareEspa"))
             .add(RunLaSRC.map(granule_id)("LaSRC"))
             .add(ProcessHdfParts.map(granule_id)("ProcessHdfParts"))
-            .add(CombineS2Hdf.map(granule_id)("CombineParts"))
-            .add(AddS2FmaskSds.map(granule_id)("AddFmaskSds"))
-            .add(TrimS2Hdf.map(granule_id)("Trim"))
+            .add(CombineHdf.map(granule_id)("CombineParts"))
+            .add(AddFmaskSds.map(granule_id)("AddFmaskSds"))
+            .add(TrimHdf.map(granule_id)("Trim"))
         )
 
     # Post-single granule workflow
@@ -121,13 +121,13 @@ def construct_pipeline(
         .add(Resample30m("Resample"))
         .add(DeriveNbar("Nbar"))
         .add(BandpassCorrection("Bandpass"))
-        .add(RenameS2Outputs("RenameOutputs"))
-        .add(S2ConvertToCogs("ConvertToCogs"))
-        .add(S2CreateThumbnail("CreateThumbnail"))
-        .add(S2CreateMetadata("CreateMetadata"))
-        .add(S2CreateManifest("CreateManifest"))
-        .add(S2ProcessGibs("ProcessGibs"))
-        .add(S2ProcessVi("ProcessVi"))
+        .add(RenameOutputs("RenameOutputs"))
+        .add(ConvertToCogs("ConvertToCogs"))
+        .add(CreateThumbnail("CreateThumbnail"))
+        .add(CreateMetadata("CreateMetadata"))
+        .add(CreateManifest("CreateManifest"))
+        .add(ProcessGibs("ProcessGibs"))
+        .add(ProcessVi("ProcessVi"))
     )
 
     if upload:

@@ -30,21 +30,21 @@ from hls_nextgen_orchestration.sentinel.assets import (
     trimmed_hdf_asset,
 )
 from hls_nextgen_orchestration.sentinel.mapped_tasks import (
-    AddS2FmaskSds,
-    ApplyS2QualityMask,
+    AddFmaskSds,
+    ApplyQualityMask,
     CheckSolarZenith,
-    CombineS2Hdf,
-    DeriveS2Angles,
+    CombineHdf,
+    DeriveAngles,
     DownloadSentinelGranule,
-    FindS2Footprint,
+    FindFootprint,
     GetGranuleDir,
     ProcessHdfParts,
     RunFmask,
-    TrimS2Hdf,
+    TrimHdf,
 )
 
 
-def test_download_sentinel(
+def test_DownloadSentinelGranule(
     s3_client: S3Client,
     sentinel_config: EnvConfig,
     tmp_path: Path,
@@ -70,7 +70,7 @@ def test_download_sentinel(
     assert outputs[safe_dir].exists()
 
 
-def test_get_granule_dir(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
+def test_GetGranuleDir(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     """Tests finding the internal GRANULE directory."""
     # Setup structure
     granule_id = "GRANULE_ID"
@@ -89,7 +89,7 @@ def test_get_granule_dir(sentinel_config: EnvConfig, mock_binaries: Path) -> Non
 
 
 @pytest.mark.parametrize("valid", [True, False])
-def test_check_solar_zenith(
+def test_CheckSolarZenith(
     sentinel_config: EnvConfig,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -116,7 +116,7 @@ def test_check_solar_zenith(
         assert ex_info.value.exit_code == 3
 
 
-def test_find_s2_footprint(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
+def test_FindFootprint(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     """Tests finding and converting the S2 footprint."""
     granule_id = "GRANULE_ID"
     safe_dir = sentinel_config.working_dir / granule_id / f"{granule_id}.SAFE"
@@ -124,7 +124,7 @@ def test_find_s2_footprint(sentinel_config: EnvConfig, mock_binaries: Path) -> N
     qi_data.mkdir(parents=True, exist_ok=True)
     (qi_data / "MSK_DETFOO_B06.jp2").touch()
 
-    task = FindS2Footprint.map(granule_id)(name="footprint")
+    task = FindFootprint.map(granule_id)(name="footprint")
     outputs = task.run({safe_dir_asset(granule_id): safe_dir, CONFIG: sentinel_config})
 
     detfoo = outputs[detfoo_file_asset(granule_id)]
@@ -132,7 +132,7 @@ def test_find_s2_footprint(sentinel_config: EnvConfig, mock_binaries: Path) -> N
     assert detfoo.suffix == ".bin"
 
 
-def test_apply_s2_quality_mask(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
+def test_ApplyQualityMask(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     """Tests applying the quality mask."""
     granule_id = "GRANULE_ID"
     inner = (
@@ -140,13 +140,13 @@ def test_apply_s2_quality_mask(sentinel_config: EnvConfig, mock_binaries: Path) 
     )
     inner.mkdir(parents=True)
 
-    task = ApplyS2QualityMask.map(granule_id)(name="mask")
+    task = ApplyQualityMask.map(granule_id)(name="mask")
     outputs = task.run({granule_dir_asset(granule_id): inner})
 
     assert outputs[quality_mask_applied_asset(granule_id)] is True
 
 
-def test_derive_s2_angles(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
+def test_DeriveAngles(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     """Tests the final angle generation task."""
     granule_id = "GRANULE_ID"
     granule_dir = sentinel_config.working_dir / granule_id
@@ -157,7 +157,7 @@ def test_derive_s2_angles(sentinel_config: EnvConfig, mock_binaries: Path) -> No
     detfoo = granule_dir / "detfoo.bin"
     detfoo.touch()
 
-    task = DeriveS2Angles.map(granule_id)(name="angles")
+    task = DeriveAngles.map(granule_id)(name="angles")
     outputs = task.run(
         {
             CONFIG: sentinel_config,
@@ -171,7 +171,7 @@ def test_derive_s2_angles(sentinel_config: EnvConfig, mock_binaries: Path) -> No
     assert outputs[angle_hdf_asset(granule_id)].exists()
 
 
-def test_run_fmask(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
+def test_RunFmask(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     """Tests Fmask execution and conversion."""
     granule_id = "GRANULE_ID"
     granule_dir = sentinel_config.working_dir / granule_id
@@ -221,8 +221,8 @@ def test_process_hdf_parts(sentinel_config: EnvConfig, mock_binaries: Path) -> N
     assert split_hdf_parts[0].exists()
 
 
-def test_combine_s2_hdf(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
-    """Test CombineS2Hdf"""
+def test_CombineHdf(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
+    """Test CombineHdf"""
     granule_id = "GRANULE_ID"
     granule_dir = sentinel_config.working_dir / granule_id
     granule_dir.mkdir(exist_ok=True, parents=True)
@@ -235,7 +235,7 @@ def test_combine_s2_hdf(sentinel_config: EnvConfig, mock_binaries: Path) -> None
         split_hdf = granule_dir / "ESPA_ID_sr_{part}.hdf}"
         split_hdf_parts.append(split_hdf)
 
-    task = CombineS2Hdf.map(granule_id)("CombineS2Hdf")
+    task = CombineHdf.map(granule_id)("CombineHdf")
 
     output = task.run(
         {
@@ -248,7 +248,7 @@ def test_combine_s2_hdf(sentinel_config: EnvConfig, mock_binaries: Path) -> None
     assert output[combined_sr_hdf_asset(granule_id)].exists()
 
 
-def test_add_fmask_sds(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
+def test_AddFmaskSds(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     granule_id = "GRANULE_ID"
     granule_dir = sentinel_config.working_dir / granule_id
     granule_dir.mkdir(exist_ok=True, parents=True)
@@ -264,7 +264,7 @@ def test_add_fmask_sds(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     fmask_bin = granule_dir / "fmask.bin"
     fmask_bin.touch()
 
-    task = AddS2FmaskSds.map(granule_id)("AddS2FmaskSds")
+    task = AddFmaskSds.map(granule_id)("AddFmaskSds")
     output = task.run(
         {
             CONFIG: sentinel_config,
@@ -279,7 +279,7 @@ def test_add_fmask_sds(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     assert output[final_sr_hdf_asset(granule_id)].exists()
 
 
-def test_trim_s2_hdf(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
+def test_TrimHdf(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     granule_id = "GRANULE_ID"
     granule_dir = sentinel_config.working_dir / granule_id
     granule_dir.mkdir(exist_ok=True, parents=True)
@@ -287,7 +287,7 @@ def test_trim_s2_hdf(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     final_sr = granule_dir / "sr.hdf"
     final_sr.touch()
 
-    task = TrimS2Hdf.map(granule_id)("TrimS2Hdf")
+    task = TrimHdf.map(granule_id)("TrimHdf")
     output = task.run({final_sr_hdf_asset(granule_id): final_sr})
 
     assert output[trimmed_hdf_asset(granule_id)].exists()
