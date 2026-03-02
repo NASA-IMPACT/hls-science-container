@@ -411,11 +411,19 @@ class RunFmask(MappedTask):
 class PrepareEspaInput(MappedTask):
     """Unpackages S2 and converts to ESPA format.
 
+    This task unzips the Sentinel-2 SAFE zip archive in an
+    ESPA compatible manner, which redefines the locations
+    of the MTD_TL and MTD_MSIL1C metadata.
+
     Ports: unpackage_s2.py, convert_sentinel_to_espa
     """
 
     requires_factory = lambda gid: (CONFIG, safe_dir_asset(gid), fmask_bin_asset(gid))
-    provides_factory = lambda gid: (espa_xml_asset(gid),)
+    provides_factory = lambda gid: (
+        mtd_tl_asset(gid),
+        mtd_msil1c_asset(gid),
+        espa_xml_asset(gid),
+    )
 
     def __post_init__(self) -> None:
         validate_command("unpackage_s2.py")
@@ -459,7 +467,15 @@ class PrepareEspaInput(MappedTask):
         if not espa_xml:
             raise TaskFailure("ESPA XML not found")
 
-        return {espa_xml_asset(self.granule_id): espa_xml}
+        # Relocate MTD metadata files post-unzip
+        mtd_tl = list(granule_dir.rglob("MTD_TL.xml"))[0]
+        mtd_msil1c = list(granule_dir.rglob("MTD_MSIL1C.xml"))[0]
+
+        return {
+            mtd_tl_asset(self.granule_id): mtd_tl,
+            mtd_msil1c_asset(self.granule_id): mtd_msil1c,
+            espa_xml_asset(self.granule_id): espa_xml,
+        }
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -512,7 +528,6 @@ class ProcessHdfParts(MappedTask):
         validate_command("convert_sentinel_to_espa")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        config: EnvConfig = bundle[CONFIG]
         espa_xml = bundle[espa_xml_asset(self.granule_id)]
         espa_id = espa_xml.stem
 
@@ -597,8 +612,8 @@ class AddS2FmaskSds(MappedTask):
 
     requires_factory = lambda gid: (
         CONFIG,
-        mtd_msil1c_asset(gid),
         mtd_tl_asset(gid),
+        mtd_msil1c_asset(gid),
         combined_sr_hdf_asset(gid),
         lasrc_aerosol_qa_asset(gid),
         fmask_bin_asset(gid),
@@ -613,12 +628,10 @@ class AddS2FmaskSds(MappedTask):
         combined_hdf = bundle[combined_sr_hdf_asset(self.granule_id)]
         aerosol_qa = bundle[lasrc_aerosol_qa_asset(self.granule_id)]
         fmask_bin = bundle[fmask_bin_asset(self.granule_id)]
+        mtd_tl = bundle[mtd_tl_asset(self.granule_id)]
+        mtd_msil1c = bundle[mtd_msil1c_asset(self.granule_id)]
 
         final_sr = config.working_dir / self.granule_id / "sr.hdf"
-
-        # FIXME: we can't use the below because they've been moved post-re-unzip
-        # mtd_msil1c = bundle[mtd_msil1c_asset(self.granule_id)]
-        # mtd_tl = bundle[mtd_tl_asset(self.granule_id)]
 
         # sentinel-add-fmask-sds "$hls_sr_combined_hdf" "$fmaskbin" \
         #   "$aerosol_qa" MTD_MSIL1C.xml MTD_TL.xml \
