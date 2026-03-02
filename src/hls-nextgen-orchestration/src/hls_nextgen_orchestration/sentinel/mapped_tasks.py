@@ -418,7 +418,15 @@ class PrepareEspaInput(MappedTask):
     Ports: unpackage_s2.py, convert_sentinel_to_espa
     """
 
-    requires_factory = lambda gid: (CONFIG, safe_dir_asset(gid), fmask_bin_asset(gid))
+    requires_factory = lambda gid: (
+        CONFIG,
+        safe_dir_asset(gid),
+        fmask_bin_asset(gid),
+        # NOTE: this step doesn't strictly require the angle information,
+        #       but the required files won't be available post-ESPA specific
+        #       unzipping, so we force ordering by specifying this requirement.
+        angle_hdf_asset(gid),
+    )
     provides_factory = lambda gid: (
         mtd_tl_asset(gid),
         mtd_msil1c_asset(gid),
