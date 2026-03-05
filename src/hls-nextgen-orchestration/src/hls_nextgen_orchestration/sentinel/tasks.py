@@ -84,6 +84,7 @@ def sentinel_to_nbar_hdf_filename(
         [
             "HLS",
             "S30",
+            f"T{granule.tile_id}",
             granule.acquisition_time.strftime("%Y%j"),
             granule.acquisition_time.strftime("%H%M%S"),
             hls_version.to_str(),

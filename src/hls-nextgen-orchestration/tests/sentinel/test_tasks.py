@@ -29,7 +29,31 @@ from hls_nextgen_orchestration.sentinel.tasks import (
     RenameOutputs,
     Resample30m,
     sentinel_to_hls_granule,
+    sentinel_to_nbar_hdf_filename,
 )
+
+
+def test_sentinel_to_hls_granule() -> None:
+    """Tests the parsing logic for Sentinel granule IDs."""
+    granule = Sentinel2Granule.from_str(
+        "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
+    )
+    # 2020-01-01 is DOY 001. HMS is 102431 (from T102431)
+    expected = "HLS.S30.T32TQM.2020001T102431.v2.0"
+    assert sentinel_to_hls_granule(granule) == expected
+
+
+def test_sentinel_to_nbar_hdf_filename() -> None:
+    """Test intermediate NBAR filename reconstruction
+
+    The sentinel-derive-nbar program derives the year and DOY
+    from the filename, so if we get that wrong there'll be issues.
+    """
+    granule = Sentinel2Granule.from_str(
+        "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
+    )
+    expected = "HLS.S30.T32TQM.2020001.102431.v2.0.hdf"
+    assert sentinel_to_nbar_hdf_filename(granule) == expected
 
 
 def test_ConsolidateGranules(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
@@ -66,16 +90,6 @@ def test_Resample30m(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     # for non-debug mode we renamed the resampled HDF
     assert not outputs[RESAMPLED_HDF].exists()
     assert outputs[NBAR_INPUT_HDF].exists()
-
-
-def test_sentinel_to_hls_granule() -> None:
-    """Tests the parsing logic for Sentinel granule IDs."""
-    granule = Sentinel2Granule.from_str(
-        "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
-    )
-    # 2020-01-01 is DOY 001. HMS is 102431 (from T102431)
-    expected = "HLS.S30.T32TQM.2020001T102431.v2.0"
-    assert sentinel_to_hls_granule(granule) == expected
 
 
 def test_RenameOutputs(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
