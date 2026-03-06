@@ -287,7 +287,11 @@ class BandpassCorrection(Task):
         nbar_hdf = bundle[NBAR_HDF]
         granule = bundle[CONFIG].sentinel_granule
 
-        param_file = f"bandpass_parameter.{granule.mission}.txt"
+        binary = shutil.which("sentinel-l8-like")
+        assert binary is not None  # checked in post init
+        hls_libs_share = Path(binary).parents[1] / "share" / "hls-libs"
+        param_file = hls_libs_share / f"bandpass_parameter.{granule.mission}.txt"
+
         subprocess.run(["sentinel-l8-like", param_file, str(nbar_hdf)], check=True)
 
         return {FINAL_OUTPUT_HDF: nbar_hdf}
