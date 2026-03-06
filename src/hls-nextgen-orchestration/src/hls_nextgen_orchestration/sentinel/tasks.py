@@ -558,7 +558,7 @@ class ProcessVi(Task):
     Ports: vi_generate_indices, vi_generate_metadata, vi_generate_stac_items
     """
 
-    requires = (CONFIG, OUTPUT_BASE_NAME, SR_MANIFEST_FILE)
+    requires = (CONFIG, OUTPUT_BASE_NAME, SR_MANIFEST_FILE, THUMBNAIL_FILE)
     provides = (VI_DIR, VI_MANIFEST_FILE)
 
     def __post_init__(self) -> None:
