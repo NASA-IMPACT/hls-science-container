@@ -24,9 +24,9 @@ from hls_nextgen_orchestration.base import (
 )
 from hls_nextgen_orchestration.common import Paths
 from hls_nextgen_orchestration.common.commands import run_hdf_to_cog
+from hls_nextgen_orchestration.constants import HLS_VERSION, HlsVersion
 from hls_nextgen_orchestration.granules import HlsGranule, Sentinel2Granule
 from hls_nextgen_orchestration.utils import validate_command
-from hls_nextgen_orchestration.version import HLS_VERSION, HlsVersion
 
 from .assets import (
     CMR_XML,
@@ -62,17 +62,6 @@ logger = logging.getLogger(__name__)
 
 
 # ----- Naming conventions
-def sentinel_to_hls_granule(granule: Sentinel2Granule) -> str:
-    """Get the HLS product output name for a Sentinel-2 granule ID"""
-    hls_granule = HlsGranule(
-        product="HLS",
-        sensor="S30",
-        tile_id=granule.tile_id,
-        acquisition_time=granule.acquisition_time,
-    )
-    return hls_granule.to_str()
-
-
 def sentinel_to_nbar_hdf_filename(
     granule: Sentinel2Granule,
     hls_version: HlsVersion = HLS_VERSION,
@@ -312,7 +301,7 @@ class RenameOutputs(Task):
         hdf_path = bundle[FINAL_OUTPUT_HDF]
         angle_path = bundle[CONSOLIDATED_ANGLE_HDF]
 
-        base_name = sentinel_to_hls_granule(config.sentinel_granule)
+        base_name = HlsGranule.from_sentinel2("HLS", config.sentinel_granule).to_str()
         renamed_hdf = config.working_dir / f"{base_name}.hdf"
         renamed_angle = config.working_dir / f"{base_name}.ANGLE.hdf"
 
@@ -453,7 +442,6 @@ class CreateMetadata(Task):
 class CreateManifest(Task):
     """
     Creates the main product manifest.
-    Ports: create_manifest
     """
 
     requires = (CONFIG, OUTPUT_BASE_NAME, CMR_XML)
@@ -466,11 +454,6 @@ class CreateManifest(Task):
         config = bundle[CONFIG]
         base_name = bundle[OUTPUT_BASE_NAME]
 
-        # Derive Bucket Key (s3://bucket/S30/data/YYYYDOY/base_name)
-        parts = base_name.split(".")
-        year_doy = parts[3][:7]  # 2020001
-
-        bucket_key = f"s3://{config.output_bucket}/S30/data/{year_doy}/{base_name}"
         manifest_path = config.working_dir / f"{base_name}.json"
 
         logger.info("Creating Manifest")
@@ -479,7 +462,7 @@ class CreateManifest(Task):
                 "create_manifest",
                 str(config.working_dir),
                 str(manifest_path),
-                bucket_key,
+                f"s3://{config.output_bucket}/{config.output_bucket_prefix}",
                 "HLSS30",
                 base_name,
                 config.job_id,
@@ -505,21 +488,19 @@ class ProcessGibs(Task):
         validate_command("granule_to_gibs")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        config = bundle[CONFIG]
+        config: EnvConfig = bundle[CONFIG]
         base_name = bundle[OUTPUT_BASE_NAME]
-
-        parts = base_name.split(".")
-        year_doy = parts[3][:7]
 
         gibs_dir = config.working_dir / "gibs"
         gibs_dir.mkdir(parents=True, exist_ok=True)
-        gibs_bucket_key_root = f"s3://{config.gibs_bucket}/S30/data/{year_doy}"
 
         logger.info("Generating GIBS tiles")
         subprocess.run(
             ["granule_to_gibs", str(config.working_dir), str(gibs_dir), base_name],
             check=True,
         )
+
+        gibs_bucket_key_root = config.gibs_bucket_prefix
 
         manifests = Paths()
         for gibs_id_path in gibs_dir.iterdir():
@@ -558,7 +539,7 @@ class ProcessVi(Task):
     Ports: vi_generate_indices, vi_generate_metadata, vi_generate_stac_items
     """
 
-    requires = (CONFIG, OUTPUT_BASE_NAME, SR_MANIFEST_FILE, THUMBNAIL_FILE)
+    requires = (CONFIG, SR_MANIFEST_FILE, THUMBNAIL_FILE)
     provides = (VI_DIR, VI_MANIFEST_FILE)
 
     def __post_init__(self) -> None:
@@ -567,19 +548,15 @@ class ProcessVi(Task):
         validate_command("vi_generate_stac_items")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        config = bundle[CONFIG]
-        base_name = bundle[OUTPUT_BASE_NAME]
-        vi_base_name = base_name.replace("HLS.S30", "HLS-VI.S30")
-
-        parts = base_name.split(".")
-        year_doy = parts[3][:7]
+        config: EnvConfig = bundle[CONFIG]
 
         vi_dir = config.working_dir / "vi"
         vi_dir.mkdir(parents=True, exist_ok=True)
 
-        vi_bucket_key = (
-            f"s3://{config.output_bucket}/S30_VI/data/{year_doy}/{vi_base_name}"
-        )
+        base_name = HlsGranule.from_sentinel2("HLS", config.sentinel_granule).to_str()
+        vi_base_name = HlsGranule.from_sentinel2(
+            "HLS-VI", config.sentinel_granule
+        ).to_str()
 
         logger.info("Generating VI files")
         subprocess.run(
@@ -622,7 +599,7 @@ class ProcessVi(Task):
                 "create_manifest",
                 str(vi_dir),
                 str(manifest),
-                vi_bucket_key,
+                config.vi_bucket_prefix,
                 "HLSS30_VI",
                 vi_base_name,
                 config.job_id,
@@ -643,7 +620,6 @@ class UploadAll(Task):
 
     requires = (
         CONFIG,
-        OUTPUT_BASE_NAME,
         GIBS_DIR,
         GIBS_MANIFEST_FILES,
         VI_DIR,
@@ -652,59 +628,57 @@ class UploadAll(Task):
         THUMBNAIL_FILE,
         # Intermediate assets needed for Debug Mode
         RESAMPLED_HDF,
-        NBAR_HDF,  # This is the intermediate NBAR before L8Like
+        # This is the intermediate NBAR before L8Like
+        NBAR_HDF,
     )
     provides = (UPLOAD_COMPLETE,)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config = bundle[CONFIG]
-        base_name = bundle[OUTPUT_BASE_NAME]
         s3 = boto3.client("s3")
 
         if config.debug_bucket:
-            self._upload_debug(s3, bundle, config, base_name)
+            self._upload_debug(s3, bundle, config)
         else:
-            self._upload_production(s3, bundle, config, base_name)
+            self._upload_production(s3, bundle, config)
 
         return {UPLOAD_COMPLETE: True}
 
     def _upload_production(
-        self, s3: S3Client, bundle: AssetBundle, config: EnvConfig, base_name: str
+        self, s3: S3Client, bundle: AssetBundle, config: EnvConfig
     ) -> None:
         """Handles production upload logic by delegating to specific product handlers."""
-        parts = base_name.split(".")
-        year_doy = parts[3][:7]
-
         logger.info("Starting Production Uploads")
-        self._upload_main_product(s3, bundle, config, base_name, year_doy)
-        self._upload_gibs(s3, bundle, config, year_doy)
-        self._upload_vi(s3, bundle, config, base_name, year_doy)
+        self._upload_main_product(s3, bundle, config)
+        self._upload_gibs(s3, bundle, config)
+        self._upload_vi(s3, bundle, config)
 
     def _upload_main_product(
         self,
         s3: S3Client,
         bundle: AssetBundle,
         config: EnvConfig,
-        base_name: str,
-        year_doy: str,
     ) -> None:
         """Uploads standard HLS S30 product files and manifest."""
-        logger.info("Uploading Main Product")
-        bucket_key_root = f"S30/data/{year_doy}/{base_name}"
+        logger.info(f"Uploading Main Product to {config.output_bucket_prefix}")
 
         # Include patterns: *.tif, *.xml, *.jpg, *_stac.json
+        include = (
+            ".tif",
+            ".xml",
+            ".jpg",
+            "_stac.json",
+        )
         # Exclude: *fmask.bin.aux.xml
+        exclude = ("fmask.bin.aux.xml",)
         for f in config.working_dir.iterdir():
-            if not f.is_file():
-                continue
-
-            # Check Excludes
-            if f.name.endswith("fmask.bin.aux.xml"):
+            # Ignore excludes
+            if not f.is_file() or f.name.endswith(exclude):
                 continue
 
             # Check Includes
-            if f.suffix in [".tif", ".xml", ".jpg"] or f.name.endswith("_stac.json"):
-                key = f"{bucket_key_root}/{f.name}"
+            if f.name.endswith(include):
+                key = f"{config.output_bucket_prefix}/{f.name}"
                 s3.upload_file(str(f), config.output_bucket, key)
 
         # Upload Manifest
@@ -713,27 +687,29 @@ class UploadAll(Task):
             s3.upload_file(
                 str(manifest),
                 config.output_bucket,
-                f"{bucket_key_root}/{manifest.name}",
+                f"{config.output_bucket_prefix}/{manifest.name}",
             )
 
     def _upload_gibs(
-        self, s3: S3Client, bundle: AssetBundle, config: EnvConfig, year_doy: str
+        self,
+        s3: S3Client,
+        bundle: AssetBundle,
+        config: EnvConfig,
     ) -> None:
         """Uploads GIBS tiles and manifests."""
         logger.info("Uploading GIBS")
         gibs_dir = bundle[GIBS_DIR]
-        gibs_root_key = f"S30/data/{year_doy}"
 
         for gibs_id_path in gibs_dir.iterdir():
             if gibs_id_path.is_dir():
                 gibs_id = gibs_id_path.name
-                target_key = f"{gibs_root_key}/{gibs_id}"
+                target_prefix = f"{config.gibs_bucket_prefix}/{gibs_id}"
 
                 # Upload content
                 for f in gibs_id_path.glob("*"):
                     if f.suffix in [".tif", ".xml"]:
                         s3.upload_file(
-                            str(f), config.gibs_bucket, f"{target_key}/{f.name}"
+                            str(f), config.gibs_bucket, f"{target_prefix}/{f.name}"
                         )
 
                 # Upload Subtile Manifest
@@ -743,7 +719,7 @@ class UploadAll(Task):
                     man = gibs_id_path / f"{subtile_base}.json"
                     if man.exists():
                         s3.upload_file(
-                            str(man), config.gibs_bucket, f"{target_key}/{man.name}"
+                            str(man), config.gibs_bucket, f"{target_prefix}/{man.name}"
                         )
 
     def _upload_vi(
@@ -751,29 +727,33 @@ class UploadAll(Task):
         s3: S3Client,
         bundle: AssetBundle,
         config: EnvConfig,
-        base_name: str,
-        year_doy: str,
     ) -> None:
         """Uploads Vegetation Index files and manifest."""
         logger.info("Uploading VI")
         vi_dir = bundle[VI_DIR]
-        vi_base_name = base_name.replace("HLS.S30", "HLS-VI.S30")
-        vi_root_key = f"S30_VI/data/{year_doy}/{vi_base_name}"
 
+        include = (
+            ".tif",
+            ".xml",
+            ".jpg",
+            "_stac.json",
+        )
         for f in vi_dir.iterdir():
-            if f.suffix in [".tif", ".xml", ".jpg"] or f.name.endswith("_stac.json"):
-                s3.upload_file(str(f), config.output_bucket, f"{vi_root_key}/{f.name}")
+            if f.name.endswith(include):
+                s3.upload_file(
+                    str(f), config.output_bucket, f"{config.vi_bucket_prefix}/{f.name}"
+                )
 
         vi_manifest = bundle[VI_MANIFEST_FILE]
         if vi_manifest.exists():
             s3.upload_file(
                 str(vi_manifest),
                 config.output_bucket,
-                f"{vi_root_key}/{vi_manifest.name}",
+                f"{config.vi_bucket_prefix}/{vi_manifest.name}",
             )
 
     def _upload_debug(
-        self, s3: S3Client, bundle: AssetBundle, config: EnvConfig, base_name: str
+        self, s3: S3Client, bundle: AssetBundle, config: EnvConfig
     ) -> None:
         """Handles debug mode uploads."""
         assert config.debug_bucket is not None
@@ -796,12 +776,13 @@ class UploadAll(Task):
             debug_mode=True,
         )
 
-        logger.info(f"DEBUG: Uploading all files to {config.debug_bucket}/{base_name}")
-        target_root = base_name
-
         # Recursive copy of working dir
+        prefix = HlsGranule.from_sentinel2("HLS", config.sentinel_granule).to_str()
+        logger.info(
+            f"DEBUG: Uploading all files to s3://{config.debug_bucket}/{prefix}"
+        )
         for f in config.working_dir.rglob("*"):
             if f.is_file():
                 rel_path = f.relative_to(config.working_dir)
-                key = f"{target_root}/{rel_path}"
+                key = f"{prefix}/{rel_path}"
                 s3.upload_file(str(f), config.debug_bucket, key)

@@ -28,19 +28,8 @@ from hls_nextgen_orchestration.sentinel.tasks import (
     CreateMetadata,
     RenameOutputs,
     Resample30m,
-    sentinel_to_hls_granule,
     sentinel_to_nbar_hdf_filename,
 )
-
-
-def test_sentinel_to_hls_granule() -> None:
-    """Tests the parsing logic for Sentinel granule IDs."""
-    granule = Sentinel2Granule.from_str(
-        "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
-    )
-    # 2020-01-01 is DOY 001. HMS is 102431 (from T102431)
-    expected = "HLS.S30.T32TQM.2020001T102431.v2.0"
-    assert sentinel_to_hls_granule(granule) == expected
 
 
 def test_sentinel_to_nbar_hdf_filename() -> None:

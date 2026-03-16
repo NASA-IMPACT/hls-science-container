@@ -192,3 +192,12 @@ class TestHlsGranule:
         invalid_id = "HLS.S30.T18TYL.2020400T153621.v2.0"
         with pytest.raises(ValueError):
             HlsGranule.from_str(invalid_id)
+
+    def test_sentinel_to_hls_granule(self) -> None:
+        """Tests the parsing logic for Sentinel granule IDs."""
+        granule = Sentinel2Granule.from_str(
+            "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
+        )
+        # 2020-01-01 is DOY 001. HMS is 102431 (from T102431)
+        expected = "HLS.S30.T32TQM.2020001T102431.v2.0"
+        assert HlsGranule.from_sentinel2("HLS", granule).to_str() == expected

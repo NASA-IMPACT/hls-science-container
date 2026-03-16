@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
+
+# HLS products (reflectance & vegetation indexes)
+PRODUCTS = Literal["HLS", "HLS-VI"]
 
 
 @dataclass(frozen=True, kw_only=True)

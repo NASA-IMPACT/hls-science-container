@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import datetime as dt
 from dataclasses import dataclass
+from typing import cast, get_args
 
-from .version import HLS_VERSION, HlsVersion
+from .constants import HLS_VERSION, PRODUCTS, HlsVersion
 
 
 @dataclass
@@ -193,7 +194,7 @@ class HlsGranule:
 
     Attributes
     ----------
-    product : str
+    product : Literal
         The product name (e.g., 'HLS').
     sensor : str
         The sensor identifier (e.g., 'S30', 'L30').
@@ -207,7 +208,7 @@ class HlsGranule:
         The minor version string (e.g., '0').
     """
 
-    product: str
+    product: PRODUCTS
     sensor: str
     tile_id: str
     acquisition_time: dt.datetime
@@ -219,6 +220,17 @@ class HlsGranule:
             raise ValueError(
                 f"tile_id must be the raw MGRS code (starting with a digit). Found prefix 'T' in: {self.tile_id}"
             )
+
+    @classmethod
+    def from_sentinel2(cls, product: PRODUCTS, granule: Sentinel2Granule) -> HlsGranule:
+        """Convert from a Sentinel-2 granule ID for a HLS product"""
+        hls_granule = HlsGranule(
+            product=product,
+            sensor="S30",
+            tile_id=granule.tile_id,
+            acquisition_time=granule.acquisition_time,
+        )
+        return hls_granule
 
     @classmethod
     def from_str(cls, granule_id: str) -> HlsGranule:
@@ -244,6 +256,12 @@ class HlsGranule:
         if len(parts) != 6:
             raise ValueError(f"Invalid HLS v2 ID format: {granule_id}")
 
+        product = parts[0]
+        products = get_args(PRODUCTS)
+        if product not in products:
+            raise ValueError(f"Unknown product {parts[0]} (expected {products})")
+        product = cast(PRODUCTS, parts[0])
+
         # Extract MGRS tile, stripping the 'T' prefix if present
         raw_tile_id = parts[2].lstrip("T")
 
@@ -251,7 +269,7 @@ class HlsGranule:
         acq_time = dt.datetime.strptime(parts[3], "%Y%jT%H%M%S")
 
         return cls(
-            product=parts[0],
+            product=product,
             sensor=parts[1],
             tile_id=raw_tile_id,
             acquisition_time=acq_time,

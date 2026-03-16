@@ -148,12 +148,16 @@ if __name__ == "__main__":
     local_granule_zips: list[Path] | None
     if env := os.getenv("LOCAL_GRANULE_ZIPS"):
         local_granule_zips = [Path(zf) for zf in env.split(",")]
+        granule_ids = [granule_zip.stem for granule_zip in local_granule_zips]
+        os.environ["GRANULE_LIST"] = ",".join(granule_ids)
     else:
         local_granule_zips = None
 
     try:
         pipeline = construct_pipeline(
-            granule_ids=granule_ids, local_granule_zips=local_granule_zips, upload=False
+            granule_ids=granule_ids,
+            local_granule_zips=local_granule_zips,
+            upload=True,
         )
         print(pipeline)
         pipeline.run()

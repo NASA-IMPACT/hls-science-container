@@ -5,7 +5,8 @@ from pathlib import Path
 
 from hls_nextgen_orchestration.base import Asset
 from hls_nextgen_orchestration.common import Paths
-from hls_nextgen_orchestration.granules import Sentinel2Granule
+from hls_nextgen_orchestration.constants import PRODUCTS
+from hls_nextgen_orchestration.granules import HlsGranule, Sentinel2Granule
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -33,6 +34,56 @@ class EnvConfig:
         """
         # FIXME: shouldn't this be deterministic? hls-sentinel script is NOT
         return Sentinel2Granule.from_str(self.granule_ids[0])
+
+    def _product_output_key_prefix(self, product: PRODUCTS) -> str:
+        """HLS product output key prefix
+
+        Ports
+        -----
+        outputname="HLS.S30.${granulecomponents[5]}.${year}${day_of_year}${hms}.${hlsversion}"
+        bucket_key="s3://${bucket}/S30/data/${year}${day_of_year}/${outputname}${twinkey}"
+        vi_outputname="HLS-VI.S30.${granulecomponents[5]}.${year}${day_of_year}${hms}.${hlsversion}"
+        vi_bucket_key="s3://${bucket}/S30_VI/data/${year}${day_of_year}/${vi_outputname}${twinkey}"
+        """
+        parts = [
+            "S30_VI" if "VI" in product else "S30",
+            "data",
+            f"{self.sentinel_granule.acquisition_time.strftime('%Y%j')}",
+            HlsGranule.from_sentinel2(product, self.sentinel_granule).to_str(),
+        ]
+
+        # Twin granules have an additional suffix to avoid clobbering previously generated granules
+        if len(self.granule_ids) > 1:
+            parts.append("twin")
+
+        return "/".join(parts)
+
+    @property
+    def output_bucket_prefix(self) -> str:
+        """Main HLS output bucket key prefix"""
+        return self._product_output_key_prefix("HLS")
+
+    @property
+    def vi_bucket_prefix(self) -> str:
+        """HLS Vegetation Index product output bucket key prefix"""
+        return self._product_output_key_prefix("HLS-VI")
+
+    @property
+    def gibs_bucket_prefix(self) -> str:
+        """GIBS output bucket key prefix
+
+        Ports
+        -----
+        gibs_dir="${workingdir}/gibs"
+        gibs_bucket_key="s3://${gibs_bucket}/S30/data/${year}${day_of_year}"
+        """
+        return "/".join(
+            [
+                "S30",
+                "data",
+                self.sentinel_granule.acquisition_time.strftime("%Y%j"),
+            ]
+        )
 
 
 # ----- Asset definitions and factories
