@@ -55,7 +55,7 @@ RUN --mount=type=cache,target=/root/.cache/rattler/cache \
 COPY packages/fmask4/run_Fmask.sh /app/.pixi/envs/default/bin
 COPY src/scripts/*.sh /app/.pixi/envs/default/bin
 
-ENTRYPOINT [ "/bin/bash", "-c" ]
+ENTRYPOINT [ "/app/entrypoint.sh", "/bin/bash", "-c" ]
 CMD [ "/bin/bash" ]
 
 # ===== Production installation
