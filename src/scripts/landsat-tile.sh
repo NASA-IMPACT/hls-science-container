@@ -12,7 +12,7 @@ if [[ -z "$AWS_BATCH_JOB_ID" ]]; then
     export MGRS_ULY=4800000
     export OUTPUT_BUCKET="hls-dev-global-v2-forward"
     export INPUT_BUCKET="hls-mcp-development-viirs-landsat-intermediate-output"
-    export GIBS_OUTPUT_BUCKET="hls-dev-browse-imagery-v2-forward"
+    export GIBS_OUTPUT_BUCKET="hls-development-gibs-intermediate-output"
 fi
 
 python -m "hls_nextgen_orchestration.landsat_tile.workflow"

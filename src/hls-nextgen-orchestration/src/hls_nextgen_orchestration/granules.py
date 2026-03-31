@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import datetime as dt
 from dataclasses import dataclass
+from typing import cast, get_args
+
+from .constants import HLS_VERSION, PRODUCTS, HlsVersion
 
 
 @dataclass
@@ -88,13 +91,110 @@ class LandsatGranule:
 
 
 @dataclass
-class HlsGranule:
-    """
-    Represents an HLS v2 Granule ID.
+class Sentinel2Granule:
+    """Represents a Sentinel-2 L1C Granule ID.
+
+    Examples
+    --------
+    S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841
+
+    Notes
+    -----
+    The SAFE (Standard Archive Format for Europe) product format layout
+    looks like (abbre)
+
+    {PRODUCT_ID}/
+        DATASTRIP/*
+        GRANULE/
+            {GRANULE_ID}/
+                AUX_DATA/
+                IMG_DATA/
+                QI_DATA/
+                MTD_TL.xml
+        HTML/*
+        INSPIRE.xml
+        manifest.safe
+        MTD_MSIL1C.xml
+
+    By convention within the HLS project we call the "product ID" (outer ID) the
+    "granule ID" and ignore the "inner" granule identifier. When this format
+    was originally released there would be multiple granules within each product,
+    but now there's only 1 granule within the product so they are one-to-one.
 
     Attributes
     ----------
-    product : str
+    mission : str
+        The mission identifier (e.g., 'S2A', 'S2B').
+    product_level : str
+        The product level (e.g., 'MSIL1C').
+    acquisition_time : dt.datetime
+        The sensing start time.
+    processing_baseline : str
+        The processing baseline (e.g., 'N0208').
+    relative_orbit : str
+        The relative orbit number (e.g., 'R065').
+    tile_id : str
+        The MGRS tile identifier (e.g., '32TQM').
+    product_time : dt.datetime
+        The product generation time.
+    """
+
+    mission: str
+    product_level: str
+    acquisition_time: dt.datetime
+    processing_baseline: str
+    relative_orbit: str
+    tile_id: str
+    product_time: dt.datetime
+
+    @classmethod
+    def from_str(cls, granule_id: str) -> Sentinel2Granule:
+        """Parse a Sentinel-2 L1C SAFE ID string."""
+        parts = granule_id.split("_")
+        if len(parts) != 7:
+            raise ValueError(f"Invalid Sentinel-2 ID format: {granule_id}")
+
+        return cls(
+            mission=parts[0],
+            product_level=parts[1],
+            acquisition_time=dt.datetime.strptime(parts[2], "%Y%m%dT%H%M%S"),
+            processing_baseline=parts[3],
+            relative_orbit=parts[4],
+            tile_id=parts[5].lstrip("T"),
+            product_time=dt.datetime.strptime(parts[6], "%Y%m%dT%H%M%S"),
+        )
+
+    def to_str(self) -> str:
+        """
+        Reconstruct the Sentinel-2 SAFE ID string.
+
+        Returns
+        -------
+        str
+            The formatted Sentinel-2 SAFE ID.
+        """
+        return "_".join(
+            [
+                self.mission,
+                self.product_level,
+                self.acquisition_time.strftime("%Y%m%dT%H%M%S"),
+                self.processing_baseline,
+                self.relative_orbit,
+                f"T{self.tile_id}",
+                self.product_time.strftime("%Y%m%dT%H%M%S"),
+            ]
+        )
+
+
+@dataclass
+class HlsGranule:
+    """Represents an HLS v2 Granule ID.
+
+    Example: HLS.S30.T18TYL.2020001T153621.v2.0
+
+    Attributes
+    ----------
+    product : Literal
         The product name (e.g., 'HLS').
     sensor : str
         The sensor identifier (e.g., 'S30', 'L30').
@@ -108,12 +208,11 @@ class HlsGranule:
         The minor version string (e.g., '0').
     """
 
-    product: str
+    product: PRODUCTS
     sensor: str
     tile_id: str
     acquisition_time: dt.datetime
-    version_major: str = "v2"
-    version_minor: str = "0"
+    version: HlsVersion = HLS_VERSION
 
     def __post_init__(self) -> None:
         """Validate granule attributes"""
@@ -121,6 +220,17 @@ class HlsGranule:
             raise ValueError(
                 f"tile_id must be the raw MGRS code (starting with a digit). Found prefix 'T' in: {self.tile_id}"
             )
+
+    @classmethod
+    def from_sentinel2(cls, product: PRODUCTS, granule: Sentinel2Granule) -> HlsGranule:
+        """Convert from a Sentinel-2 granule ID for a HLS product"""
+        hls_granule = HlsGranule(
+            product=product,
+            sensor="S30",
+            tile_id=granule.tile_id,
+            acquisition_time=granule.acquisition_time,
+        )
+        return hls_granule
 
     @classmethod
     def from_str(cls, granule_id: str) -> HlsGranule:
@@ -146,6 +256,12 @@ class HlsGranule:
         if len(parts) != 6:
             raise ValueError(f"Invalid HLS v2 ID format: {granule_id}")
 
+        product = parts[0]
+        products = get_args(PRODUCTS)
+        if product not in products:
+            raise ValueError(f"Unknown product {parts[0]} (expected {products})")
+        product = cast(PRODUCTS, parts[0])
+
         # Extract MGRS tile, stripping the 'T' prefix if present
         raw_tile_id = parts[2].lstrip("T")
 
@@ -153,12 +269,11 @@ class HlsGranule:
         acq_time = dt.datetime.strptime(parts[3], "%Y%jT%H%M%S")
 
         return cls(
-            product=parts[0],
+            product=product,
             sensor=parts[1],
             tile_id=raw_tile_id,
             acquisition_time=acq_time,
-            version_major=parts[4],
-            version_minor=parts[5],
+            version=HlsVersion.from_str(f"{parts[4]}.{parts[5]}"),
         )
 
     def to_str(self) -> str:
@@ -176,7 +291,6 @@ class HlsGranule:
                 self.sensor,
                 f"T{self.tile_id}",
                 self.acquisition_time.strftime("%Y%jT%H%M%S"),
-                self.version_major,
-                self.version_minor,
+                self.version.to_str(),
             ]
         )

@@ -2,7 +2,11 @@ import datetime as dt
 
 import pytest
 
-from hls_nextgen_orchestration.granules import HlsGranule, LandsatGranule
+from hls_nextgen_orchestration.granules import (
+    HlsGranule,
+    LandsatGranule,
+    Sentinel2Granule,
+)
 
 
 # --- LandsatGranule Tests ---
@@ -92,7 +96,35 @@ class TestLandsatGranule:
             LandsatGranule.from_str(invalid_id)
 
 
-# --- HlsGranule Tests ---
+# --- Sentinel-2 granule tests
+class TestSentinel2Granule:
+    def test_sentinel_granule_parsing(self) -> None:
+        """Test that a standard Sentinel-2 SAFE ID is parsed correctly into attributes."""
+        sid = "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
+        granule = Sentinel2Granule.from_str(sid)
+
+        assert granule.mission == "S2A"
+        assert granule.product_level == "MSIL1C"
+        assert granule.acquisition_time == dt.datetime(2020, 1, 1, 10, 24, 31)
+        assert granule.processing_baseline == "N0208"
+        assert granule.relative_orbit == "R065"
+        assert granule.tile_id == "32TQM"
+        assert granule.product_time == dt.datetime(2020, 1, 1, 12, 28, 41)
+
+    def test_sentinel_granule_roundtrip(self) -> None:
+        """Test that to_str reconstructs the original Sentinel-2 ID exactly."""
+        sid = "S2B_MSIL1C_20230515T120000_N0509_R123_T18TWN_20230515T153000"
+        granule = Sentinel2Granule.from_str(sid)
+        assert granule.to_str() == sid
+
+    def test_sentinel_granule_invalid_format(self) -> None:
+        """Test that invalid Sentinel-2 IDs raise ValueError."""
+        with pytest.raises(ValueError, match="Invalid Sentinel-2 ID format"):
+            # Missing parts
+            Sentinel2Granule.from_str("S2A_MSIL1C_20200101T102431_N0208")
+
+
+# ----- HlsGranule Tests
 class TestHlsGranule:
     def test_from_str_valid_s30(self) -> None:
         """
@@ -110,8 +142,8 @@ class TestHlsGranule:
         assert granule.tile_id == "18TYL"
         # 2020 day 1 at 15:36:21
         assert granule.acquisition_time == dt.datetime(2020, 1, 1, 15, 36, 21)
-        assert granule.version_major == "v2"
-        assert granule.version_minor == "0"
+        assert granule.version.major == 2
+        assert granule.version.minor == 0
 
     def test_from_str_valid_l30(self) -> None:
         """
@@ -160,3 +192,12 @@ class TestHlsGranule:
         invalid_id = "HLS.S30.T18TYL.2020400T153621.v2.0"
         with pytest.raises(ValueError):
             HlsGranule.from_str(invalid_id)
+
+    def test_sentinel_to_hls_granule(self) -> None:
+        """Tests the parsing logic for Sentinel granule IDs."""
+        granule = Sentinel2Granule.from_str(
+            "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
+        )
+        # 2020-01-01 is DOY 001. HMS is 102431 (from T102431)
+        expected = "HLS.S30.T32TQM.2020001T102431.v2.0"
+        assert HlsGranule.from_sentinel2("HLS", granule).to_str() == expected

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, ClassVar, TypeVar
 
@@ -162,6 +163,61 @@ class Task(NodeBase):
             context.put(asset, outputs[asset])
 
 
+TMapped = TypeVar("TMapped", bound="MappedTask")
+TMerge = TypeVar("TMerge", bound="MergeTask")
+
+
+@dataclass(frozen=True)
+class MappedTask(Task):
+    """A Task mapped across granule(s)"""
+
+    granule_id: ClassVar[str]
+    requires_factory: ClassVar[Callable[[str], Assets] | None] = None
+    provides_factory: ClassVar[Callable[[str], Assets] | None] = None
+
+    @classmethod
+    def map(cls: type[TMapped], granule_id: str) -> type[TMapped]:
+        """Build a unique Task to process this granule ID"""
+        requires = (
+            cls.requires_factory(granule_id) if cls.requires_factory else cls.requires
+        )
+        provides = (
+            cls.provides_factory(granule_id) if cls.provides_factory else cls.provides
+        )
+        return type(
+            f"{cls.__name__}-{granule_id}",
+            (cls,),
+            {"granule_id": granule_id, "requires": requires, "provides": provides},
+        )
+
+
+@dataclass(frozen=True)
+class MergeTask(Task):
+    """A Task merges outputs from granule(s)"""
+
+    granule_ids: ClassVar[list[str]]
+    # Called per _granule_id_
+    requires_factory: ClassVar[Callable[[str], Assets] | None] = None
+
+    @classmethod
+    def merge(cls: type[TMerge], granule_ids: list[str]) -> type[TMerge]:
+        """Build a unique Task to process this granule ID"""
+        if cls.requires_factory:
+            requires = tuple(
+                require
+                for granule_id in granule_ids
+                for require in cls.requires_factory(granule_id)
+            )
+        else:
+            requires = cls.requires
+
+        return type(
+            f"{cls.__name__}-Merged",
+            (cls,),
+            {"granule_ids": granule_ids, "requires": requires},
+        )
+
+
 @dataclass(frozen=True)
 class Pipeline:
     """
@@ -248,23 +304,36 @@ class PipelineBuilder:
         return self
 
     def build(self) -> Pipeline:
+        """Build the pipeline into a DAG"""
         logger.info("Building Pipeline...")
 
         # Topological Sort (Kahn's Algorithm)
         # We work on a copy of in-degrees to avoid mutating the builder state permanently
         in_degree = self._in_degree.copy()
 
-        queue = [n for n in self.nodes if in_degree[n] == 0]
+        # Use a stack (LIFO) instead of a queue (FIFO) to encourage Depth-First execution.
+        # This prevents interleaved execution of parallel branches.
+        # We reverse the initial list so that the first added node ends up at the
+        # top of the stack (Last In, First Out -> First In needs to be last pushed).
+        stack = [n for n in reversed(self.nodes) if in_degree[n] == 0]
         sorted_nodes = []
 
-        while queue:
-            current = queue.pop(0)
+        while stack:
+            current = stack.pop()
             sorted_nodes.append(current)
 
-            for dependent in self._adjacency[current]:
+            # Sort dependents to ensure deterministic execution order.
+            # We sort in descending order (reverse=True) because we are pushing to a stack;
+            # the last item pushed is the first one processed (LIFO).
+            # Example: [A, B] -> push B, push A -> pop A, pop B.
+            dependents = sorted(
+                self._adjacency[current], key=lambda n: n.name, reverse=True
+            )
+
+            for dependent in dependents:
                 in_degree[dependent] -= 1
                 if in_degree[dependent] == 0:
-                    queue.append(dependent)
+                    stack.append(dependent)
 
         # Cycle Detection
         if len(sorted_nodes) != len(self.nodes):

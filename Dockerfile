@@ -32,7 +32,7 @@ RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
 
 
 # ===== Development installation
-FROM --platform=${PLATFORM} debian:bookworm-slim AS dev
+FROM build AS dev
 
 # Enforce v1.0.0 for STAC specification within PySTAC
 ENV PYSTAC_STAC_VERSION_OVERRIDE=1.0.0
@@ -43,13 +43,20 @@ ENV FMASK_PREFIX=/opt/fmask
 # Set variable defining LaSRC version used in HLS product metadata
 ENV ACCODE="LaSRC v3.5.1.0"
 
+# install libxt for MCR / Fmask
+RUN apt update && \
+    apt install -y --no-install-recommends \
+        libxt6 && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN --mount=type=cache,target=/root/.cache/rattler/cache \
     pixi install --frozen -e dev
 
 COPY packages/fmask4/run_Fmask.sh /app/.pixi/envs/default/bin
 COPY src/scripts/*.sh /app/.pixi/envs/default/bin
+COPY --from=build --chmod=0755 /app/entrypoint.sh /app/entrypoint.sh
 
-ENTRYPOINT [ "/bin/bash", "-c" ]
+ENTRYPOINT [ "/app/entrypoint.sh", "/bin/bash", "-c" ]
 CMD [ "/bin/bash" ]
 
 # ===== Production installation

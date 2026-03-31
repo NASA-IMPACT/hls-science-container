@@ -8,16 +8,6 @@ from hls_nextgen_orchestration.granules import LandsatGranule
 
 
 @dataclass(frozen=True)
-class ProcessingMetadata:
-    """
-    Metadata derived from parsing the granule, used for naming outputs.
-    """
-
-    output_name: str
-    bucket_key: str
-
-
-@dataclass(frozen=True)
 class EnvConfig:
     """
     Configuration for the Landsat AC environment variables.
@@ -59,6 +49,16 @@ class EnvConfig:
     def landsat_granule(self) -> LandsatGranule:
         """Get the parsed LandsatGranule object."""
         return LandsatGranule.from_str(self.granule)
+
+
+@dataclass(frozen=True)
+class ProcessingMetadata:
+    """
+    Metadata derived from parsing the granule, used for naming outputs.
+    """
+
+    output_name: str
+    bucket_key: str
 
 
 CONFIG = Asset("config_object", EnvConfig)

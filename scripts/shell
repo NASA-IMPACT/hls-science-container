@@ -6,6 +6,11 @@ export IMAGE_NAME=${IMAGE_NAME:-hls-atmospheric-correction}
 
 TARGET=${TARGET:-dev}
 
+HERE=$(dirname $0)
+
+history_file=$HERE/.docker_bash_history
+touch $history_file
+
 docker run \
     -v "$(pwd)/pixi.toml":/app/pixi.toml \
     -v "$(pwd)/pixi.lock":/app/pixi.lock \
@@ -13,6 +18,8 @@ docker run \
     -v "$(pwd)/data":/app/data \
     -v "$(pwd)/src":/app/src \
     -e LASRC_AUX_DIR=/app/data/lasrc_aux/ \
+    -e HISTFILE=/root/.bash_history \
+    -v $history_file:/root/.bash_history \
     -v "${HOME}/.aws/:/root/.aws" \
     -e "AWS_PROFILE=${AWS_PROFILE:-default}" \
     -it "${IMAGE_NAME}":${TARGET} \
