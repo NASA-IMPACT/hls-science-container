@@ -2,7 +2,7 @@
 
 set -e
 
-export IMAGE_NAME=${IMAGE_NAME:-hls-atmospheric-correction}
+export IMAGE_NAME=${IMAGE_NAME:-hls-science-container}
 
 TARGET=${TARGET:-dev}
 

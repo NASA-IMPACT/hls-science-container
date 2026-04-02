@@ -1,5 +1,5 @@
 [workspace]
-name = "hls-atmospheric-correction"
+name = "hls-science-container"
 version = "0.1.0"
 platforms = ["linux-64", "osx-arm64"]
 channels = ["conda-forge"]

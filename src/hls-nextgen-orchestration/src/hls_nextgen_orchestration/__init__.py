@@ -1,2 +1,2 @@
 def main() -> None:
-    print("Hello from hls-atmospheric-correction!")
+    print("Hello from hls-science-container!")
