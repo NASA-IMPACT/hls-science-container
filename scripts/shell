@@ -11,12 +11,16 @@ HERE=$(dirname $0)
 history_file=$HERE/.docker_bash_history
 touch $history_file
 
+cache_dir=$HERE/.cache/rattler
+mkdir -p "$cache_dir"
+
 docker run \
     -v "$(pwd)/pixi.toml":/app/pixi.toml \
     -v "$(pwd)/pixi.lock":/app/pixi.lock \
     -v "$(pwd)/packages":/app/packages \
     -v "$(pwd)/data":/app/data \
     -v "$(pwd)/src":/app/src \
+    -v "$cache_dir":/root/.cache/rattler \
     -e LASRC_AUX_DIR=/app/data/lasrc_aux/ \
     -e HISTFILE=/root/.bash_history \
     -v $history_file:/root/.bash_history \
