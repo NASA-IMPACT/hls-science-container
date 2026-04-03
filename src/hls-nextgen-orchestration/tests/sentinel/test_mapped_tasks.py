@@ -40,6 +40,7 @@ from hls_nextgen_orchestration.sentinel.mapped_tasks import (
     GetGranuleDir,
     ProcessHdfParts,
     RunFmask,
+    RunFmaskV5,
     TrimHdf,
 )
 
@@ -186,6 +187,28 @@ def test_RunFmask(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     outputs = task.run(
         {
             granule_dir_asset(granule_id): inner,
+            mtd_msil1c_asset(granule_id): mtd_msil1c,
+            CONFIG: sentinel_config,
+        }
+    )
+
+    assert outputs[fmask_bin_asset(granule_id)].exists()
+
+
+def test_RunFmaskV5(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
+    """Tests Fmask v5 execution and ENVI binary conversion."""
+    granule_id = "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
+    safe_dir = sentinel_config.working_dir / granule_id / f"{granule_id}.SAFE"
+    safe_dir.mkdir(parents=True)
+
+    mtd_msil1c = safe_dir / "MTD_MSIL1C.xml"
+    mtd_msil1c.touch()
+
+    task = RunFmaskV5.map(granule_id)(name="fmask_v5")
+    outputs = task.run(
+        {
+            safe_dir_asset(granule_id): safe_dir,
+            quality_mask_applied_asset(granule_id): True,
             mtd_msil1c_asset(granule_id): mtd_msil1c,
             CONFIG: sentinel_config,
         }

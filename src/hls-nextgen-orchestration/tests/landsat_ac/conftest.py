@@ -21,6 +21,20 @@ RUN_FMASK = """#!/bin/bash
 echo "Mock Fmask running"
 """
 
+FMASK_V5 = """#!/bin/bash
+# usage: fmask --imagepath <dir> --model UPL
+prev=""
+for arg in "$@"; do
+    if [[ "$prev" == "--imagepath" || "$prev" == "-i" ]]; then
+        imagepath="${arg%/}"
+    fi
+    prev="$arg"
+done
+basename=$(basename "$imagepath")
+touch "${imagepath}/${basename}_UPL.tif"
+echo "Fmask v5 complete"
+"""
+
 GDAL_TRANSLATE = """#!/bin/bash
 # The destination is always the last argument
 dest="${!#}"
@@ -57,6 +71,7 @@ SCRIPTS = {
     "download_landsat": DOWNLOAD_LANDSAT,
     "check_solar_zenith_landsat": CHECK_SOLAR_ZENITH_LANDSAT,
     "run_Fmask.sh": RUN_FMASK,
+    "fmask": FMASK_V5,
     "gdal_translate": GDAL_TRANSLATE,
     "convert_lpgs_to_espa": CONVERT_LPGS_TO_ESPA,
     "do_lasrc_landsat.py": DO_LASRC_LANDSAT,

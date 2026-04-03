@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from hls_nextgen_orchestration.base import Pipeline, PipelineBuilder
+from hls_nextgen_orchestration.constants import FMASK_VERSION
 
 from .mapped_tasks import (
     AddFmaskSds,
@@ -20,6 +21,7 @@ from .mapped_tasks import (
     PrepareEspaInput,
     ProcessHdfParts,
     RunFmask,
+    RunFmaskV5,
     RunLaSRC,
     TrimHdf,
 )
@@ -46,6 +48,7 @@ def construct_pipeline(
     granule_ids: list[str] | None = None,
     working_dir: Path | None = None,
     local_granule_zips: list[Path] | None = None,
+    fmask_version: FMASK_VERSION = "v4",
     upload: bool = True,
 ) -> Pipeline:
     """Constructs the Sentinel-2 (S30) Preprocessing Pipeline.
@@ -62,6 +65,8 @@ def construct_pipeline(
     local_granule_zips
         If provided, assume there is a pre-downloaded Sentinel-2 granule(s)
         to process in this directory.
+    fmask_version
+        Fmask version to use: "v4" (default) or "v5".
     upload
         If True (default), upload to output bucket.
     """
@@ -106,7 +111,11 @@ def construct_pipeline(
             .add(FindFootprint.map(granule_id)(name="FindFootprint"))
             .add(ApplyQualityMask.map(granule_id)(name="ApplyMask"))
             .add(DeriveAngles.map(granule_id)(name="DeriveAngles"))
-            .add(RunFmask.map(granule_id)("Fmask"))
+            .add(
+                RunFmaskV5.map(granule_id)("Fmask")
+                if fmask_version == "v5"
+                else RunFmask.map(granule_id)("Fmask")
+            )
             .add(PrepareEspaInput.map(granule_id)("PrepareEspa"))
             .add(RunLaSRC.map(granule_id)("LaSRC"))
             .add(ProcessHdfParts.map(granule_id)("ProcessHdfParts"))
@@ -153,10 +162,13 @@ if __name__ == "__main__":
     else:
         local_granule_zips = None
 
+    fmask_version: FMASK_VERSION = "v5" if os.getenv("FMASK_VERSION") == "5" else "v4"
+
     try:
         pipeline = construct_pipeline(
             granule_ids=granule_ids,
             local_granule_zips=local_granule_zips,
+            fmask_version=fmask_version,
             upload=True,
         )
         print(pipeline)

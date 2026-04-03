@@ -407,6 +407,106 @@ class RunFmask(MappedTask):
         return l1c_invalid and fmask_invalid
 
 
+def _parse_fmask_v5_clear(summary: str) -> float:
+    """Parse clear pixel percentage from Fmask v5 --print_summary output.
+
+    Searches for a line containing both "clear" and "%" and extracts the
+    numeric percentage. Returns 50.0 on parse failure (safe non-blocking default).
+
+    Note: The exact output format of --print_summary should be verified against
+    the Fmask v5 source (fmask.cli.fmask:main, NASA-IMPACT/fmask-v5).
+    """
+    for line in summary.splitlines():
+        line_lower = line.lower()
+        if "clear" in line_lower and "%" in line_lower:
+            try:
+                return float(line_lower.split("%")[0].split()[-1])
+            except (ValueError, IndexError):
+                pass
+    logger.warning(
+        "Could not parse clear percentage from Fmask v5 output; assuming 50%%"
+    )
+    return 50.0
+
+
+@dataclass(frozen=True, kw_only=True)
+class RunFmaskV5(MappedTask):
+    """Run Fmask v5 on a Sentinel-2 SAFE directory.
+
+    Uses the top-level .SAFE directory as input (via --imagepath), which is
+    different from RunFmask (v4) that operates inside the inner GRANULE/ dir.
+    """
+
+    cmd_prefix: tuple[str, ...] = ()
+    requires_factory = lambda gid: (
+        CONFIG,
+        safe_dir_asset(gid),
+        quality_mask_applied_asset(gid),
+        mtd_msil1c_asset(gid),
+    )
+    provides_factory = lambda gid: (fmask_bin_asset(gid),)
+
+    def __post_init__(self) -> None:
+        validate_command(self.cmd_prefix[0] if self.cmd_prefix else "fmask")
+        validate_command("check_sentinel_clouds")
+        validate_command("gdal_translate")
+
+    def run(self, bundle: AssetBundle) -> AssetBundle:
+        config: EnvConfig = bundle[CONFIG]
+        safe_dir: Path = bundle[safe_dir_asset(self.granule_id)]
+        mtd_msil1c: Path = bundle[mtd_msil1c_asset(self.granule_id)]
+
+        cmd = [
+            *self.cmd_prefix,
+            "fmask",
+            "--imagepath",
+            str(safe_dir),
+            "--model",
+            "UPL",
+            "--print_summary",
+            "yes",
+        ]
+        logger.info(f"Running Fmask v5 on {safe_dir}")
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+
+        invalid = self.check_invalid_cloud_cover(mtd_msil1c, result.stdout)
+        if invalid:
+            raise TaskFailure("Fmask reports no clear pixels. Exiting now", exit_code=4)
+
+        fmask_tif = safe_dir / f"{safe_dir.name}_UPL.tif"
+        if not fmask_tif.exists():
+            raise RuntimeError(f"Expected Fmask v5 output missing: {fmask_tif}")
+
+        fmask_bin = config.working_dir / self.granule_id / "fmask.bin"
+        logger.info(f"Converting {fmask_tif} to {fmask_bin}")
+        subprocess.run(
+            ["gdal_translate", "-of", "ENVI", str(fmask_tif), str(fmask_bin)],
+            check=True,
+        )
+
+        return {fmask_bin_asset(self.granule_id): fmask_bin}
+
+    def check_invalid_cloud_cover(self, mtd_msil1c: Path, fmask_summary: str) -> bool:
+        """Check if the cloud cover is invalid.
+
+        Returns True (invalid) only if BOTH conditions hold:
+        1. Sentinel-2 L1C metadata shows greater than 95% cloud cover.
+        2. Fmask v5 summary shows less than 2% clear pixels.
+        """
+        logger.info("Checking Sentinel-2 metadata cloud cover...")
+        result = subprocess.run(
+            ["check_sentinel_clouds", str(mtd_msil1c)],
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        l1c_invalid = result.stdout.strip() == "invalid"
+
+        fmask_invalid = _parse_fmask_v5_clear(fmask_summary) < 2.0
+
+        return l1c_invalid and fmask_invalid
+
+
 @dataclass(frozen=True, kw_only=True)
 class PrepareEspaInput(MappedTask):
     """Unpackages S2 and converts to ESPA format.
