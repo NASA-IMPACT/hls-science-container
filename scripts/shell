@@ -22,5 +22,6 @@ docker run \
     -v $history_file:/root/.bash_history \
     -v "${HOME}/.aws/:/root/.aws" \
     -e "AWS_PROFILE=${AWS_PROFILE:-default}" \
+    -e "KMP_AFFINITY=${KMP_AFFINITY:-disabled}" \
     -it "${IMAGE_NAME}":${TARGET} \
     /bin/bash
