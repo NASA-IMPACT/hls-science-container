@@ -30,6 +30,9 @@ RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
     pixi shell-hook --frozen -e default -s bash >> /app/entrypoint.sh && \
     echo 'exec "$@"' >> /app/entrypoint.sh
 
+# ----- Install Fmask v5 models and ancillary data
+RUN wget -q -O /tmp/fmask_5_0_1.zip https://fmask4installer.s3.amazonaws.com/fmask_5_0_1.zip && \
+    pixi run fmask-data install /tmp/fmask_5_0_1.zip
 
 # ===== Development installation
 FROM build AS dev

@@ -266,6 +266,47 @@ class RunFmask(Task):
 
 
 @dataclass(frozen=True)
+class RunFmaskV5(Task):
+    """Run Fmask v5 on a Landsat L1 granule directory."""
+
+    requires = (CONFIG, GRANULE_DIR)
+    provides = (FMASK_BIN,)
+
+    def __post_init__(self) -> None:
+        validate_command("fmask")
+        validate_command("gdal_translate")
+
+    def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
+        granule_dir: Path = inputs[GRANULE_DIR]
+        fmask_bin_path = granule_dir / "fmask.bin"
+
+        model_name = "UPL"
+        cmd = [
+            "fmask",
+            f"--imagepath={granule_dir}",
+            f"--model={model_name}",
+            "--dcloud=1",
+            "--dshadow=5",
+        ]
+        logger.info("Running Fmask v5...")
+        subprocess.run(cmd, check=True)
+
+        fmask_tif = granule_dir / f"{granule_dir.name}_{model_name}.tif"
+        if not fmask_tif.exists():
+            raise RuntimeError(f"Expected Fmask v5 output missing: {fmask_tif}")
+
+        logger.info("Converting Fmask v5 output to ENVI binary...")
+        subprocess.run(
+            ["gdal_translate", "-of", "ENVI", str(fmask_tif), str(fmask_bin_path)],
+            check=True,
+        )
+
+        if not fmask_bin_path.exists():
+            raise RuntimeError(f"Output file missing: {fmask_bin_path}")
+        return {FMASK_BIN: fmask_bin_path}
+
+
+@dataclass(frozen=True)
 class ConvertScanline(Task):
     """Convert tiled TIFFs to scanline (BIL) format ahead of ESPA format conversion"""
 

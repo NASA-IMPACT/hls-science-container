@@ -6,6 +6,11 @@ from typing import Literal
 # HLS products (reflectance & vegetation indexes)
 PRODUCTS = Literal["HLS", "HLS-VI"]
 
+# Fmask versions,
+# - 4.7
+# - 5.0.x
+FMASK_VERSION = Literal["v4", "v5"]
+
 
 @dataclass(frozen=True, kw_only=True)
 class HlsVersion:

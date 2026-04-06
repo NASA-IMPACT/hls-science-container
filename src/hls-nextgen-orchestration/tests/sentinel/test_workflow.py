@@ -6,8 +6,10 @@ from pathlib import Path
 import pytest
 from mypy_boto3_s3 import S3Client
 
+from hls_nextgen_orchestration.constants import FMASK_VERSION
 from hls_nextgen_orchestration.granules import Sentinel2Granule
 from hls_nextgen_orchestration.sentinel.assets import RENAMED_HDF
+from hls_nextgen_orchestration.sentinel.mapped_tasks import RunFmask, RunFmaskV5
 from hls_nextgen_orchestration.sentinel.tasks import EnvSource, UploadAll
 from hls_nextgen_orchestration.sentinel.workflow import construct_pipeline
 
@@ -59,6 +61,30 @@ def container_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("SCRATCH_DIR", str(working_dir))
 
     return working_dir
+
+
+@pytest.mark.parametrize(
+    ("fmask_version", "expected_task_cls"),
+    [("v4", RunFmask), ("v5", RunFmaskV5)],
+)
+def test_sentinel_pipeline_fmask_toggle(
+    mock_binaries: Path,
+    container_setup: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    fmask_version: FMASK_VERSION,
+    expected_task_cls: type,
+) -> None:
+    """Verify that the correct Fmask task class is used based on fmask_version."""
+    granule_ids = [GRANULE_ID_1, GRANULE_ID_2]
+    monkeypatch.setenv("GRANULE_LIST", ",".join(granule_ids))
+
+    pipeline = construct_pipeline(granule_ids=granule_ids, fmask_version=fmask_version)
+    fmask_tasks = [
+        t for t in pipeline.execution_order if isinstance(t, (RunFmask, RunFmaskV5))
+    ]
+
+    assert len(fmask_tasks) == len(granule_ids)
+    assert all(isinstance(t, expected_task_cls) for t in fmask_tasks)
 
 
 def test_sentinel_pipeline_ordering(

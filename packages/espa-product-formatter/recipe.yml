@@ -21,11 +21,16 @@ requirements:
     - libtiff
     - libpng
     - hdf4
-    - hdf5
+    # hdf5 2.x builds of libgdal-hdf5 require proj 9.8+, which rasterio doesn't
+    # support yet. Pin to hdf5 1.14.x to stay on the proj 9.7.x-compatible
+    # libgdal builds. Drop once conda-forge/rasterio-feedstock#340 lands.
+    - hdf5 <2
     - hdfeos2
     - hdfeos5
     - netcdf4
-    - proj
+    # rasterio requires proj <9.8 (all current conda-forge builds).
+    # Drop once conda-forge/rasterio-feedstock#340 lands.
+    - proj <9.8
     - libaec
     - libidn11
     - liblzma
