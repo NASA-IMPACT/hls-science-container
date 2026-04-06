@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -434,21 +435,18 @@ class RunFmaskV5(MappedTask):
         mtd_msil1c: Path = bundle[mtd_msil1c_asset(self.granule_id)]
 
         model_name = "UPL"
-
         cmd = [
             "fmask",
-            "--imagepath",
-            str(safe_dir),
-            "--model",
-            model_name,
-            "--print_summary",
-            "yes",
+            f"--imagepath={safe_dir}",
+            f"--model={model_name}",
+            "--print_summary=yes",
+            "--dcloud=0",
+            "--dshadow=5",
         ]
         logger.info(f"Running Fmask v5 on {safe_dir}")
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)
 
-        invalid = self.check_invalid_cloud_cover(mtd_msil1c, result.stdout)
-        if invalid:
+        if self.check_invalid_cloud_cover(mtd_msil1c, result.stdout):
             raise TaskFailure("Fmask reports no clear pixels. Exiting now", exit_code=4)
 
         fmask_tif = safe_dir / f"{safe_dir.stem}_{model_name}.tif"
@@ -468,17 +466,16 @@ class RunFmaskV5(MappedTask):
     def _parse_fmask_v5_clear(summary: str) -> float:
         """Parse clear pixel percentage from Fmask v5 --print_summary output.
 
-        Searches for a line containing both "clear" and "%" and extracts the
-        numeric percentage.
+        Expected format (one line):
+            Summary: Cloud = 98.71%, Shadow = 1.29%, Snow = 0.00%, Clear = 0.00%
         """
         for line in summary.splitlines():
-            line_lower = line.lower()
-            if "clear" in line_lower and "%" in line_lower:
-                try:
-                    return float(line_lower.split("%")[0].split()[-1])
-                except (ValueError, IndexError):
-                    pass
-        raise RuntimeError("Could not parse clear percentage from Fmask v5 output")
+            match = re.search(r"Clear\s*=\s*([\d.]+)%", line, re.IGNORECASE)
+            if match:
+                return float(match.group(1))
+        raise RuntimeError(
+            f"Could not parse clear percentage from Fmask v5 output:\n{summary}"
+        )
 
     def check_invalid_cloud_cover(self, mtd_msil1c: Path, fmask_summary: str) -> bool:
         """Check if the cloud cover is invalid.
@@ -495,9 +492,7 @@ class RunFmaskV5(MappedTask):
             capture_output=True,
         )
         l1c_invalid = result.stdout.strip() == "invalid"
-
         fmask_invalid = self._parse_fmask_v5_clear(fmask_summary) < 2.0
-
         return l1c_invalid and fmask_invalid
 
 

@@ -55,17 +55,16 @@ echo "Derive angles complete: $out"
 """)
 
 FMASK_V5 = make_script("""
-# usage: fmask --imagepath <dir> --model UPL [--print_summary yes]
-prev=""
+# usage: fmask --imagepath=<dir> --model=UPL [--print_summary=yes]
 for arg in "$@"; do
-    if [[ "$prev" == "--imagepath" || "$prev" == "-i" ]]; then
-        imagepath="${arg%/}"
-    fi
-    prev="$arg"
+    case "$arg" in
+        --imagepath=*|-i=*) imagepath="${arg#*=}" ;;
+    esac
 done
+imagepath="${imagepath%/}"
 basename=$(basename "$imagepath" .SAFE)
 touch "${imagepath}/${basename}_UPL.tif"
-echo "Clear: 96.3%"
+echo "Summary: Cloud = 2.50%, Shadow = 1.20%, Snow = 0.00%, Clear = 96.30%"
 """)
 
 GDAL_TRANSLATE = make_script("""

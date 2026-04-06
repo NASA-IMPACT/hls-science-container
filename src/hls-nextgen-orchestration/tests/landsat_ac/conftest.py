@@ -22,17 +22,15 @@ echo "Mock Fmask running"
 """
 
 FMASK_V5 = """#!/bin/bash
-# usage: fmask --imagepath <dir> --model UPL
-prev=""
+# usage: fmask --imagepath=<dir> --model=UPL
 for arg in "$@"; do
-    if [[ "$prev" == "--imagepath" || "$prev" == "-i" ]]; then
-        imagepath="${arg%/}"
-    fi
-    prev="$arg"
+    case "$arg" in
+        --imagepath=*|-i=*) imagepath="${arg#*=}" ;;
+    esac
 done
+imagepath="${imagepath%/}"
 basename=$(basename "$imagepath")
 touch "${imagepath}/${basename}_UPL.tif"
-echo "Fmask v5 complete"
 """
 
 GDAL_TRANSLATE = """#!/bin/bash

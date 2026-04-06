@@ -280,17 +280,18 @@ class RunFmaskV5(Task):
         granule_dir: Path = inputs[GRANULE_DIR]
         fmask_bin_path = granule_dir / "fmask.bin"
 
+        model_name = "UPL"
         cmd = [
             "fmask",
-            "--imagepath",
-            str(granule_dir),
-            "--model",
-            "UPL",
+            f"--imagepath={granule_dir}",
+            f"--model={model_name}",
+            "--dcloud=1",
+            "--dshadow=5",
         ]
         logger.info("Running Fmask v5...")
         subprocess.run(cmd, check=True)
 
-        fmask_tif = granule_dir / f"{granule_dir.name}_UPL.tif"
+        fmask_tif = granule_dir / f"{granule_dir.name}_{model_name}.tif"
         if not fmask_tif.exists():
             raise RuntimeError(f"Expected Fmask v5 output missing: {fmask_tif}")
 
