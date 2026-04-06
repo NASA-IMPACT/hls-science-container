@@ -31,9 +31,9 @@ check_untyped_defs = true
 warn_return_any = false
 
 [tool.pixi.workspace]
-name = "hls-atmospheric-correction"
+name = "hls-science-container"
 channels = ["conda-forge"]
 platforms = ["osx-arm64"]
 
 [tool.pixi.pypi-dependencies]
-hls-atmospheric-correction = { path = ".", editable = true }
+hls-science-container = { path = ".", editable = true }

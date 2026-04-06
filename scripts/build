@@ -5,7 +5,7 @@ set -e
 # ==============================================================================
 # 🛠️  CONFIGURATION
 # ==============================================================================
-IMAGE_NAME="${IMAGE_NAME:-hls-atmospheric-correction}"
+IMAGE_NAME="${IMAGE_NAME:-hls-science-container}"
 TARGET=${TARGET:-dev}
 REGION="us-west-2"
 CACHE_TAG="cache"

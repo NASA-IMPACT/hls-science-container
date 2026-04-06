@@ -6,7 +6,7 @@ on:
 
 env:
   AWS_REGION: us-west-2
-  ECR_REPOSITORY: hls-atmospheric-correction
+  ECR_REPOSITORY: hls-science-container
   BUILD_PLATFORM: linux/amd64
 
 jobs:
