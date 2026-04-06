@@ -9,296 +9,220 @@ import pytest
 
 from hls_nextgen_orchestration.granules import Sentinel2Granule
 from hls_nextgen_orchestration.sentinel.assets import EnvConfig
-
+from tests.mock_cli import (
+    cli_noop,
+    cli_touch_flag_arg,
+    cli_touch_last_arg,
+    cli_touch_nth_arg,
+    make_python_script,
+)
 
 # --- Mock CLI Scripts for Sentinel-2 ---
-def make_script(command: str) -> str:
-    """Wrap CLI commands in a Bash script with error handling"""
-    return f"""#!/bin/bash
-set -eux
-{command}
-"""
 
+CHECK_SZA = cli_noop("valid")
 
-CHECK_SZA = make_script('echo "valid"')
+CHECK_SENTINEL_CLOUDS = cli_noop("valid")
 
-CHECK_SENTINEL_CLOUDS = make_script('echo "valid"')
-
-RUN_FMASK_SH_CLEAR = make_script("""
-# usage: run_Fmask.sh (runs in cwd)
-touch "granuleid_Fmask4.tif"
-echo "Fmask 4.7 finished (0.42 minutes)\nfor S2C_SCENE with 96.3% clear pixels\n"
+RUN_FMASK_SH_CLEAR = make_python_script("""
+from pathlib import Path
+Path("granuleid_Fmask4.tif").touch()
+print("Fmask 4.7 finished (0.42 minutes)")
+print("for S2C_SCENE with 96.3% clear pixels")
 """)
 
-RUN_FMASK_SH_CLOUDY = make_script("""
-# usage: run_Fmask.sh (runs in cwd)
-touch "granuleid_Fmask4.tif"
-echo "Fmask 4.7 finished (0.42 minutes)\nfor S2C_SCENE with 1.2% clear pixels\n"
+RUN_FMASK_SH_CLOUDY = make_python_script("""
+from pathlib import Path
+Path("granuleid_Fmask4.tif").touch()
+print("Fmask 4.7 finished (0.42 minutes)")
+print("for S2C_SCENE with 1.2% clear pixels")
 """)
 
-PARSE_FMASK = make_script("""
-# usage: parse_fmask <text>
-clear=$(echo $@ | sed -n 's/.*with \\([0-9.]*\\).*/\\1/p')
-if [[ $clear < 2 ]]; then
-    echo "invalid"
-else
-    echo "valid"
-fi
+PARSE_FMASK = make_python_script("""
+import re
+import sys
+
+text = " ".join(sys.argv[1:])
+match = re.search(r"([0-9.]+)%", text)
+value = float(match.group(1)) if match else 50.0
+print("invalid" if value < 2 else "valid")
 """)
 
-SENTINEL_DERIVE_ANGLE = make_script("""
-# usage: sentinel-derive-angle ... output
-# Grab the last argument as the output file
-out="${@: -1}"
-touch "$out"
-echo "Derive angles complete: $out"
+SENTINEL_DERIVE_ANGLE = cli_touch_last_arg()
+
+FMASK_V5 = make_python_script("""
+import argparse
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--imagepath", "-i", required=True)
+parser.add_argument("--model", default="UPL")
+parser.add_argument("--print_summary", default="no")
+parser.add_argument("--dcloud", type=int, default=3)
+parser.add_argument("--dshadow", type=int, default=5)
+args = parser.parse_args()
+
+safe_dir = Path(args.imagepath)
+(safe_dir / f"{safe_dir.stem}_{args.model}.tif").touch()
+if args.print_summary == "yes":
+    print("Summary: Cloud = 2.50%, Shadow = 1.20%, Snow = 0.00%, Clear = 96.30%")
 """)
 
-FMASK_V5 = make_script("""
-# usage: fmask --imagepath=<dir> --model=UPL [--print_summary=yes]
-for arg in "$@"; do
-    case "$arg" in
-        --imagepath=*|-i=*) imagepath="${arg#*=}" ;;
-    esac
-done
-imagepath="${imagepath%/}"
-basename=$(basename "$imagepath" .SAFE)
-touch "${imagepath}/${basename}_UPL.tif"
-echo "Summary: Cloud = 2.50%, Shadow = 1.20%, Snow = 0.00%, Clear = 96.30%"
+GDAL_TRANSLATE = cli_touch_last_arg()
+
+APPLY_S2_QUALITY_MASK = cli_noop()
+
+UNPACKAGE_S2 = cli_noop()
+
+CONVERT_SENTINEL_TO_ESPA = make_python_script("""
+from pathlib import Path
+Path("S2A_TEST.xml").touch()
 """)
 
-GDAL_TRANSLATE = make_script("""
-# usage: gdal_translate ... input output
-out="${@: -1}"
-touch "$out"
-echo "GDAL translate complete: $out"
+DO_LASRC_SENTINEL = make_python_script("""
+from pathlib import Path
+cwd = Path.cwd()
+(cwd / "S2A_TEST_sr_aerosol_qa.img").touch()
+(cwd / "S2A_TEST_sr_band5.img").touch()
 """)
 
-APPLY_S2_QUALITY_MASK = make_script("""
-# usage: apply_s2_quality_mask directory
-echo "Applied S2 quality mask in $1"
+CREATE_SR_HDF_XML = cli_touch_nth_arg(2)
+
+CONVERT_ESPA_TO_HDF = cli_touch_flag_arg("--hdf")
+
+SENTINEL_TWOHDF2ONE = cli_touch_last_arg()
+
+SENTINEL_ADD_FMASK_SDS = cli_touch_last_arg()
+
+SENTINEL_TRIM = cli_noop()
+
+SENTINEL_CREATE_S2AT30M = make_python_script("""
+import sys
+from pathlib import Path
+
+output = Path(sys.argv[2])
+output.touch()
+Path(str(output.with_suffix("")) + ".hdf.hdr").touch()
 """)
 
-UNPACKAGE_S2 = make_script("""
-# usage: unpackage_s2.py -i input -o output
-echo "Unpackage S2 complete"
+CONSOLIDATE_SR = make_python_script("""
+import sys
+from pathlib import Path
+
+*inputs, output = sys.argv[1:]
+for f in inputs:
+    if not Path(f).exists():
+        print(f"Input file {f} doesn't exist.", file=__import__("sys").stderr)
+        raise SystemExit(1)
+Path(output).touch()
 """)
 
-CONVERT_SENTINEL_TO_ESPA = make_script("""
-# usage: convert_sentinel_to_espa
-touch "S2A_TEST.xml"
-echo "Convert to ESPA complete"
+CONSOLIDATE_ANGLE = make_python_script("""
+import sys
+from pathlib import Path
+
+*inputs, output = sys.argv[1:]
+for f in inputs:
+    if not Path(f).exists():
+        print(f"Input file {f} doesn't exist.", file=__import__("sys").stderr)
+        raise SystemExit(1)
+Path(output).touch()
 """)
 
-DO_LASRC_SENTINEL = make_script("""
-# usage: do_lasrc_sentinel.py --xml mtd_file
-touch $(pwd)/S2A_TEST_sr_aerosol_qa.img
-touch $(pwd)/S2A_TEST_sr_band5.img
-echo "LaSRC complete"
+SENTINEL_DERIVE_NBAR = cli_noop()
+
+SENTINEL_L8_LIKE = make_python_script("""
+import sys
+from pathlib import Path
+
+input_path = Path(sys.argv[2])
+if not input_path.exists():
+    print(f"Cannot find input: {input_path}", file=__import__("sys").stderr)
+    raise SystemExit(1)
+input_path.touch()
 """)
 
-CREATE_SR_HDF_XML = make_script("""
-# usage: create_sr_hdf_xml xml hls_xml suffix
-touch "$2"
-echo "Created SR HDF XML: $2"
+HDF_TO_COG = make_python_script("""
+import argparse
+import sys
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("input")
+parser.add_argument("--output-dir", required=True)
+parser.add_argument("--product", required=True)
+args = parser.parse_args()
+
+bname = Path(args.input).stem
+output_dir = Path(args.output_dir)
+output_dir.mkdir(parents=True, exist_ok=True)
+
+if args.product == "S30":
+    band = "B05"
+elif args.product == "S30_ANGLES":
+    band = "VZA"
+    bname = Path(bname).stem  # strip .ANGLE
+else:
+    print(f"Unsupported product {args.product}", file=sys.stderr)
+    raise SystemExit(1)
+
+(output_dir / f"{bname}.{band}.tif").touch()
 """)
 
-CONVERT_ESPA_TO_HDF = make_script("""
-# usage: convert_espa_to_hdf --xml=x --hdf=h
-for arg in "$@"; do
-  if [[ $arg == --hdf=* ]]; then
-    hdf="${arg#*=}"
-    touch $hdf
-  fi
-done
-echo "Convert ESPA to HDF complete for $hdf"
+CREATE_THUMBNAIL = make_python_script("""
+import argparse
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-i")
+parser.add_argument("-o", required=True)
+parser.add_argument("-s")
+args = parser.parse_args()
+
+Path(args.o).touch()
 """)
 
-SENTINEL_TWOHDF2ONE = make_script("""
-# usage: sentinel-twohdf2one ... output
-out="${@: -1}"
-touch "$out"
-echo "Combined HDFs: $out"
+CREATE_METADATA = cli_touch_last_arg()
+
+CMR_TO_STAC_ITEM = cli_touch_nth_arg(2)
+
+CREATE_MANIFEST = cli_touch_nth_arg(2)
+
+GRANULE_TO_GIBS = make_python_script("""
+import sys
+from pathlib import Path
+
+working_dir, gibs_dir, base_name = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
+gibs_subdir = gibs_dir / f"{base_name}_GIBS_ID"
+gibs_subdir.mkdir(parents=True, exist_ok=True)
+(gibs_subdir / f"{base_name}.xml").touch()
+(gibs_subdir / f"{base_name}.tif").touch()
 """)
 
-SENTINEL_ADD_FMASK_SDS = make_script("""
-# usage: sentinel-add-fmask-sds ... output
-out="${@: -1}"
-touch "$out"
-echo "Added Fmask SDS: $out"
+VI_GENERATE_INDICES = make_python_script("""
+import argparse
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-i")
+parser.add_argument("-o", required=True)
+parser.add_argument("-s", required=True)
+args = parser.parse_args()
+
+output_dir = Path(args.o)
+output_dir.mkdir(parents=True, exist_ok=True)
+(output_dir / f"{args.s}_NDVI.tif").touch()
 """)
 
-SENTINEL_TRIM = make_script("""
-# usage: sentinel-trim input
-# modifies in place or assumes output exists
-echo "Trim complete: $1"
+VI_GENERATE_METADATA = make_python_script("""
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-i")
+parser.add_argument("-o")
+parser.parse_args()
 """)
 
-SENTINEL_CREATE_S2AT30M = make_script("""
-# usage: sentinel-create-s2at30m in out
-touch "$2"
-touch "${2%.*}.hdf.hdr"
-echo "Resample complete: $2"
-""")
-
-CONSOLIDATE_SR = make_script("""
-# usage: sentinel-consolidate *input-sr output-sr
-inputs=("${@:1:$#-1}")
-output="${!#}"
-for file in "${inputs[@]}"; do
-    if [[ ! -f "$file" ]]; then
-        echo "Input file $file doesn't exist."
-        exit 1
-    fi
-done
-touch "$output"
-echo "Consolidated SR to $output"
-""")
-
-CONSOLIDATE_ANGLE = make_script("""
-# usage: sentinel-consolidate-angle *input-angles output-angle
-inputs=("${@:1:$#-1}")
-output="${!#}"
-for file in "${inputs[@]}"; do
-    if [[ ! -f "$file" ]]; then
-        echo "Input file $file doesn't exist."
-        exit 1
-    fi
-done
-touch "$output"
-echo "Consolidated angles to $output"
-""")
-
-SENTINEL_DERIVE_NBAR = make_script("""
-# usage: sentinel-derive-nbar inp angle cfactor
-echo "NBAR derive complete"
-""")
-
-SENTINEL_L8_LIKE = make_script("""
-# usage: sentinel-l8-like param input
-# this updates the `input` in place
-input=$2
-if [[ -f $input ]]; then
-    echo "L8-like complete for $input"
-    touch $input
-else
-    echo "Cannot find input!"
-    exit 1
-fi
-""")
-
-HDF_TO_COG = make_script("""
-# usage: hdf_to_cog <input> --output-dir=<dir> --product=<product>
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --output-dir)
-      output_dir="$2"
-      shift 2
-      ;;
-    --product)
-      product="$2"
-      shift 2
-      ;;
-    -*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # Everything else is treated as the <input>
-      input="$1"
-      shift
-      ;;
-  esac
-done
-
-echo "Converting to COG: $input"
-
-bname=$(basename $input .hdf)
-if [[ "$product" == "S30" ]]; then
-    band=B05
-elif [[ "$product" == "S30_ANGLES" ]]; then
-    band=VZA
-    # remove `.ANGLE` suffix
-    bname=$(basename $bname .ANGLE)
-else
-    echo "Unsupported product $product"
-    exit 1
-fi
-touch $output_dir/${bname}.${band}.tif
-""")
-
-CREATE_THUMBNAIL = make_script("""
-# usage: create_thumbnail -i dir -o out ...
-while getopts "i:o:s:" opt; do
-  case $opt in
-    o) output_file="$OPTARG" ;;
-  esac
-done
-touch "$output_file"
-echo "Created thumbnail"
-""")
-
-CREATE_METADATA = make_script("""
-# usage: create_metadata input --save output
-output="${@: -1}"
-touch "$output"
-echo "Created metadata: $output"
-""")
-
-CMR_TO_STAC_ITEM = make_script("""
-# usage: cmr_to_stac_item xml json ...
-touch "$2"
-echo "Created STAC JSON: $2"
-""")
-
-CREATE_MANIFEST = make_script("""
-# usage: create_manifest dir output ...
-touch "$2"
-echo "Created manifest: $2"
-""")
-
-GRANULE_TO_GIBS = make_script("""
-# usage: granule_to_gibs working_dir gibs_dir base_name
-gibs_dir="$2"
-base_name="$3"
-# Create a fake gibs structure
-mkdir -p "$gibs_dir/${base_name}_GIBS_ID"
-touch "$gibs_dir/${base_name}_GIBS_ID/${base_name}.xml"
-touch "$gibs_dir/${base_name}_GIBS_ID/${base_name}.tif"
-echo "Generated GIBS tiles"
-""")
-
-VI_GENERATE_INDICES = make_script("""
-# usage: vi_generate_indices -i in -o out -s base_name
-while getopts "i:o:s:" opt; do
-  case $opt in
-    o) output_dir="$OPTARG" ;;
-    s) base_name="$OPTARG" ;;
-  esac
-done
-mkdir -p "$output_dir"
-touch "$output_dir/${base_name}_NDVI.tif"
-echo "Generated VI indices"
-""")
-
-# FIXME: generate metadata
-VI_GENERATE_METADATA = make_script("""
-# usage: vi_generate_metadata -i in -o out
-while getopts "i:o:" opt; do
-  case $opt in
-    o) output_dir="$OPTARG" ;;
-  esac
-done
-
-echo "Generated VI metadata"
-""")
-
-VI_GENERATE_STAC_ITEMS = make_script("""
-# usage: vi_generate_stac_items ... --out_json output
-output="${@: -1}"
-touch "$output"
-echo "Generated VI STAC: $output"
-""")
+VI_GENERATE_STAC_ITEMS = cli_touch_last_arg()
 
 
 SENTINEL_SCRIPTS = {
