@@ -3,129 +3,109 @@ from pathlib import Path
 
 import pytest
 
+from tests.mock_cli import (
+    cli_noop,
+    cli_touch_flag_arg,
+    cli_touch_last_arg,
+    cli_touch_nth_arg,
+    make_python_script,
+)
+
 # Mocks for landsat_tile pipeline
 
-EXTRACT_LANDSAT_HMS = """#!/bin/bash
-# usage: extract_landsat_hms.py file.hdf
-# Returns a time string like "101010"
-echo "101010"
-"""
+EXTRACT_LANDSAT_HMS = cli_noop("101010")
 
-LANDSAT_TILE = """#!/bin/bash
-# usage: landsat-tile mgrs ulx uly ... ac_file output_file
-# Last arg is output
-dest="${!#}"
-touch "$dest"
-"""
+LANDSAT_TILE = cli_touch_last_arg()
 
-LANDSAT_ANGLE_TILE = """#!/bin/bash
-# usage: landsat-angle-tile ... ... ... output_file
-dest="${!#}"
-touch "$dest"
-"""
+LANDSAT_ANGLE_TILE = cli_touch_last_arg()
 
-LANDSAT_NBAR = """#!/bin/bash
-# usage: landsat-nbar nbar_input nbar_angle nbar_cfactor
-# Does not create a new file name, modifies inputs or creates implicit files.
-# The python task renames the input files, so we assume this just runs.
-echo "Running NBAR"
-"""
+LANDSAT_NBAR = cli_noop()
 
-HDF_TO_COG = """#!/bin/bash
-# usage: hdf_to_cog input --output-dir dir ...
-# Creates dummy TIFs
-dir="$3"
-if [ "$2" == "--output-dir" ]; then
-    touch "$dir/dummy.tif"
-fi
-"""
+HDF_TO_COG = make_python_script("""
+import argparse
+from pathlib import Path
 
-CREATE_THUMBNAIL = """#!/bin/bash
-# usage: create_thumbnail -i ... -o output.jpg ...
-# Find -o flag
-while getopts ":i:o:s:" opt; do
-  case $opt in
-    o)
-      touch "$OPTARG"
-      ;;
-  esac
-done
-"""
+parser = argparse.ArgumentParser()
+parser.add_argument("input")
+parser.add_argument("--output-dir", required=True)
+parser.add_argument("--product")
+args = parser.parse_args()
 
-CREATE_METADATA = """#!/bin/bash
-# usage: create_metadata input --save output.xml
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    --save)
-      touch "$2"
-      shift # past value
-      shift # past arg
-      ;;
-    *)
-      shift
-      ;;
-  esac
-done
-"""
+output_dir = Path(args.output_dir)
+output_dir.mkdir(parents=True, exist_ok=True)
+(output_dir / "dummy.tif").touch()
+""")
 
-CMR_TO_STAC_ITEM = """#!/bin/bash
-# usage: cmr_to_stac_item input.xml output.json ...
-touch "$2"
-"""
+CREATE_THUMBNAIL = make_python_script("""
+import argparse
+from pathlib import Path
 
-CREATE_MANIFEST = """#!/bin/bash
-# usage: create_manifest dir output.json ...
-touch "$2"
-"""
+parser = argparse.ArgumentParser()
+parser.add_argument("-i")
+parser.add_argument("-o", required=True)
+parser.add_argument("-s")
+args = parser.parse_args()
 
-GRANULE_TO_GIBS = """#!/bin/bash
-# usage: granule_to_gibs input_dir output_dir output_name
-out_dir="$2"
-# Create a fake gibs ID folder and an xml inside
-mkdir -p "$out_dir/GIBS_ID_1"
-touch "$out_dir/GIBS_ID_1/test.xml"
-touch "$out_dir/GIBS_ID_1/test.tif"
-"""
+Path(args.o).touch()
+""")
 
-VI_GENERATE_INDICES = """#!/bin/bash
-# usage: vi_generate_indices -i ... -o out_dir ...
-while getopts ":i:o:s:" opt; do
-  case $opt in
-    o)
-      mkdir -p "$OPTARG"
-      touch "$OPTARG/NDVI.tif"
-      ;;
-  esac
-done
-"""
+CREATE_METADATA = make_python_script("""
+import argparse
+from pathlib import Path
 
-VI_GENERATE_METADATA = """#!/bin/bash
-# usage: vi_generate_metadata -i ... -o out_dir
-while getopts ":i:o:" opt; do
-  case $opt in
-    o)
-      mkdir -p "$OPTARG"
-      touch "$OPTARG/VI.cmr.xml"
-      ;;
-  esac
-done
-"""
+parser = argparse.ArgumentParser()
+parser.add_argument("input", nargs="?")
+parser.add_argument("--save", required=True)
+args = parser.parse_args()
 
-VI_GENERATE_STAC_ITEMS = """#!/bin/bash
-# usage: ... --out_json output.json
-while [[ $# -gt 0 ]]; do
-  case $1 in
-    --out_json)
-      touch "$2"
-      shift
-      shift
-      ;;
-    *)
-      shift
-      ;;
-  esac
-done
-"""
+Path(args.save).touch()
+""")
+
+CMR_TO_STAC_ITEM = cli_touch_nth_arg(2)
+
+CREATE_MANIFEST = cli_touch_nth_arg(2)
+
+GRANULE_TO_GIBS = make_python_script("""
+import sys
+from pathlib import Path
+
+input_dir, output_dir, output_name = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
+gibs_dir = output_dir / "GIBS_ID_1"
+gibs_dir.mkdir(parents=True, exist_ok=True)
+(gibs_dir / "test.xml").touch()
+(gibs_dir / "test.tif").touch()
+""")
+
+VI_GENERATE_INDICES = make_python_script("""
+import argparse
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-i")
+parser.add_argument("-o", required=True)
+parser.add_argument("-s")
+args = parser.parse_args()
+
+output_dir = Path(args.o)
+output_dir.mkdir(parents=True, exist_ok=True)
+(output_dir / "NDVI.tif").touch()
+""")
+
+VI_GENERATE_METADATA = make_python_script("""
+import argparse
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-i")
+parser.add_argument("-o", required=True)
+args = parser.parse_args()
+
+output_dir = Path(args.o)
+output_dir.mkdir(parents=True, exist_ok=True)
+(output_dir / "VI.cmr.xml").touch()
+""")
+
+VI_GENERATE_STAC_ITEMS = cli_touch_flag_arg("--out_json")
 
 SCRIPTS = {
     "extract_landsat_hms.py": EXTRACT_LANDSAT_HMS,
