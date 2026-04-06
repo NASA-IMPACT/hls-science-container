@@ -63,7 +63,7 @@ for arg in "$@"; do
     fi
     prev="$arg"
 done
-basename=$(basename "$imagepath")
+basename=$(basename "$imagepath" .SAFE)
 touch "${imagepath}/${basename}_UPL.tif"
 echo "Clear: 96.3%"
 """)

@@ -456,13 +456,15 @@ class RunFmaskV5(MappedTask):
         safe_dir: Path = bundle[safe_dir_asset(self.granule_id)]
         mtd_msil1c: Path = bundle[mtd_msil1c_asset(self.granule_id)]
 
+        model_name = "UPL"
+
         cmd = [
             *self.cmd_prefix,
             "fmask",
             "--imagepath",
             str(safe_dir),
             "--model",
-            "UPL",
+            model_name,
             "--print_summary",
             "yes",
         ]
@@ -473,7 +475,7 @@ class RunFmaskV5(MappedTask):
         if invalid:
             raise TaskFailure("Fmask reports no clear pixels. Exiting now", exit_code=4)
 
-        fmask_tif = safe_dir / f"{safe_dir.name}_UPL.tif"
+        fmask_tif = safe_dir / f"{safe_dir.stem}_{model_name}.tif"
         if not fmask_tif.exists():
             raise RuntimeError(f"Expected Fmask v5 output missing: {fmask_tif}")
 
