@@ -169,7 +169,6 @@ if __name__ == "__main__":
             granule_ids=granule_ids,
             local_granule_zips=local_granule_zips,
             fmask_version=fmask_version,
-            upload=True,
         )
         print(pipeline)
         pipeline.run()

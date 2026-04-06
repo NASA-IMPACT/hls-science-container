@@ -269,12 +269,11 @@ class RunFmask(Task):
 class RunFmaskV5(Task):
     """Run Fmask v5 on a Landsat L1 granule directory."""
 
-    cmd_prefix: tuple[str, ...] = ()
     requires = (CONFIG, GRANULE_DIR)
     provides = (FMASK_BIN,)
 
     def __post_init__(self) -> None:
-        validate_command(self.cmd_prefix[0] if self.cmd_prefix else "fmask")
+        validate_command("fmask")
         validate_command("gdal_translate")
 
     def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
@@ -282,7 +281,6 @@ class RunFmaskV5(Task):
         fmask_bin_path = granule_dir / "fmask.bin"
 
         cmd = [
-            *self.cmd_prefix,
             "fmask",
             "--imagepath",
             str(granule_dir),

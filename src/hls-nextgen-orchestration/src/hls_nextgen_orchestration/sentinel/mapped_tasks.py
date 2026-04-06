@@ -407,28 +407,6 @@ class RunFmask(MappedTask):
         return l1c_invalid and fmask_invalid
 
 
-def _parse_fmask_v5_clear(summary: str) -> float:
-    """Parse clear pixel percentage from Fmask v5 --print_summary output.
-
-    Searches for a line containing both "clear" and "%" and extracts the
-    numeric percentage. Returns 50.0 on parse failure (safe non-blocking default).
-
-    Note: The exact output format of --print_summary should be verified against
-    the Fmask v5 source (fmask.cli.fmask:main, NASA-IMPACT/fmask-v5).
-    """
-    for line in summary.splitlines():
-        line_lower = line.lower()
-        if "clear" in line_lower and "%" in line_lower:
-            try:
-                return float(line_lower.split("%")[0].split()[-1])
-            except (ValueError, IndexError):
-                pass
-    logger.warning(
-        "Could not parse clear percentage from Fmask v5 output; assuming 50%%"
-    )
-    return 50.0
-
-
 @dataclass(frozen=True, kw_only=True)
 class RunFmaskV5(MappedTask):
     """Run Fmask v5 on a Sentinel-2 SAFE directory.
@@ -437,7 +415,6 @@ class RunFmaskV5(MappedTask):
     different from RunFmask (v4) that operates inside the inner GRANULE/ dir.
     """
 
-    cmd_prefix: tuple[str, ...] = ()
     requires_factory = lambda gid: (
         CONFIG,
         safe_dir_asset(gid),
@@ -447,7 +424,7 @@ class RunFmaskV5(MappedTask):
     provides_factory = lambda gid: (fmask_bin_asset(gid),)
 
     def __post_init__(self) -> None:
-        validate_command(self.cmd_prefix[0] if self.cmd_prefix else "fmask")
+        validate_command("fmask")
         validate_command("check_sentinel_clouds")
         validate_command("gdal_translate")
 
@@ -459,7 +436,6 @@ class RunFmaskV5(MappedTask):
         model_name = "UPL"
 
         cmd = [
-            *self.cmd_prefix,
             "fmask",
             "--imagepath",
             str(safe_dir),
@@ -488,6 +464,22 @@ class RunFmaskV5(MappedTask):
 
         return {fmask_bin_asset(self.granule_id): fmask_bin}
 
+    @staticmethod
+    def _parse_fmask_v5_clear(summary: str) -> float:
+        """Parse clear pixel percentage from Fmask v5 --print_summary output.
+
+        Searches for a line containing both "clear" and "%" and extracts the
+        numeric percentage.
+        """
+        for line in summary.splitlines():
+            line_lower = line.lower()
+            if "clear" in line_lower and "%" in line_lower:
+                try:
+                    return float(line_lower.split("%")[0].split()[-1])
+                except (ValueError, IndexError):
+                    pass
+        raise RuntimeError("Could not parse clear percentage from Fmask v5 output")
+
     def check_invalid_cloud_cover(self, mtd_msil1c: Path, fmask_summary: str) -> bool:
         """Check if the cloud cover is invalid.
 
@@ -504,7 +496,7 @@ class RunFmaskV5(MappedTask):
         )
         l1c_invalid = result.stdout.strip() == "invalid"
 
-        fmask_invalid = _parse_fmask_v5_clear(fmask_summary) < 2.0
+        fmask_invalid = self._parse_fmask_v5_clear(fmask_summary) < 2.0
 
         return l1c_invalid and fmask_invalid
 

@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import sys
 from pathlib import Path
-from typing import Literal
 
 from hls_nextgen_orchestration.base import Pipeline, PipelineBuilder
 from hls_nextgen_orchestration.constants import FMASK_VERSION
@@ -95,15 +94,12 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     local_granule_dir = Path(_) if (_ := os.getenv("LOCAL_GRANULE_DIR")) else None
-    fmask_version: Literal["v4", "v5"] = (
-        "v5" if os.getenv("FMASK_VERSION") == "5" else "v4"
-    )
+    fmask_version: FMASK_VERSION = "v5" if os.getenv("FMASK_VERSION") == "5" else "v4"
 
     try:
         pipeline = construct_pipeline(
             local_granule_dir=local_granule_dir,
             fmask_version=fmask_version,
-            upload=False,
         )
         print(pipeline)
         pipeline.run()
