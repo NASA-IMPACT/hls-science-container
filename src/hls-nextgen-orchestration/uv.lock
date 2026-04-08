@@ -239,12 +239,12 @@ dev = [
     { name = "mypy" },
     { name = "pytest" },
     { name = "ruff" },
+    { name = "types-psutil" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "hls-nextgen-orchestration", extra = ["dev"] },
-    { name = "types-psutil" },
 ]
 
 [package.metadata]
@@ -256,14 +256,12 @@ requires-dist = [
     { name = "psutil", specifier = ">=6.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9.0" },
+    { name = "types-psutil", marker = "extra == 'dev'", specifier = ">=7.2.2.20260408" },
 ]
 provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
-dev = [
-    { name = "hls-nextgen-orchestration", extras = ["dev"] },
-    { name = "types-psutil", specifier = ">=7.2.2.20260408" },
-]
+dev = [{ name = "hls-nextgen-orchestration", extras = ["dev"] }]
 
 [[package]]
 name = "idna"
