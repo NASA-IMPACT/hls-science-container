@@ -97,6 +97,7 @@ class NodeBase(ABC):
     name: str
     requires: ClassVar[Assets] = ()
     provides: ClassVar[Assets] = ()
+    instrument: ClassVar[bool] = False
 
     @abstractmethod
     def execute(self, context: TaskContext) -> None:
@@ -230,13 +231,20 @@ class Pipeline:
         """
         Executes the pipeline and returns the final context state.
         """
+        # Deferred import to break the circular dependency:
+        # metrics.py imports NodeBase/MappedTask from base.py, so a top-level
+        # import here would cause a partially-initialized module error.
+        from hls_nextgen_orchestration.metrics import MetricsCollector
+
         logger.info("--- Starting Pipeline Execution ---")
         context = TaskContext()
+        metrics = MetricsCollector()
 
         for i, node in enumerate(self.execution_order, 1):
             logger.info(f"Step {i}/{len(self.execution_order)}: {node.name}")
             try:
-                node.execute(context)
+                with metrics.collect(node):
+                    node.execute(context)
             except TaskFailure as e:
                 logger.warning(f"Pipeline stopped at step '{node.name}': {e}")
                 context.exit_code = e.exit_code
