@@ -234,6 +234,7 @@ class CheckSolarZenith(Task):
 class RunFmask(Task):
     """Run Fmask v4.7"""
 
+    instrument = True
     requires = (CONFIG, GRANULE_DIR)
     provides = (FMASK_BIN,)
 
@@ -269,6 +270,7 @@ class RunFmask(Task):
 class RunFmaskV5(Task):
     """Run Fmask v5 on a Landsat L1 granule directory."""
 
+    instrument = True
     requires = (CONFIG, GRANULE_DIR)
     provides = (FMASK_BIN,)
 
@@ -365,6 +367,7 @@ class ConvertToEspa(Task):
 class RunLaSRC(Task):
     """Run LaSRC to create atmospherically corrected surface reflectance estimates"""
 
+    instrument = True
     requires = (ESPA_XML, SOLAR_VALID)
     provides = (LASRC_DONE,)
 
