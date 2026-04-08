@@ -22,6 +22,8 @@ def aws_credentials():
     os.environ["AWS_SECURITY_TOKEN"] = "testing"
     os.environ["AWS_SESSION_TOKEN"] = "testing"
     os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
+    os.environ["AWS_REGION"] = "us-east-1"
+    os.environ.pop("AWS_PROFILE", None)
 
 
 @pytest.fixture
@@ -95,7 +97,6 @@ def metrics_env(
     logs_client.create_log_stream(logGroupName=log_group, logStreamName=log_stream)
     monkeypatch.setenv("METRIC_LOG_GROUP_NAME", log_group)
     monkeypatch.setenv("AWS_BATCH_JOB_ID", log_stream)
-    monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
     return logs_client
 
 
