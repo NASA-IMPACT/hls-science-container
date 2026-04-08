@@ -5,8 +5,8 @@ import os
 import sys
 from pathlib import Path
 
-from hls_nextgen_orchestration.base import Pipeline, PipelineBuilder
 from hls_nextgen_orchestration.constants import FMASK_VERSION
+from hls_nextgen_orchestration.pipeline import Pipeline, PipelineBuilder
 
 from .mapped_tasks import (
     AddFmaskSds,

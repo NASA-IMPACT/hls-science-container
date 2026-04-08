@@ -108,28 +108,25 @@ class MetricsCollector:
     dimension ``fmask_version=v5``).
     """
 
-    _log_group: str | None = field(
-        default_factory=lambda: os.environ.get("METRIC_LOG_GROUP_NAME"), init=False
+    log_group: str | None = field(
+        default_factory=lambda: os.environ.get("METRIC_LOG_GROUP_NAME")
     )
-    _job_id: str = field(
-        default_factory=lambda: os.environ.get("AWS_BATCH_JOB_ID", "local_job"),
-        init=False,
-    )
-    _experiment_dims: dict[str, str] = field(
+    experiment_dims: dict[str, str] = field(
         default_factory=lambda: {
             key.removeprefix(_EXPERIMENT_PREFIX).lower(): val
             for key, val in os.environ.items()
             if key.startswith(_EXPERIMENT_PREFIX)
         },
+    )
+    client: CloudWatchLogsClient = field(default_factory=lambda: boto3.client("logs"))
+    enabled: bool = field(init=False)
+    _job_id: str = field(
+        default_factory=lambda: os.environ.get("AWS_BATCH_JOB_ID", "local_job"),
         init=False,
     )
-    _logs: CloudWatchLogsClient = field(
-        default_factory=lambda: boto3.client("logs"), init=False
-    )
-    enabled: bool = field(init=False)
 
     def __post_init__(self) -> None:
-        self.enabled = bool(self._log_group)
+        self.enabled = bool(self.log_group)
 
     def collect(self, node: NodeBase) -> AbstractContextManager[_MetricsContext | None]:
         """Return a context manager that measures a task's execution.
@@ -153,7 +150,7 @@ class MetricsCollector:
         if isinstance(node, MappedTask) and "granule_id" in type(node).__dict__:
             fixed["granule_id"] = type(node).__dict__["granule_id"]
 
-        dims = {**fixed, **self._experiment_dims}
+        dims = {**fixed, **self.experiment_dims}
 
         record: dict[str, Any] = {
             "_aws": {
@@ -176,10 +173,10 @@ class MetricsCollector:
             "max_cpu_percent": round(sample.max_cpu_percent, 1),
         }
 
-        assert self._log_group is not None
+        assert self.log_group is not None
         try:
-            self._logs.put_log_events(
-                logGroupName=self._log_group,
+            self.client.put_log_events(
+                logGroupName=self.log_group,
                 logStreamName=self._job_id,
                 logEvents=[
                     {
