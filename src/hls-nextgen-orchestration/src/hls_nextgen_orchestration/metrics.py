@@ -85,11 +85,10 @@ class _MetricsContext:
     _poller: _PollingThread | None = field(default=None, init=False)
     _start: float = field(default=0.0, init=False)
 
-    def __enter__(self) -> _MetricsContext:
+    def __enter__(self) -> None:
         self._start = time.perf_counter()
         self._poller = _PollingThread()
         self._poller.start()
-        return self
 
     def __exit__(self, *_: object) -> None:
         runtime = time.perf_counter() - self._start
@@ -128,7 +127,7 @@ class MetricsCollector:
     def __post_init__(self) -> None:
         self.enabled = bool(self.log_group)
 
-    def collect(self, node: NodeBase) -> AbstractContextManager[_MetricsContext | None]:
+    def collect(self, node: NodeBase) -> AbstractContextManager[None]:
         """Return a context manager that measures a task's execution.
 
         Returns a no-op context manager if metrics are disabled or the node

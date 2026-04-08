@@ -25,16 +25,12 @@ class Pipeline:
     """
 
     execution_order: tuple[NodeBase, ...]
-    metrics: MetricsCollector = field(default_factory=MetricsCollector)
+    metrics: MetricsCollector
 
     def run(self) -> TaskContext:
         """
         Executes the pipeline and returns the final context state.
         """
-        # Deferred import to break the circular dependency:
-        # metrics.py imports NodeBase/MappedTask from base.py, so a top-level
-        # import here would cause a partially-initialized module error.
-
         logger.info("--- Starting Pipeline Execution ---")
         context = TaskContext()
 
@@ -168,10 +164,10 @@ class PipelineBuilder:
     def build(self, metrics: MetricsCollector | None = None) -> Pipeline:
         """Build the pipeline into a DAG"""
         logger.info("Building Pipeline...")
-        kwargs: dict[str, Any] = {"execution_order": tuple(self._topological_sort())}
-        if metrics:
-            kwargs["metrics"] = metrics
-        return Pipeline(**kwargs)
+        return Pipeline(
+            execution_order=tuple(self._topological_sort()),
+            metrics=metrics or MetricsCollector(),
+        )
 
     def visualize(self) -> str:
         """Render the pipeline as a Mermaid flowchart diagram string."""
