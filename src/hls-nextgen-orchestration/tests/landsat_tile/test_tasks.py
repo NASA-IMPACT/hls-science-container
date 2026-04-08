@@ -3,14 +3,12 @@ from __future__ import annotations
 import datetime as dt
 from collections.abc import Generator
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import boto3
 import pytest
-
-if TYPE_CHECKING:
-    from mypy_boto3_s3 import S3Client
+from mypy_boto3_s3 import S3Client
 
 from hls_nextgen_orchestration.landsat_tile.assets import (
     ANGLE_HDF,
@@ -110,7 +108,7 @@ def test_env_source(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     assert cfg.working_dir.exists()
 
 
-def test_download_pathrows(mock_config: EnvConfig, mock_aws_s3: S3Client) -> None:
+def test_download_pathrows(mock_config: EnvConfig, mocked_aws: None) -> None:
     """
     Test downloading Landsat atmospheric correction path/rows
     """
@@ -318,12 +316,11 @@ def test_process_vi(mock_binaries: Path, mock_config: EnvConfig) -> None:
 
 
 def test_upload_all_production(
-    mock_binaries: Path, mock_aws_s3: S3Client, mock_config: EnvConfig
+    mock_binaries: Path, s3_client: S3Client, mock_config: EnvConfig
 ) -> None:
     """Test production upload logic."""
-    s3: S3Client = boto3.client("s3", region_name="us-east-1")
-    s3.create_bucket(Bucket=BUCKET_OUT)
-    s3.create_bucket(Bucket=BUCKET_GIBS)
+    s3_client.create_bucket(Bucket=BUCKET_OUT)
+    s3_client.create_bucket(Bucket=BUCKET_GIBS)
 
     granule_id = f"HLS.L30.T{MGRS}.{DATE_STR_YYYYDOY}T{SCENE_TIME_STR}.v2.0"
     vi_id = granule_id.replace("HLS.L30", "HLS-VI.L30")
@@ -369,7 +366,7 @@ def test_upload_all_production(
     # Verify S3 Contents
     # 1. Main Product
     # Key structure: L30/data/{DATE_STR_YYYYDOY}/{granule_id}/product.tif
-    main_objs = s3.list_objects(
+    main_objs = s3_client.list_objects(
         Bucket=BUCKET_OUT, Prefix=f"L30/data/{DATE_STR_YYYYDOY}/{granule_id}"
     )
     main_keys = [o["Key"] for o in main_objs.get("Contents", [])]
@@ -379,7 +376,7 @@ def test_upload_all_production(
 
     # 2. GIBS
     # Key: L30/data/{DATE_STR_YYYYDOY}/id1/gibs.tif
-    gibs_objs = s3.list_objects(
+    gibs_objs = s3_client.list_objects(
         Bucket=BUCKET_GIBS, Prefix=f"L30/data/{DATE_STR_YYYYDOY}"
     )
     gibs_keys = [o["Key"] for o in gibs_objs.get("Contents", [])]
@@ -387,7 +384,7 @@ def test_upload_all_production(
 
     # 3. VI
     # Key: L30_VI/data/{DATE_STR_YYYYDOY}/{vi_id}/vi.tif
-    vi_objs = s3.list_objects(
+    vi_objs = s3_client.list_objects(
         Bucket=BUCKET_OUT, Prefix=f"L30_VI/data/{DATE_STR_YYYYDOY}/{vi_id}"
     )
     vi_keys = [o["Key"] for o in vi_objs.get("Contents", [])]
