@@ -3,67 +3,64 @@ from pathlib import Path
 
 import pytest
 
+from tests.mock_cli import (
+    cli_noop,
+    cli_touch_flag_arg,
+    cli_touch_last_arg,
+    cli_touch_nth_arg,
+    make_python_script,
+)
+
 # Mocks for external CLI tools used in the Landsat pipeline.
 
-DOWNLOAD_LANDSAT = """#!/bin/bash
-# usage: download_landsat bucket prefix dest_dir
-mkdir -p "$3"
-G=${GRANULE:-LC08_L1TP_000000_20200101_20200114_01_T1}
-touch "$3/${G}_MTL.txt"
-echo $G
-"""
+DOWNLOAD_LANDSAT = make_python_script("""
+import os
+import sys
+from pathlib import Path
 
-CHECK_SOLAR_ZENITH_LANDSAT = """#!/bin/bash
-echo "valid"
-"""
+bucket, prefix, dest_dir = sys.argv[1], sys.argv[2], Path(sys.argv[3])
+dest_dir.mkdir(parents=True, exist_ok=True)
+granule = os.environ.get("GRANULE", "LC08_L1TP_000000_20200101_20200114_01_T1")
+(dest_dir / f"{granule}_MTL.txt").touch()
+print(granule)
+""")
 
-RUN_FMASK = """#!/bin/bash
-echo "Mock Fmask running"
-"""
+CHECK_SOLAR_ZENITH_LANDSAT = cli_noop("valid")
 
-FMASK_V5 = """#!/bin/bash
-# usage: fmask --imagepath=<dir> --model=UPL
-for arg in "$@"; do
-    case "$arg" in
-        --imagepath=*|-i=*) imagepath="${arg#*=}" ;;
-    esac
-done
-imagepath="${imagepath%/}"
-basename=$(basename "$imagepath")
-touch "${imagepath}/${basename}_UPL.tif"
-"""
+RUN_FMASK = cli_noop()
 
-GDAL_TRANSLATE = """#!/bin/bash
-# The destination is always the last argument
-dest="${!#}"
-touch "$dest"
-"""
+FMASK_V5 = make_python_script("""
+import argparse
+from pathlib import Path
 
-CONVERT_LPGS_TO_ESPA = """#!/bin/bash
-G=${GRANULE:-LC08_L1TP_000000_20200101_20200114_01_T1}
-touch "${G}.xml"
-"""
+parser = argparse.ArgumentParser()
+parser.add_argument("--imagepath", "-i", required=True)
+parser.add_argument("--model", default="UPL")
+parser.add_argument("--dcloud", type=int, default=3)
+parser.add_argument("--dshadow", type=int, default=5)
+args = parser.parse_args()
 
-DO_LASRC_LANDSAT = """#!/bin/bash
-echo "Mock LaSRC running"
-"""
+image_dir = Path(args.imagepath)
+(image_dir / f"{image_dir.name}_{args.model}.tif").touch()
+""")
 
-CREATE_LANDSAT_SR_HDF_XML = """#!/bin/bash
-touch "$2"
-"""
+GDAL_TRANSLATE = cli_touch_last_arg()
 
-CONVERT_ESPA_TO_HDF = """#!/bin/bash
-for arg in "$@"; do
-    if [[ "$arg" == --hdf=* ]]; then
-        touch "${arg#*=}"
-    fi
-done
-"""
+CONVERT_LPGS_TO_ESPA = make_python_script("""
+import os
+from pathlib import Path
 
-LANDSAT_ADD_FMASK_SDS = """#!/bin/bash
-dest="${!#}"
-touch "$dest"
-"""
+granule = os.environ.get("GRANULE", "LC08_L1TP_000000_20200101_20200114_01_T1")
+Path(f"{granule}.xml").touch()
+""")
+
+DO_LASRC_LANDSAT = cli_noop()
+
+CREATE_LANDSAT_SR_HDF_XML = cli_touch_nth_arg(2)
+
+CONVERT_ESPA_TO_HDF = cli_touch_flag_arg("--hdf")
+
+LANDSAT_ADD_FMASK_SDS = cli_touch_last_arg()
 
 SCRIPTS = {
     "download_landsat": DOWNLOAD_LANDSAT,
