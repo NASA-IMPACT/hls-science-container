@@ -8,6 +8,7 @@
 **/.DS_Store
 
 scripts/.docker_bash_history
+scripts/.cache/
 
 # ===== Github default Python.gitignore below
 # Byte-compiled / optimized / DLL files

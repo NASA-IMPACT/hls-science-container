@@ -21,7 +21,7 @@ hls-manifest = { git = "https://github.com/NASA-IMPACT/hls-manifest", tag = "v2.
 metadata-creator = { git = "https://github.com/NASA-IMPACT/hls-metadata", tag = "v2.8" }
 hls-thumbnails = { git = "https://github.com/NASA-IMPACT/hls-thumbnails", tag=  "v1.3" }
 hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", tag = "v1.11.3" }
-hls-vi = { url = "https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20/hls_vi-1.20.tar.gz" }
+hls-vi = { url = "https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.1/hls_vi-1.20.1-py3-none-any.whl" }
 
 [dependencies]
 # Dependencies we source via Conda for easier install
@@ -36,6 +36,8 @@ pyproj = ">=3.7.2,<4"
 shapely = ">=2,<3"
 zip = "*"
 unzip = "*"
+# Fmask v5
+fmask = { git = "https://github.com/NASA-IMPACT/fmask-v5", branch = "feat/rattler-recipe" }
 
 [feature.dev.dependencies]
 ruff = "*"

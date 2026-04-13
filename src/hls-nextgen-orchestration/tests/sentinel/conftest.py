@@ -54,6 +54,19 @@ touch "$out"
 echo "Derive angles complete: $out"
 """)
 
+FMASK_V5 = make_script("""
+# usage: fmask --imagepath=<dir> --model=UPL [--print_summary=yes]
+for arg in "$@"; do
+    case "$arg" in
+        --imagepath=*|-i=*) imagepath="${arg#*=}" ;;
+    esac
+done
+imagepath="${imagepath%/}"
+basename=$(basename "$imagepath" .SAFE)
+touch "${imagepath}/${basename}_UPL.tif"
+echo "Summary: Cloud = 2.50%, Shadow = 1.20%, Snow = 0.00%, Clear = 96.30%"
+""")
+
 GDAL_TRANSLATE = make_script("""
 # usage: gdal_translate ... input output
 out="${@: -1}"
@@ -297,6 +310,7 @@ SENTINEL_SCRIPTS = {
     "check_sentinel_clouds": CHECK_SENTINEL_CLOUDS,
     "run_Fmask.sh": RUN_FMASK_SH_CLEAR,
     "parse_fmask": PARSE_FMASK,
+    "fmask": FMASK_V5,
     "unpackage_s2.py": UNPACKAGE_S2,
     "convert_sentinel_to_espa": CONVERT_SENTINEL_TO_ESPA,
     "do_lasrc_sentinel.py": DO_LASRC_SENTINEL,

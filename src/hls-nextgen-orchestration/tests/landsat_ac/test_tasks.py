@@ -38,6 +38,7 @@ from hls_nextgen_orchestration.landsat_ac.tasks import (
     ParseMetadata,
     RenameAngleBands,
     RunFmask,
+    RunFmaskV5,
     RunLaSRC,
     UploadResults,
 )
@@ -109,6 +110,13 @@ def test_check_solar_zenith(mock_binaries: Path, mock_config: EnvConfig) -> None
 
 def test_run_fmask(mock_binaries: Path, mock_config: EnvConfig) -> None:
     task = RunFmask("test_fmask")
+    outputs = task.run({CONFIG: mock_config, GRANULE_DIR: mock_config.granule_dir})
+    assert outputs[FMASK_BIN].exists()
+    assert outputs[FMASK_BIN].name == "fmask.bin"
+
+
+def test_run_fmask_v5(mock_binaries: Path, mock_config: EnvConfig) -> None:
+    task = RunFmaskV5("test_fmask_v5")
     outputs = task.run({CONFIG: mock_config, GRANULE_DIR: mock_config.granule_dir})
     assert outputs[FMASK_BIN].exists()
     assert outputs[FMASK_BIN].name == "fmask.bin"
