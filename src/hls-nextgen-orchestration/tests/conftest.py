@@ -94,7 +94,6 @@ def metrics_env(
     log_stream: str,
 ) -> CloudWatchLogsClient:
     logs_client.create_log_group(logGroupName=log_group)
-    logs_client.create_log_stream(logGroupName=log_group, logStreamName=log_stream)
     monkeypatch.setenv("METRIC_LOG_GROUP_NAME", log_group)
     monkeypatch.setenv("AWS_BATCH_JOB_ID", log_stream)
     return logs_client

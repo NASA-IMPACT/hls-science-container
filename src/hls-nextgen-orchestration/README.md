@@ -103,8 +103,8 @@ Three metrics are captured per task execution:
 | `max_cpu_percent` | Percent | Maximum combined CPU usage across the process tree |
 
 **Enabling metrics** — set the `METRIC_LOG_GROUP_NAME` environment variable to an existing CloudWatch Logs
-log group. The log stream is taken from `AWS_BATCH_JOB_ID` (defaulting to `local_job`). The log group and
-stream must already exist; the framework will not create them.
+log group. The log stream is taken from `AWS_BATCH_JOB_ID` (defaulting to `local_job`). The log group
+must already exist. The log stream is created automatically by the framework on startup.
 
 **Experiment dimensions** — any environment variable prefixed with `HLS_EXPERIMENT_` is added as a CloudWatch
 dimension, enabling side-by-side comparisons in dashboards. For example:

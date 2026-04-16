@@ -126,6 +126,14 @@ class MetricsCollector:
 
     def __post_init__(self) -> None:
         self.enabled = bool(self.log_group)
+        if self.log_group:
+            try:
+                self.client.create_log_stream(
+                    logGroupName=self.log_group,
+                    logStreamName=self._job_id,
+                )
+            except self.client.exceptions.ResourceAlreadyExistsException:
+                pass
 
     def collect(self, node: NodeBase) -> AbstractContextManager[None]:
         """Return a context manager that measures a task's execution.
