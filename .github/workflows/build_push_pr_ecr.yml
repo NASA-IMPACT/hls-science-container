@@ -74,8 +74,10 @@ jobs:
 
       - name: Push to ECR
         if: success()
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
         run: |
-          for tag in ${{ steps.meta.outputs.tags }}; do
-            docker tag ${{ env.ECR_REPOSITORY }}:local $tag
-            docker push $tag
-          done
+          while IFS= read -r tag; do
+            docker tag ${{ env.ECR_REPOSITORY }}:local "$tag"
+            docker push "$tag"
+          done <<< "$TAGS"
