@@ -16,14 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # We run out of space w/o cleanup. This is less comprehensive but faster
-      # than `jlumbroso/free-disk-space`
-      - name: Cleanup disk space
-        run: |
-          sudo rm -rf /usr/local/lib/android &
-          sudo rm -rf /usr/share/dotnet &
-          sudo rm -rf /opt/ghc &
-          echo "Cleanup started in background..."
+      - uses: ./.github/actions/free-disk-space
 
       - uses: prefix-dev/setup-pixi@v0.9.3
         with:
@@ -81,16 +74,8 @@ jobs:
 
       - name: Push to ECR
         if: success()
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          target: prod
-          push: true
-          provenance: false
-          sbom: false
-          build-args: |
-            PLATFORM=${{ env.BUILD_PLATFORM }}
-            FMASK_INSTALLER=${{ env.FMASK_INSTALLER }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
+        run: |
+          for tag in ${{ steps.meta.outputs.tags }}; do
+            docker tag ${{ env.ECR_REPOSITORY }}:local $tag
+            docker push $tag
+          done
