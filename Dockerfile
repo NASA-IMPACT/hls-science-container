@@ -32,7 +32,7 @@ RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
 
 # ----- Install Fmask v5 models and ancillary data
 RUN wget -q -O /tmp/fmask_5_0_1.zip https://fmask4installer.s3.us-west-2.amazonaws.com/fmask_5_0_1.zip && \
-    pixi run fmask-data install /tmp/fmask_5_0_1.zip
+    pixi run --frozen fmask-data install /tmp/fmask_5_0_1.zip
 
 # ===== Development installation
 FROM build AS dev
