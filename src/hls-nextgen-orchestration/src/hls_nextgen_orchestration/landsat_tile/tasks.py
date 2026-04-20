@@ -18,7 +18,7 @@ from hls_nextgen_orchestration.base import (
     TaskFailure,
 )
 from hls_nextgen_orchestration.granules import HlsGranule
-from hls_nextgen_orchestration.utils import validate_command
+from hls_nextgen_orchestration.utils import s3_client, validate_command
 
 from .assets import (
     ANGLE_HDF,
@@ -125,6 +125,7 @@ class EnvSource(DataSource):
             gibs_bucket=os.environ["GIBS_OUTPUT_BUCKET"],
             working_dir=working_dir,
             debug_bucket=os.environ.get("DEBUG_BUCKET"),
+            gcc_role_arn=os.environ.get("GCC_ROLE_ARN"),
         )
 
         if config.working_dir.exists() and self.purge_working_dir:
@@ -750,7 +751,7 @@ class UploadAll(Task):
         gridded_hdf: Path = inputs[GRIDDED_HDF]
         manifest_file: Path = inputs[SR_MANIFEST_FILE]
 
-        s3: S3Client = boto3.client("s3")
+        s3: S3Client = s3_client(config.gcc_role_arn)
 
         if not config.debug_bucket:
             self._upload_production(

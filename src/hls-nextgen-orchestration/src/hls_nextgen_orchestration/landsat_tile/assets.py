@@ -49,6 +49,7 @@ class EnvConfig:
     gibs_bucket: str
     working_dir: Path
     debug_bucket: str | None = None
+    gcc_role_arn: str | None = None
 
     @property
     def year(self) -> str:

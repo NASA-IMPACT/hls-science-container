@@ -23,6 +23,7 @@ class EnvConfig:
     working_dir: Path
     ac_code: str
     debug_bucket: str | None = None
+    gcc_role_arn: str | None = None
     replace_existing: bool = False
 
     @property

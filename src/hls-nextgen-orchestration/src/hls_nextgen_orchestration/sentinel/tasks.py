@@ -13,7 +13,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import boto3
 
 from hls_nextgen_orchestration.base import (
     Asset,
@@ -26,7 +25,7 @@ from hls_nextgen_orchestration.common import Paths
 from hls_nextgen_orchestration.common.commands import run_hdf_to_cog
 from hls_nextgen_orchestration.constants import HLS_VERSION, HlsVersion
 from hls_nextgen_orchestration.granules import HlsGranule, Sentinel2Granule
-from hls_nextgen_orchestration.utils import validate_command
+from hls_nextgen_orchestration.utils import s3_client, validate_command
 
 from .assets import (
     CMR_XML,
@@ -111,6 +110,7 @@ class EnvSource(DataSource):
             ac_code=os.environ["ACCODE"],
             working_dir=working_dir,
             debug_bucket=os.getenv("DEBUG_BUCKET"),
+            gcc_role_arn=os.getenv("GCC_ROLE_ARN"),
             replace_existing=os.getenv("REPLACE_EXISTING", "false").lower() == "true",
         )
 
@@ -635,7 +635,7 @@ class UploadAll(Task):
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config = bundle[CONFIG]
-        s3 = boto3.client("s3")
+        s3 = s3_client(config.gcc_role_arn)
 
         if config.debug_bucket:
             self._upload_debug(s3, bundle, config)
