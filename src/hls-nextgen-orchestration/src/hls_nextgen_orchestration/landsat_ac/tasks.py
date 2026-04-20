@@ -51,6 +51,7 @@ class EnvSource(DataSource):
 
     provides = (CONFIG,)
 
+    granule_id: str
     scratch_dir: Path = field(
         default_factory=lambda: Path(os.getenv("SCRATCH_DIR", "/var/scratch"))
     )
@@ -60,14 +61,13 @@ class EnvSource(DataSource):
 
     def fetch(self) -> dict[Asset[EnvConfig], EnvConfig]:
         job_id = os.environ.get("AWS_BATCH_JOB_ID", "local_job")
-        granule = os.environ["GRANULE"]
 
         working_dir = self.working_dir or self.scratch_dir / job_id
-        granule_dir = self.granule_dir or working_dir / granule
+        granule_dir = self.granule_dir or working_dir / self.granule_id
 
         config = EnvConfig(
             job_id=job_id,
-            granule=granule,
+            granule=self.granule_id,
             input_bucket=os.environ["INPUT_BUCKET"],
             output_bucket=os.environ["OUTPUT_BUCKET"],
             prefix=os.environ["PREFIX"],
