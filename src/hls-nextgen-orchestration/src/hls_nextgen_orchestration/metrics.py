@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 import boto3
 import psutil
 
-from hls_nextgen_orchestration.base import MappedTask, NodeBase
+from hls_nextgen_orchestration.base import NodeBase
 
 if TYPE_CHECKING:
     from mypy_boto3_logs import CloudWatchLogsClient
@@ -117,6 +117,7 @@ class MetricsCollector:
             if key.startswith(_EXPERIMENT_PREFIX)
         },
     )
+    pipeline_dims: dict[str, str] = field(default_factory=dict)
     client: CloudWatchLogsClient = field(default_factory=lambda: boto3.client("logs"))
     enabled: bool = field(init=False)
     _job_id: str = field(
@@ -154,10 +155,10 @@ class MetricsCollector:
             "task_name": node.name,
             "job_id": self._job_id,
         }
-        if isinstance(node, MappedTask) and "granule_id" in type(node).__dict__:
-            fixed["granule_id"] = type(node).__dict__["granule_id"]
+        if granule_id := getattr(type(node), "granule_id", None):
+            fixed["input_granule_id"] = granule_id
 
-        dims = {**fixed, **self.experiment_dims}
+        dims = {**fixed, **self.pipeline_dims, **self.experiment_dims}
 
         record: dict[str, Any] = {
             "_aws": {

@@ -4,6 +4,7 @@ import logging
 import sys
 from pathlib import Path
 
+from hls_nextgen_orchestration.metrics import MetricsCollector
 from hls_nextgen_orchestration.pipeline import Pipeline, PipelineBuilder
 
 from .tasks import (
@@ -63,7 +64,7 @@ def construct_pipeline(
         .add(ProcessGibs("ProcessGibs"))
         .add(ProcessVi("ProcessVi"))
         .add(UploadAll("UploadAll"))
-        .build()
+        .build(metrics=MetricsCollector(pipeline_dims={"workflow": "landsat-tile"}))
     )
 
 

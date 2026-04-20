@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from pathlib import Path
 
 from hls_nextgen_orchestration.constants import FMASK_VERSION
+from hls_nextgen_orchestration.metrics import MetricsCollector
 from hls_nextgen_orchestration.pipeline import Pipeline, PipelineBuilder
 
 from .tasks import (
@@ -27,6 +29,7 @@ from .tasks import (
 
 
 def construct_pipeline(
+    granule_id: str,
     working_dir: Path | None = None,
     granule_dir: Path | None = None,
     local_granule_dir: Path | None = None,
@@ -37,6 +40,8 @@ def construct_pipeline(
 
     Parameters
     ----------
+    granule_id
+        Input Landsat granule ID.
     working_dir
         Override local processing directory
     granule_dir
@@ -68,7 +73,14 @@ def construct_pipeline(
 
     builder = (
         PipelineBuilder()
-        .add(EnvSource("EnvConfig", working_dir=working_dir, granule_dir=granule_dir))
+        .add(
+            EnvSource(
+                "EnvConfig",
+                granule_id=granule_id,
+                working_dir=working_dir,
+                granule_dir=granule_dir,
+            )
+        )
         .add(granule_task)
         .add(ParseMetadata("Metadata"))
         .add(CheckSolarZenith("CheckSolar"))
@@ -85,19 +97,23 @@ def construct_pipeline(
     if upload:
         builder = builder.add(UploadResults("Upload"))
 
-    return builder.build()
+    return builder.build(
+        metrics=MetricsCollector(
+            pipeline_dims={"workflow": "landsat-ac", "input_granule_id": granule_id}
+        )
+    )
 
 
 if __name__ == "__main__":
-    import os
-
     logging.basicConfig(level=logging.INFO)
 
+    granule_id = os.environ["GRANULE"]
     local_granule_dir = Path(_) if (_ := os.getenv("LOCAL_GRANULE_DIR")) else None
     fmask_version: FMASK_VERSION = "v5" if os.getenv("FMASK_VERSION") == "5" else "v4"
 
     try:
         pipeline = construct_pipeline(
+            granule_id=granule_id,
             local_granule_dir=local_granule_dir,
             fmask_version=fmask_version,
         )
