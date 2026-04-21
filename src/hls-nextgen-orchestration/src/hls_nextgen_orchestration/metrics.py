@@ -26,74 +26,69 @@ _NAMESPACE = "HLS/Tasks"
 @dataclass
 class _Sample:
     peak_memory_mb: float = 0.0
-    max_cpu_percent: float = 0.0
+    avg_cpu_percent: float = 0.0
 
 
 @dataclass(eq=False)
 class _PollingThread(threading.Thread):
-    """Polls the current process tree for peak memory and max CPU."""
+    """Polls the current process tree for peak memory; measures avg CPU via cpu_times().
+
+    CPU is measured by diffing proc.cpu_times() at start and stop rather than
+    polling cpu_percent(). On Linux, cpu_times() includes children_user and
+    children_system — the transitively accumulated CPU of all waited-for
+    children (grandchildren roll up through the shell that reaps them). This
+    naturally captures subprocess CPU without needing to track child PIDs.
+    """
 
     interval: float = 1.0
     sample: _Sample = field(default_factory=_Sample, init=False)
     _stop: threading.Event = field(default_factory=threading.Event, init=False)
     _proc: psutil.Process = field(default_factory=psutil.Process, init=False)
-    # Keyed by pid so the same Process object is reused across polls.
-    # cpu_percent(interval=None) measures elapsed CPU time between calls on the
-    # same object. Fresh objects always return 0, so we must not recreate them.
-    _known: dict[int, psutil.Process] = field(default_factory=dict, init=False)
+    _cpu_start: float = field(default=0.0, init=False)
+    _wall_start: float = field(default=0.0, init=False)
 
     def __post_init__(self) -> None:
         super().__init__(daemon=True)
 
-    def _refresh_procs(self) -> list[psutil.Process]:
-        """Return known live processes, priming any that are new."""
-        try:
-            current = {
-                p.pid: p for p in [self._proc] + self._proc.children(recursive=True)
-            }
-        except psutil.NoSuchProcess:
-            return list(self._known.values())
-
-        for pid, proc in current.items():
-            if pid not in self._known:
-                try:
-                    proc.cpu_percent(interval=None)  # prime; first reading is always 0
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    pass
-                self._known[pid] = proc
-
-        # Drop processes that have exited
-        self._known = {pid: self._known[pid] for pid in self._known if pid in current}
-        return list(self._known.values())
+    def _cpu_secs(self) -> float:
+        t = self._proc.cpu_times()
+        return (
+            t.user
+            + t.system
+            + getattr(t, "children_user", 0.0)
+            + getattr(t, "children_system", 0.0)
+        )
 
     def run(self) -> None:
-        # Prime the main process so the first real poll has a baseline.
-        self._proc.cpu_percent(interval=None)
-        self._known[self._proc.pid] = self._proc
-
+        self._wall_start = time.monotonic()
+        self._cpu_start = self._cpu_secs()
         while not self._stop.wait(self.interval):
             self._poll()
 
     def _poll(self) -> None:
         try:
-            procs = self._refresh_procs()
+            procs = [self._proc] + self._proc.children(recursive=True)
             rss = 0
-            cpu = 0.0
             for p in procs:
                 try:
-                    rss += p.memory_info().rss
-                    cpu += p.cpu_percent(interval=None)
+                    with p.oneshot():
+                        rss += p.memory_info().rss
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
-            mb = rss / (1024 * 1024)
-            self.sample.peak_memory_mb = max(self.sample.peak_memory_mb, mb)
-            self.sample.max_cpu_percent = max(self.sample.max_cpu_percent, cpu)
+            self.sample.peak_memory_mb = max(
+                self.sample.peak_memory_mb, rss / (1024 * 1024)
+            )
         except Exception:
             logger.debug("Metrics poll error", exc_info=True)
 
     def stop(self) -> _Sample:
         self._stop.set()
         self.join()
+        wall = time.monotonic() - self._wall_start
+        if wall >= self.interval:
+            self.sample.avg_cpu_percent = (
+                (self._cpu_secs() - self._cpu_start) / wall * 100
+            )
         return self.sample
 
 
@@ -191,7 +186,7 @@ class MetricsCollector:
                         "Metrics": [
                             {"Name": "runtime_seconds", "Unit": "Seconds"},
                             {"Name": "peak_memory_mb", "Unit": "Megabytes"},
-                            {"Name": "max_cpu_percent", "Unit": "Percent"},
+                            {"Name": "avg_cpu_percent", "Unit": "Percent"},
                         ],
                     }
                 ],
@@ -199,7 +194,7 @@ class MetricsCollector:
             **dims,
             "runtime_seconds": round(runtime, 3),
             "peak_memory_mb": round(sample.peak_memory_mb, 1),
-            "max_cpu_percent": round(sample.max_cpu_percent, 1),
+            "avg_cpu_percent": round(sample.avg_cpu_percent, 1),
         }
 
         assert self.log_group is not None
@@ -218,7 +213,7 @@ class MetricsCollector:
                 f"Emitted metrics for {node.name}: "
                 f"runtime={runtime:.1f}s "
                 f"peak_mem={sample.peak_memory_mb:.0f}MB "
-                f"max_cpu={sample.max_cpu_percent:.0f}%"
+                f"avg_cpu={sample.avg_cpu_percent:.0f}%"
             )
         except Exception:
             logger.warning("Failed to emit task metrics", exc_info=True)

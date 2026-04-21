@@ -130,7 +130,7 @@ def test_emit_sends_emf_payload(
     assert record["job_id"] == log_stream
     assert "runtime_seconds" in record
     assert "peak_memory_mb" in record
-    assert "max_cpu_percent" in record
+    assert "avg_cpu_percent" in record
     assert "_aws" in record
 
 
