@@ -37,25 +37,46 @@ class _PollingThread(threading.Thread):
     sample: _Sample = field(default_factory=_Sample, init=False)
     _stop: threading.Event = field(default_factory=threading.Event, init=False)
     _proc: psutil.Process = field(default_factory=psutil.Process, init=False)
+    # Keyed by pid so the same Process object is reused across polls.
+    # cpu_percent(interval=None) measures elapsed CPU time between calls on the
+    # same object. Fresh objects always return 0, so we must not recreate them.
+    _known: dict[int, psutil.Process] = field(default_factory=dict, init=False)
 
     def __post_init__(self) -> None:
         super().__init__(daemon=True)
 
+    def _refresh_procs(self) -> list[psutil.Process]:
+        """Return known live processes, priming any that are new."""
+        try:
+            current = {
+                p.pid: p for p in [self._proc] + self._proc.children(recursive=True)
+            }
+        except psutil.NoSuchProcess:
+            return list(self._known.values())
+
+        for pid, proc in current.items():
+            if pid not in self._known:
+                try:
+                    proc.cpu_percent(interval=None)  # prime; first reading is always 0
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+                self._known[pid] = proc
+
+        # Drop processes that have exited
+        self._known = {pid: self._known[pid] for pid in self._known if pid in current}
+        return list(self._known.values())
+
     def run(self) -> None:
-        # Prime cpu_percent — first call always returns 0.0
+        # Prime the main process so the first real poll has a baseline.
         self._proc.cpu_percent(interval=None)
-        for child in self._proc.children(recursive=True):
-            try:
-                child.cpu_percent(interval=None)
-            except psutil.NoSuchProcess:
-                pass
+        self._known[self._proc.pid] = self._proc
 
         while not self._stop.wait(self.interval):
             self._poll()
 
     def _poll(self) -> None:
         try:
-            procs = [self._proc] + self._proc.children(recursive=True)
+            procs = self._refresh_procs()
             rss = 0
             cpu = 0.0
             for p in procs:
