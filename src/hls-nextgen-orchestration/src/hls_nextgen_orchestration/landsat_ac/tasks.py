@@ -122,21 +122,25 @@ class DownloadGranule(Task):
         )
         downloaded_granule_id = result.stdout.strip()
 
+        granule_dir = config.granule_dir
         if downloaded_granule_id != config.granule:
             logger.info(
                 f"Downloaded an updated granule with ID={downloaded_granule_id}"
             )
+            # Fmask v5 derives its expected MTL path as folder_name + "_MTL.txt",
+            # so the directory must be named after the actual granule ID.
+            granule_dir = config.granule_dir.parent / downloaded_granule_id
+            config.granule_dir.rename(granule_dir)
 
-        # Update the configuration with the actual ID found by the downloader.
-        updated_config = replace(config, granule=downloaded_granule_id)
+        updated_config = replace(config, granule=downloaded_granule_id, granule_dir=granule_dir)
 
-        mtl_path = config.granule_dir / f"{updated_config.granule}_MTL.txt"
+        mtl_path = granule_dir / f"{downloaded_granule_id}_MTL.txt"
         if not mtl_path.exists():
             raise RuntimeError(f"Output file missing: {mtl_path}")
 
         return {
             CONFIG: updated_config,
-            GRANULE_DIR: config.granule_dir,
+            GRANULE_DIR: granule_dir,
             MTL_FILE: mtl_path,
         }
 
