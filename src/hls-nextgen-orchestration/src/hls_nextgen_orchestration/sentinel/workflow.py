@@ -5,8 +5,9 @@ import os
 import sys
 from pathlib import Path
 
-from hls_nextgen_orchestration.base import Pipeline, PipelineBuilder
 from hls_nextgen_orchestration.constants import FMASK_VERSION
+from hls_nextgen_orchestration.metrics import MetricsCollector
+from hls_nextgen_orchestration.pipeline import Pipeline, PipelineBuilder
 
 from .mapped_tasks import (
     AddFmaskSds,
@@ -142,7 +143,9 @@ def construct_pipeline(
     if upload:
         builder = builder.add(UploadAll("Upload"))
 
-    return builder.build()
+    return builder.build(
+        metrics=MetricsCollector(pipeline_dims={"workflow": "sentinel-ac"})
+    )
 
 
 if __name__ == "__main__":

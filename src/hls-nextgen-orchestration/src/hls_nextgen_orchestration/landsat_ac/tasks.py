@@ -51,6 +51,7 @@ class EnvSource(DataSource):
 
     provides = (CONFIG,)
 
+    granule_id: str
     scratch_dir: Path = field(
         default_factory=lambda: Path(os.getenv("SCRATCH_DIR", "/var/scratch"))
     )
@@ -60,14 +61,13 @@ class EnvSource(DataSource):
 
     def fetch(self) -> dict[Asset[EnvConfig], EnvConfig]:
         job_id = os.environ.get("AWS_BATCH_JOB_ID", "local_job")
-        granule = os.environ["GRANULE"]
 
         working_dir = self.working_dir or self.scratch_dir / job_id
-        granule_dir = self.granule_dir or working_dir / granule
+        granule_dir = self.granule_dir or working_dir / self.granule_id
 
         config = EnvConfig(
             job_id=job_id,
-            granule=granule,
+            granule=self.granule_id,
             input_bucket=os.environ["INPUT_BUCKET"],
             output_bucket=os.environ["OUTPUT_BUCKET"],
             prefix=os.environ["PREFIX"],
@@ -122,21 +122,27 @@ class DownloadGranule(Task):
         )
         downloaded_granule_id = result.stdout.strip()
 
+        granule_dir = config.granule_dir
         if downloaded_granule_id != config.granule:
             logger.info(
                 f"Downloaded an updated granule with ID={downloaded_granule_id}"
             )
+            # Fmask v5 derives its expected MTL path as folder_name + "_MTL.txt",
+            # so the directory must be named after the actual granule ID.
+            granule_dir = config.granule_dir.parent / downloaded_granule_id
+            config.granule_dir.rename(granule_dir)
 
-        # Update the configuration with the actual ID found by the downloader.
-        updated_config = replace(config, granule=downloaded_granule_id)
+        updated_config = replace(
+            config, granule=downloaded_granule_id, granule_dir=granule_dir
+        )
 
-        mtl_path = config.granule_dir / f"{updated_config.granule}_MTL.txt"
+        mtl_path = granule_dir / f"{downloaded_granule_id}_MTL.txt"
         if not mtl_path.exists():
             raise RuntimeError(f"Output file missing: {mtl_path}")
 
         return {
             CONFIG: updated_config,
-            GRANULE_DIR: config.granule_dir,
+            GRANULE_DIR: granule_dir,
             MTL_FILE: mtl_path,
         }
 
@@ -234,6 +240,7 @@ class CheckSolarZenith(Task):
 class RunFmask(Task):
     """Run Fmask v4.7"""
 
+    instrument = True
     requires = (CONFIG, GRANULE_DIR)
     provides = (FMASK_BIN,)
 
@@ -269,6 +276,7 @@ class RunFmask(Task):
 class RunFmaskV5(Task):
     """Run Fmask v5 on a Landsat L1 granule directory."""
 
+    instrument = True
     requires = (CONFIG, GRANULE_DIR)
     provides = (FMASK_BIN,)
 
@@ -365,6 +373,7 @@ class ConvertToEspa(Task):
 class RunLaSRC(Task):
     """Run LaSRC to create atmospherically corrected surface reflectance estimates"""
 
+    instrument = True
     requires = (ESPA_XML, SOLAR_VALID)
     provides = (LASRC_DONE,)
 

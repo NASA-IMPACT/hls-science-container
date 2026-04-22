@@ -15,7 +15,7 @@ RUN apt update && \
     rm -rf /var/lib/apt/lists/*
 
 # ----- Install Fmask4
-RUN wget -q -O /tmp/Fmask.install https://fmask4installer.s3.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install && \
+RUN wget -q -O /tmp/Fmask.install https://fmask4installer.s3.us-west-2.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install && \
     chmod +x /tmp/Fmask.install && \
     mkdir -p /opt && \
     /tmp/Fmask.install -destinationFolder /opt/fmask -agreeToLicense yes -mode silent && \
@@ -31,8 +31,8 @@ RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
     echo 'exec "$@"' >> /app/entrypoint.sh
 
 # ----- Install Fmask v5 models and ancillary data
-RUN wget -q -O /tmp/fmask_5_0_1.zip https://fmask4installer.s3.amazonaws.com/fmask_5_0_1.zip && \
-    pixi run fmask-data install /tmp/fmask_5_0_1.zip
+RUN wget -q -O /tmp/fmask_5_0_1.zip https://fmask4installer.s3.us-west-2.amazonaws.com/fmask_5_0_1.zip && \
+    pixi run --frozen fmask-data install /tmp/fmask_5_0_1.zip
 
 # ===== Development installation
 FROM build AS dev

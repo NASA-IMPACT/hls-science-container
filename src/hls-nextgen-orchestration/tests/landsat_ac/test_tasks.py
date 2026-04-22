@@ -70,13 +70,12 @@ def mock_config(tmp_path: Path) -> Generator[EnvConfig, None, None]:
 def test_env_source(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """Test environment variable parsing."""
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
-    monkeypatch.setenv("GRANULE", GRANULE)
     monkeypatch.setenv("INPUT_BUCKET", BUCKET_IN)
     monkeypatch.setenv("OUTPUT_BUCKET", BUCKET_OUT)
     monkeypatch.setenv("PREFIX", "L8")
     monkeypatch.setenv("ACCODE", "LaSRC")
 
-    source = EnvSource("test_source", scratch_dir=tmp_path)
+    source = EnvSource("test_source", granule_id=GRANULE, scratch_dir=tmp_path)
     result = source.fetch()
 
     assert CONFIG in result
@@ -248,7 +247,7 @@ def test_add_fmask_sds(mock_binaries: Path, mock_config: EnvConfig) -> None:
     assert outputs[FINAL_HDF].name == "OUTPUT_GRANULE.hdf"
 
 
-def test_upload_results(mock_aws_s3, mock_config) -> None:
+def test_upload_results(mocked_aws: None, mock_config) -> None:
     s3: S3Client = boto3.client("s3", region_name="us-east-1")
     s3.create_bucket(Bucket=BUCKET_OUT)
 
