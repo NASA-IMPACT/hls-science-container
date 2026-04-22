@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 import boto3
 import psutil
 
-from hls_nextgen_orchestration.base import NodeBase
+from hls_nextgen_orchestration.base import NodeBase, TaskFailure
 
 if TYPE_CHECKING:
     from mypy_boto3_logs import CloudWatchLogsClient
@@ -27,6 +27,7 @@ _NAMESPACE = "HLS/Tasks"
 class _Sample:
     peak_memory_mb: float = 0.0
     avg_cpu_percent: float = 0.0
+    exit_code: int = 0
 
 
 @dataclass(eq=False)
@@ -106,9 +107,20 @@ class _MetricsContext:
         self._poller = _PollingThread()
         self._poller.start()
 
-    def __exit__(self, *_: object) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: object,
+    ) -> None:
         runtime = time.perf_counter() - self._start
         sample = self._poller.stop() if self._poller else _Sample()
+        if exc_val is None:
+            sample.exit_code = 0
+        elif isinstance(exc_val, TaskFailure):
+            sample.exit_code = exc_val.exit_code
+        else:
+            sample.exit_code = 1
         self.collector._emit(self.node, runtime, sample)
 
 
@@ -187,6 +199,7 @@ class MetricsCollector:
                             {"Name": "runtime_seconds", "Unit": "Seconds"},
                             {"Name": "peak_memory_mb", "Unit": "Megabytes"},
                             {"Name": "avg_cpu_percent", "Unit": "Percent"},
+                            {"Name": "exit_code", "Unit": "None"},
                         ],
                     }
                 ],
@@ -195,6 +208,7 @@ class MetricsCollector:
             "runtime_seconds": round(runtime, 3),
             "peak_memory_mb": round(sample.peak_memory_mb, 1),
             "avg_cpu_percent": round(sample.avg_cpu_percent, 1),
+            "exit_code": sample.exit_code,
         }
 
         assert self.log_group is not None
@@ -213,7 +227,8 @@ class MetricsCollector:
                 f"Emitted metrics for {node.name}: "
                 f"runtime={runtime:.1f}s "
                 f"peak_mem={sample.peak_memory_mb:.0f}MB "
-                f"avg_cpu={sample.avg_cpu_percent:.0f}%"
+                f"avg_cpu={sample.avg_cpu_percent:.0f}% "
+                f"exit_code={sample.exit_code}"
             )
         except Exception:
             logger.warning("Failed to emit task metrics", exc_info=True)

@@ -132,7 +132,9 @@ class DownloadGranule(Task):
             granule_dir = config.granule_dir.parent / downloaded_granule_id
             config.granule_dir.rename(granule_dir)
 
-        updated_config = replace(config, granule=downloaded_granule_id, granule_dir=granule_dir)
+        updated_config = replace(
+            config, granule=downloaded_granule_id, granule_dir=granule_dir
+        )
 
         mtl_path = granule_dir / f"{downloaded_granule_id}_MTL.txt"
         if not mtl_path.exists():

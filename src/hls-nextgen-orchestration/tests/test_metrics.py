@@ -13,6 +13,7 @@ from hls_nextgen_orchestration.base import (
     Assets,
     DataSource,
     Task,
+    TaskFailure,
 )
 from hls_nextgen_orchestration.metrics import MetricsCollector, _MetricsContext
 from hls_nextgen_orchestration.pipeline import PipelineBuilder
@@ -131,6 +132,7 @@ def test_emit_sends_emf_payload(
     assert "runtime_seconds" in record
     assert "peak_memory_mb" in record
     assert "avg_cpu_percent" in record
+    assert record["exit_code"] == 0
     assert "_aws" in record
 
 
@@ -152,6 +154,38 @@ def test_emit_includes_experiment_dims(
     record = json.loads(events["events"][0]["message"])
     assert record["fmask_version"] == "v5"
     assert "fmask_version" in record["_aws"]["CloudWatchMetrics"][0]["Dimensions"][0]
+
+
+def test_emit_exit_code_on_task_failure(
+    metrics_env: CloudWatchLogsClient, log_group: str, log_stream: str
+) -> None:
+    node = simple_task(requires=(), provides=(A,), instrument=True)("T1")
+
+    with pytest.raises(TaskFailure):
+        with MetricsCollector(client=metrics_env).collect(node):
+            raise TaskFailure("oom", exit_code=137)
+
+    events = metrics_env.get_log_events(
+        logGroupName=log_group, logStreamName=log_stream
+    )
+    record = json.loads(events["events"][0]["message"])
+    assert record["exit_code"] == 137
+
+
+def test_emit_exit_code_1_on_unexpected_exception(
+    metrics_env: CloudWatchLogsClient, log_group: str, log_stream: str
+) -> None:
+    node = simple_task(requires=(), provides=(A,), instrument=True)("T1")
+
+    with pytest.raises(RuntimeError):
+        with MetricsCollector(client=metrics_env).collect(node):
+            raise RuntimeError("unexpected")
+
+    events = metrics_env.get_log_events(
+        logGroupName=log_group, logStreamName=log_stream
+    )
+    record = json.loads(events["events"][0]["message"])
+    assert record["exit_code"] == 1
 
 
 def test_emit_does_not_raise_on_cloudwatch_error(
