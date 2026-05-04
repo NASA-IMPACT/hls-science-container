@@ -4,6 +4,7 @@ version = "0.1.0"
 platforms = ["linux-64", "osx-arm64"]
 channels = ["conda-forge"]
 preview = ["pixi-build"]
+conda-pypi-map = {}
 
 [target.linux-64.dependencies]
 # C packages can only be compiled on Linux x86_64
@@ -36,16 +37,26 @@ pyproj = ">=3.7.2,<4"
 shapely = ">=2,<3"
 zip = "*"
 unzip = "*"
-# Fmask v5
-fmask = { git = "https://github.com/NASA-IMPACT/fmask-v5", branch = "feat/rattler-recipe" }
+# Fmask v5.0.1-0
+fmask = { git = "https://github.com/NASA-IMPACT/fmask-v5", rev = "eac925d645f39e6b3ca5f1b4250f05df9d57c369" }
 
 [feature.dev.dependencies]
 ruff = "*"
 mypy = "*"
 pytest = "*"
 
+[feature.debug.dependencies]
+click = "*"
+ipython = "*"
+matplotlib = "*"
+pandas = "*"
+pyarrow = "*"
+scalene = "*"
+py-spy = "*"
+
 [feature.dev.pypi-dependencies]
 hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = true, extras = ["dev"] }
 
 [environments]
 dev = { features = ["dev"], no-default-feature = true }
+debug = { features = ["dev", "debug"], no-default-feature = false }

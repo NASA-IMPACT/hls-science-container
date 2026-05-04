@@ -15,17 +15,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # We run out of space w/o cleanup. This is less comprehensive but faster
-      # than `jlumbroso/free-disk-space`
-      - name: Cleanup disk space in background
-        run: |
-          sudo rm -rf /usr/local/lib/android &
-          sudo rm -rf /usr/share/dotnet &
-          sudo rm -rf /opt/ghc &
-          echo "Cleanup started in background..."
+      - uses: ./.github/actions/free-disk-space
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
