@@ -37,8 +37,8 @@ pyproj = ">=3.7.2,<4"
 shapely = ">=2,<3"
 zip = "*"
 unzip = "*"
-# Fmask v5.0.1-0
-fmask = { git = "https://github.com/NASA-IMPACT/fmask-v5", rev = "eac925d645f39e6b3ca5f1b4250f05df9d57c369" }
+# Fmask v5.0.1-1
+fmask = { git = "https://github.com/NASA-IMPACT/fmask-v5", rev = "47c04feecae1f52838b4d344389a083b14251ce0" }
 
 [feature.dev.dependencies]
 ruff = "*"
