@@ -23,6 +23,14 @@ _EXPERIMENT_PREFIX = "HLS_EXPERIMENT_"
 _NAMESPACE = "HLS/Tasks"
 
 
+@dataclass(frozen=True)
+class _PipelineNode:
+    """Minimal stand-in for NodeBase used by collect_pipeline()."""
+
+    _class: str
+    name: str
+
+
 @dataclass
 class _Sample:
     peak_memory_mb: float = 0.0
@@ -98,7 +106,7 @@ class _MetricsContext:
     """Context manager that wraps a single task execution."""
 
     collector: MetricsCollector
-    node: NodeBase
+    node: NodeBase | _PipelineNode
     _poller: _PollingThread | None = field(default=None, init=False)
     _start: float = field(default=0.0, init=False)
 
@@ -174,12 +182,27 @@ class MetricsCollector:
             return nullcontext()
         return _MetricsContext(self, node)
 
-    def _emit(self, node: NodeBase, runtime: float, sample: _Sample) -> None:
+    def collect_pipeline(
+        self, *, pipeline_class: str, pipeline_name: str
+    ) -> AbstractContextManager[None]:
+        """Return a context manager that measures an entire pipeline run.
+
+        Emits a single aggregate metric record covering total runtime, peak
+        memory, and CPU for the whole pipeline. Safe to nest inside or around
+        per-task ``collect()`` contexts.
+        """
+        if not self.enabled:
+            return nullcontext()
+        return _MetricsContext(self, _PipelineNode(pipeline_class, pipeline_name))
+
+    def _emit(
+        self, node: NodeBase | _PipelineNode, runtime: float, sample: _Sample
+    ) -> None:
         if not self.enabled:
             return
 
         fixed: dict[str, str] = {
-            "task_class": type(node).__name__,
+            "task_class": getattr(node, "_class", type(node).__name__),
             "task_name": node.name,
             "job_id": self._job_id,
         }

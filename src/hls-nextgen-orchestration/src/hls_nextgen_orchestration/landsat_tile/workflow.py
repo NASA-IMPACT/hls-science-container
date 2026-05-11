@@ -77,7 +77,10 @@ if __name__ == "__main__":
     try:
         pipeline = construct_pipeline(local_pathrows_dir=local_pathrows_dir)
         print(pipeline)
-        context = pipeline.run()
+        with pipeline.metrics.collect_pipeline(
+            pipeline_class="Pipeline", pipeline_name="landsat-tile"
+        ):
+            context = pipeline.run()
         sys.exit(context.exit_code)
     except Exception as e:
         logging.error(f"Pipeline failed initialization: {e}")

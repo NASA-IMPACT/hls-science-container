@@ -111,6 +111,82 @@ def test_collect_instruments_datasource_when_opted_in(
     assert isinstance(MetricsCollector().collect(node), _MetricsContext)
 
 
+# ----- collect_pipeline()
+def test_collect_pipeline_returns_metrics_context_when_enabled(
+    metrics_env: CloudWatchLogsClient,
+) -> None:
+    collector = MetricsCollector()
+    assert isinstance(
+        collector.collect_pipeline(pipeline_class="Pipeline", pipeline_name="test-wf"),
+        _MetricsContext,
+    )
+
+
+def test_collect_pipeline_noop_when_disabled(
+    mocked_aws: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("METRIC_LOG_GROUP_NAME", raising=False)
+    collector = MetricsCollector()
+    assert isinstance(
+        collector.collect_pipeline(pipeline_class="Pipeline", pipeline_name="test-wf"),
+        nullcontext,
+    )
+
+
+def test_collect_pipeline_emits_with_correct_class_and_name(
+    metrics_env: CloudWatchLogsClient, log_group: str, log_stream: str
+) -> None:
+    with MetricsCollector(client=metrics_env).collect_pipeline(
+        pipeline_class="Pipeline", pipeline_name="landsat-ac"
+    ):
+        pass
+
+    events = metrics_env.get_log_events(
+        logGroupName=log_group, logStreamName=log_stream
+    )
+    assert len(events["events"]) == 1
+    record = json.loads(events["events"][0]["message"])
+    assert record["task_class"] == "Pipeline"
+    assert record["task_name"] == "landsat-ac"
+    assert record["exit_code"] == 0
+    assert "runtime_seconds" in record
+
+
+def test_collect_pipeline_emits_exit_code_on_failure(
+    metrics_env: CloudWatchLogsClient, log_group: str, log_stream: str
+) -> None:
+    with pytest.raises(RuntimeError):
+        with MetricsCollector(client=metrics_env).collect_pipeline(
+            pipeline_class="Pipeline", pipeline_name="landsat-ac"
+        ):
+            raise RuntimeError("boom")
+
+    events = metrics_env.get_log_events(
+        logGroupName=log_group, logStreamName=log_stream
+    )
+    record = json.loads(events["events"][0]["message"])
+    assert record["exit_code"] == 1
+
+
+def test_collect_pipeline_and_task_contexts_coexist(
+    metrics_env: CloudWatchLogsClient, log_group: str, log_stream: str
+) -> None:
+    """Two overlapping polling threads must not interfere."""
+    collector = MetricsCollector(client=metrics_env)
+    node = simple_task(requires=(), provides=(A,), instrument=True)("T1")
+
+    with collector.collect_pipeline(pipeline_class="Pipeline", pipeline_name="test-wf"):
+        with collector.collect(node):
+            pass
+
+    events = metrics_env.get_log_events(
+        logGroupName=log_group, logStreamName=log_stream
+    )
+    assert len(events["events"]) == 2
+    names = {json.loads(e["message"])["task_name"] for e in events["events"]}
+    assert names == {"T1", "test-wf"}
+
+
 # ----- _emit — CloudWatch payload
 def test_emit_sends_emf_payload(
     metrics_env: CloudWatchLogsClient, log_group: str, log_stream: str
