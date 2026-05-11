@@ -69,6 +69,9 @@ CMD [ "/bin/bash" ]
 # "Productionize" pixi install: https://pixi.sh/latest/deployment/container/
 FROM --platform=${PLATFORM} debian:bookworm-slim AS prod
 
+ARG GIT_SHA
+ENV GIT_SHA=${GIT_SHA}
+
 # install libxt for MCR / Fmask
 RUN apt update && \
     apt install -y --no-install-recommends \

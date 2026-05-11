@@ -160,6 +160,10 @@ class MetricsCollector:
         default_factory=lambda: os.environ.get("AWS_BATCH_JOB_ID", "local_job"),
         init=False,
     )
+    _git_sha: str | None = field(
+        default_factory=lambda: os.environ.get("GIT_SHA"),
+        init=False,
+    )
 
     def __post_init__(self) -> None:
         self.enabled = bool(self.log_group)
@@ -206,6 +210,8 @@ class MetricsCollector:
             "task_name": node.name,
             "job_id": self._job_id,
         }
+        if self._git_sha:
+            fixed["git_sha"] = self._git_sha
         if granule_id := getattr(type(node), "granule_id", None):
             fixed["input_granule_id"] = granule_id
 
