@@ -325,6 +325,7 @@ class RunFmask(MappedTask):
     Ports: run_Fmask.sh and gdal_translate
     """
 
+    instrument = True
     requires_factory = lambda gid: (
         CONFIG,
         granule_dir_asset(gid),
@@ -416,6 +417,7 @@ class RunFmaskV5(MappedTask):
     different from RunFmask (v4) that operates inside the inner GRANULE/ dir.
     """
 
+    instrument = True
     requires_factory = lambda gid: (
         CONFIG,
         safe_dir_asset(gid),
@@ -579,6 +581,7 @@ class PrepareEspaInput(MappedTask):
 class RunLaSRC(MappedTask):
     """Runs LaSRC for Sentinel."""
 
+    instrument = True
     requires_factory = lambda gid: (espa_xml_asset(gid),)
     provides_factory = lambda gid: (lasrc_aerosol_qa_asset(gid),)
 

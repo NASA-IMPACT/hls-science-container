@@ -39,14 +39,13 @@ def test_landsat_pipeline_fmask_toggle(
 ) -> None:
     """Verify that the correct Fmask task class is used based on fmask_version."""
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
-    monkeypatch.setenv("GRANULE", GRANULE)
     monkeypatch.setenv("INPUT_BUCKET", IN_BUCKET)
     monkeypatch.setenv("OUTPUT_BUCKET", OUT_BUCKET)
     monkeypatch.setenv("PREFIX", "L30")
     monkeypatch.setenv("ACCODE", "LaSRC")
     monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
 
-    pipeline = construct_pipeline(fmask_version=fmask_version)
+    pipeline = construct_pipeline(granule_id=GRANULE, fmask_version=fmask_version)
     fmask_tasks = [
         t for t in pipeline.execution_order if isinstance(t, (RunFmask, RunFmaskV5))
     ]
@@ -62,14 +61,13 @@ def test_landsat_pipeline_end_to_end(
     tmp_path: Path,
 ) -> None:
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
-    monkeypatch.setenv("GRANULE", GRANULE)
     monkeypatch.setenv("INPUT_BUCKET", IN_BUCKET)
     monkeypatch.setenv("OUTPUT_BUCKET", OUT_BUCKET)
     monkeypatch.setenv("PREFIX", "L30")
     monkeypatch.setenv("ACCODE", "LaSRC")
     monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
 
-    pipeline = construct_pipeline()
+    pipeline = construct_pipeline(granule_id=GRANULE)
     context = pipeline.run()
 
     assert context.get(UPLOAD_COMPLETE) is True

@@ -227,6 +227,7 @@ class ProcessPathRows(Task):
     Extracts scene time and runs landsat-tile / landsat-angle-tile.
     """
 
+    instrument = True
     requires = (CONFIG, PATHROW_IMAGES)
     provides = (NBAR_INPUT, NBAR_ANGLE, SCENE_TIME, OUTPUT_BASE_NAME)
 
@@ -341,6 +342,7 @@ class RunNbar(Task):
     Runs NBAR correction and renames output files.
     """
 
+    instrument = True
     requires = (
         CONFIG,
         NBAR_INPUT,

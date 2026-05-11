@@ -1,0 +1,24 @@
+name: Free disk space
+description: >
+  Remove large pre-installed toolchains that are unused in this repo.
+  Each directory is deleted in parallel then `wait` ensures all are done
+  before the step exits. For a more comprehensive version see:
+  https://github.com/jlumbroso/free-disk-space
+
+runs:
+  using: composite
+  steps:
+    - name: Free disk space
+      shell: bash
+      run: |
+        echo "=== Disk space before cleanup ==="
+        df -h /
+        sudo rm -rf /usr/local/lib/android &
+        sudo rm -rf /usr/share/dotnet &
+        sudo rm -rf /opt/ghc &
+        sudo rm -rf /usr/local/share/boost &
+        sudo rm -rf /usr/share/swift &
+        sudo rm -rf /opt/hostedtoolcache &
+        wait
+        echo "=== Disk space after cleanup ==="
+        df -h /
