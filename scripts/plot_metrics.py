@@ -82,15 +82,15 @@ def _run_query(
 def _query_all_chunks(
     client,
     log_group: str,
-    hours_back: int,
+    start_time: datetime.datetime,
     chunk_hours: int,
     poll_interval: float,
     query: str,
 ) -> list[dict]:
     end_time = datetime.datetime.now(datetime.UTC)
-    start_time = end_time - datetime.timedelta(hours=hours_back)
+    hours_back = (end_time - start_time).total_seconds() / 3600
     chunk = datetime.timedelta(hours=chunk_hours)
-    total_chunks = -(-hours_back // chunk_hours)
+    total_chunks = -(-int(hours_back) // chunk_hours)
 
     all_records: list[dict] = []
     chunk_start = start_time
@@ -101,14 +101,14 @@ def _query_all_chunks(
         chunk_num += 1
         click.echo(
             f"  chunk {chunk_num}/{total_chunks}: "
-            f"{chunk_start:%H:%M} – {chunk_end:%H:%M} UTC",
+            f"{chunk_start:%Y/%m/%d:%H:%M} – {chunk_end:%H:%M} UTC",
             nl=False,
         )
         records = _run_query(
             client, log_group, chunk_start, chunk_end, poll_interval, query
         )
         click.echo(f" ({len(records)} records)")
-        all_records.extend(records)
+        all_records.extend([rec for rec in records if "max_cpu_percent" not in rec])
         chunk_start = chunk_end
 
     return all_records
@@ -213,14 +213,16 @@ def _plot_scatter(
 
                 m, b = np.polyfit(wf_data[v1], wf_data[v2], 1)
                 r2 = np.corrcoef(wf_data[v1], wf_data[v2])[0, 1] ** 2
-                pct = (wf_data[v2].mean() / wf_data[v1].mean() - 1) * 100
+                mean_v1 = wf_data[v1].mean()
+                mean_v2 = wf_data[v2].mean()
+                pct = (mean_v2 / mean_v1 - 1) * 100
                 sign = "+" if pct >= 0 else ""
                 ax.plot(
                     np.array(ref),
                     m * np.array(ref) + b,
                     color=color,
                     linewidth=1.2,
-                    label=f"{workflow}  {sign}{pct:.1f}%  R²={r2:.2f}",
+                    label=f"{workflow}  μ: {mean_v1:.1f}→{mean_v2:.1f}  {sign}{pct:.1f}%  R²={r2:.2f}",
                 )
 
             ax.set_xlim(ref)
@@ -316,11 +318,14 @@ def cli():
 @click.argument("output", default="metrics.parquet")
 @click.option(
     "--log-group",
-    default="/hls-orchestration/dev-viirs/log-metrics",
+    default="/hls-orchestration/hls-mcp-development-viirs/log-metrics",
     show_default=True,
 )
 @click.option(
-    "--hours", default=48, show_default=True, help="Hours of history to fetch"
+    "--since",
+    default=None,
+    metavar="DATETIME",
+    help="Start datetime in ISO format (e.g. '2026-05-01' or '2026-05-01T12:00'). Defaults to 48 h ago.",
 )
 @click.option(
     "--chunk-hours", default=4, show_default=True, help="Time window per query"
@@ -338,18 +343,33 @@ def cli():
     show_default=True,
     help="Experiment dimension to filter and include",
 )
-def fetch(output, log_group, hours, chunk_hours, region, tasks, dimension):
+def fetch(output, log_group, since, chunk_hours, region, tasks, dimension):
     """Query Logs Insights and save to OUTPUT (default: metrics.parquet)."""
+    if since is None:
+        start_time = datetime.datetime.now(datetime.UTC) - datetime.timedelta(hours=48)
+    else:
+        try:
+            start_time = datetime.datetime.fromisoformat(since)
+        except ValueError:
+            raise click.BadParameter(
+                f"cannot parse {since!r} — use ISO format, e.g. '2026-05-01' or '2026-05-01T12:00'",
+                param_hint="'--since'",
+            )
+        if start_time.tzinfo is None:
+            start_time = start_time.replace(tzinfo=datetime.UTC)
+
     task_groups = set(tasks.split(","))
 
     kwargs = {"region_name": region} if region else {}
     client = boto3.client("logs", **kwargs)
 
-    click.echo(f"Querying {log_group!r} — last {hours}h in {chunk_hours}h chunks ...")
+    click.echo(
+        f"Querying {log_group!r} — from {start_time:%Y-%m-%d %H:%M UTC} in {chunk_hours}h chunks ..."
+    )
     records = _query_all_chunks(
         client,
         log_group,
-        hours,
+        start_time,
         chunk_hours,
         poll_interval=2.0,
         query=_build_query(dimension),
