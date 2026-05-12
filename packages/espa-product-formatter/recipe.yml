@@ -92,9 +92,12 @@ build:
     cp $RECIPE_DIR/activate.sh $PREFIX/etc/conda/activate.d/espa-product-formatter.sh
     cp $RECIPE_DIR/deactivate.sh $PREFIX/etc/conda/deactivate.d/espa-product-formatter.sh
 
-    # Normalize static library archive timestamps (SOURCE_DATE_EPOCH=0 covers ar, but
-    # objcopy --enable-deterministic-archives handles any archives built outside that env)
-    find $PREFIX -name '*.a' -exec objcopy --enable-deterministic-archives {} \; 2>/dev/null || true
+    # Pre-strip debug symbols so rattler-build's own post-processing strip is a no-op.
+    # Without this, rattler-build hashes the un-stripped binary then strips it, producing
+    # a different hash than what it recorded — causing the "hash mismatch" install error.
+    find $PREFIX/bin -type f -exec strip --strip-unneeded {} \; 2>/dev/null || true
+    find $PREFIX/lib -name '*.a' -exec strip --strip-debug {} \; 2>/dev/null || true
+    find $PREFIX/lib -name '*.so*' -exec strip --strip-unneeded {} \; 2>/dev/null || true
 
 
 tests:
