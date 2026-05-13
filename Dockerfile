@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7-labs
 ARG PLATFORM=linux/amd64
-FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:bookworm-slim AS build
+FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:bookworm-slim@sha256:4378be837a7b2e32a27e5434f50db367daf27e0cf010a28add66e85f4aabd833 AS build
 
 WORKDIR /app
 
