@@ -1,0 +1,44 @@
+name: Build and Test Conda Packages
+
+on:
+  pull_request:
+    paths:
+      - packages/**
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/free-disk-space
+
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          environments: ""
+
+      - name: Install rattler-build
+        run: pixi global install rattler-build
+
+      - name: Build espa-product-formatter
+        run: |
+          rattler-build build \
+            --recipe packages/espa-product-formatter/recipe.yml \
+            --output-dir /tmp/conda-output
+
+      - name: Build espa-surface-reflectance
+        run: |
+          rattler-build build \
+            --recipe packages/espa-surface-reflectance/recipe.yml \
+            --output-dir /tmp/conda-output \
+            --channel /tmp/conda-output \
+            --channel conda-forge
+
+      - name: Build hls-libs
+        run: |
+          rattler-build build \
+            --recipe packages/hls-libs/recipe.yml \
+            --output-dir /tmp/conda-output \
+            --channel /tmp/conda-output \
+            --channel conda-forge
