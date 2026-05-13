@@ -51,6 +51,7 @@ build:
 
     make -j${CPU_COUNT} ENABLE_THREADING=yes all-lasrc
     make install-lasrc
+    find $PREFIX -name '*.a' -exec objcopy --enable-deterministic-archives {} \; 2>/dev/null || true
 
 tests:
   - package_contents:

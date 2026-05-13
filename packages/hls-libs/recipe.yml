@@ -47,6 +47,7 @@ build:
 
     make -j${CPU_COUNT}
     make install
+    find $PREFIX -name '*.a' -exec objcopy --enable-deterministic-archives {} \; 2>/dev/null || true
 
 tests:
   - package_contents:
