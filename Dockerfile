@@ -23,14 +23,7 @@ RUN wget -q -O /tmp/Fmask.install https://fmask4installer.s3.us-west-2.amazonaws
 
 # ----- Install package dependencies
 COPY --parents pixi.toml pixi.lock packages src/ /app/
-ARG LOCK_HASH=default
-RUN --mount=type=cache,target=/root/.cache/rattler/cache,id=rattler-$LOCK_HASH \
-    rm -rf \
-        /root/.cache/rattler/cache/pkgs/espa-product-formatter-* \
-        /root/.cache/rattler/cache/pkgs/espa-surface-reflectance-* \
-        /root/.cache/rattler/cache/pkgs/hls-libs-* \
-    2>/dev/null || true && \
-    pixi install --frozen
+RUN pixi install --frozen
 ENV PREFIX=/app/.pixi/envs/default
 RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
     pixi shell-hook --frozen -e default -s bash >> /app/entrypoint.sh && \

@@ -40,9 +40,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Compute pixi.lock hash
-        run: echo "LOCK_HASH=$(sha256sum pixi.lock | awk '{print $1}')" >> $GITHUB_ENV
-
       - name: Build and Push Release to ECR
         uses: docker/build-push-action@v5
         with:
@@ -53,7 +50,6 @@ jobs:
           sbom: false
           build-args: |
             PLATFORM=${{ env.BUILD_PLATFORM }}
-            LOCK_HASH=${{ env.LOCK_HASH }}
             GIT_SHA=${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
