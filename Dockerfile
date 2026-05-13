@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7-labs
 ARG PLATFORM=linux/amd64
-FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:bookworm-slim AS build
+FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:0.67.2-bookworm-slim AS build
 
 WORKDIR /app
 
@@ -73,6 +73,9 @@ CMD [ "/bin/bash" ]
 # ===== Production installation
 # "Productionize" pixi install: https://pixi.sh/latest/deployment/container/
 FROM --platform=${PLATFORM} debian:bookworm-slim AS prod
+
+ARG GIT_SHA
+ENV GIT_SHA=${GIT_SHA}
 
 # install libxt for MCR / Fmask
 RUN apt update && \
