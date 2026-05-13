@@ -49,11 +49,6 @@ requirements:
 
 build:
   number: 0
-  # Disable rattler-build's binary relocation (patchelf RPATH patching). That
-  # post-processing step runs after the package hash is recorded, causing a
-  # hash mismatch on install. Runtime library lookup works via LD_LIBRARY_PATH
-  # set by the conda activation scripts.
-  binary_relocation: false
   script : |
     export SOURCE_DATE_EPOCH=0
     export TIFFINC="${PREFIX}/include"
