@@ -48,6 +48,8 @@ build:
     make -j${CPU_COUNT}
     make install
     find $PREFIX -name '*.a' -exec objcopy --enable-deterministic-archives {} \; 2>/dev/null || true
+    find $PREFIX/bin -type f -exec patchelf --set-rpath '$ORIGIN/../lib' {} \; 2>/dev/null || true
+    find $PREFIX/lib -name '*.so*' -exec patchelf --set-rpath '$ORIGIN/../lib' {} \; 2>/dev/null || true
 
 tests:
   - package_contents:
