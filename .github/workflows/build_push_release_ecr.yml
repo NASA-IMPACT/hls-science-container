@@ -54,6 +54,7 @@ jobs:
           build-args: |
             PLATFORM=${{ env.BUILD_PLATFORM }}
             LOCK_HASH=${{ env.LOCK_HASH }}
+            GIT_SHA=${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7-labs
 ARG PLATFORM=linux/amd64
-FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:bookworm-slim AS build
+FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:0.67.2-bookworm-slim AS build
 
 WORKDIR /app
 
@@ -27,6 +27,11 @@ COPY --parents pixi.toml pixi.lock packages src/ /app/
 # (which are non-deterministic) never collide with stale cached entries.
 ARG LOCK_HASH=default
 RUN --mount=type=cache,target=/root/.cache/rattler/cache,id=rattler-$LOCK_HASH \
+    rm -rf \
+        /root/.cache/rattler/cache/pkgs/espa-product-formatter-* \
+        /root/.cache/rattler/cache/pkgs/espa-surface-reflectance-* \
+        /root/.cache/rattler/cache/pkgs/hls-libs-* \
+    2>/dev/null || true && \
     pixi install --frozen
 ENV PREFIX=/app/.pixi/envs/default
 RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
@@ -68,6 +73,9 @@ CMD [ "/bin/bash" ]
 # ===== Production installation
 # "Productionize" pixi install: https://pixi.sh/latest/deployment/container/
 FROM --platform=${PLATFORM} debian:bookworm-slim AS prod
+
+ARG GIT_SHA
+ENV GIT_SHA=${GIT_SHA}
 
 # install libxt for MCR / Fmask
 RUN apt update && \

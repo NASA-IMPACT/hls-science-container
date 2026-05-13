@@ -10,6 +10,7 @@ TARGET=${TARGET:-dev}
 REGION="us-west-2"
 CACHE_TAG="cache"
 USE_CACHE=false
+GIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 START_TIME=$(date +%s)
 
 # ==============================================================================
@@ -59,6 +60,7 @@ BUILD_ARGS=(
     --target "${TARGET}"
     --tag "$IMAGE_NAME:$TARGET"
     --file Dockerfile
+    --build-arg "GIT_SHA=${GIT_SHA}"
     .
 )
 

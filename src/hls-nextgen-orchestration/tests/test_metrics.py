@@ -212,6 +212,45 @@ def test_emit_sends_emf_payload(
     assert "_aws" in record
 
 
+def test_emit_includes_git_sha_when_set(
+    metrics_env: CloudWatchLogsClient,
+    monkeypatch: pytest.MonkeyPatch,
+    log_group: str,
+    log_stream: str,
+) -> None:
+    monkeypatch.setenv("GIT_SHA", "abc1234")
+    node = simple_task(requires=(), provides=(A,), instrument=True)("T1")
+
+    with MetricsCollector(client=metrics_env).collect(node):
+        pass
+
+    events = metrics_env.get_log_events(
+        logGroupName=log_group, logStreamName=log_stream
+    )
+    record = json.loads(events["events"][0]["message"])
+    assert record["git_sha"] == "abc1234"
+    assert "git_sha" in record["_aws"]["CloudWatchMetrics"][0]["Dimensions"][0]
+
+
+def test_emit_omits_git_sha_when_unset(
+    metrics_env: CloudWatchLogsClient,
+    monkeypatch: pytest.MonkeyPatch,
+    log_group: str,
+    log_stream: str,
+) -> None:
+    monkeypatch.delenv("GIT_SHA", raising=False)
+    node = simple_task(requires=(), provides=(A,), instrument=True)("T1")
+
+    with MetricsCollector(client=metrics_env).collect(node):
+        pass
+
+    events = metrics_env.get_log_events(
+        logGroupName=log_group, logStreamName=log_stream
+    )
+    record = json.loads(events["events"][0]["message"])
+    assert "git_sha" not in record
+
+
 def test_emit_includes_experiment_dims(
     metrics_env: CloudWatchLogsClient,
     monkeypatch: pytest.MonkeyPatch,
