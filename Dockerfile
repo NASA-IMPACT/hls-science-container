@@ -23,7 +23,10 @@ RUN wget -q -O /tmp/Fmask.install https://fmask4installer.s3.us-west-2.amazonaws
 
 # ----- Install package dependencies
 COPY --parents pixi.toml pixi.lock packages src/ /app/
-RUN --mount=type=cache,target=/root/.cache/rattler/cache \
+# LOCK_HASH scopes the rattler cache by pixi.lock so workspace package builds
+# (which are non-deterministic) never collide with stale cached entries.
+ARG LOCK_HASH=default
+RUN --mount=type=cache,target=/root/.cache/rattler/cache,id=rattler-$LOCK_HASH \
     pixi install --frozen
 ENV PREFIX=/app/.pixi/envs/default
 RUN echo '#!/bin/bash' > /app/entrypoint.sh && \

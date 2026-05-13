@@ -174,7 +174,11 @@ if __name__ == "__main__":
             fmask_version=fmask_version,
         )
         print(pipeline)
-        pipeline.run()
+        with pipeline.metrics.collect_pipeline(
+            pipeline_class="Pipeline", pipeline_name="sentinel-ac"
+        ):
+            context = pipeline.run()
+        sys.exit(context.exit_code)
     except Exception as e:
         logging.error(f"Pipeline failed: {e}")
         sys.exit(1)

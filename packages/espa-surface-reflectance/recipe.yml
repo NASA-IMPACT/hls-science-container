@@ -23,6 +23,7 @@ requirements:
 build:
   number: 0
   script : |
+    export SOURCE_DATE_EPOCH=0
     export HDFINC="${PREFIX}/include"
     export HDFLIB="${PREFIX}/lib"
     export HDF5INC="${PREFIX}/include"
@@ -50,6 +51,7 @@ build:
 
     make -j${CPU_COUNT} ENABLE_THREADING=yes all-lasrc
     make install-lasrc
+    find $PREFIX -name '*.a' -exec objcopy --enable-deterministic-archives {} \; 2>/dev/null || true
 
 tests:
   - package_contents:

@@ -22,6 +22,7 @@ requirements:
 build:
   number: 0
   script : |
+    export SOURCE_DATE_EPOCH=0
     export HDFINC="${PREFIX}/include"
     export HDFLIB="${PREFIX}/lib"
     export GCTPINC="${PREFIX}/include"
@@ -46,6 +47,7 @@ build:
 
     make -j${CPU_COUNT}
     make install
+    find $PREFIX -name '*.a' -exec objcopy --enable-deterministic-archives {} \; 2>/dev/null || true
 
 tests:
   - package_contents:
