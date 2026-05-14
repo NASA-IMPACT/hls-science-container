@@ -19,9 +19,14 @@ jobs:
       pull-requests: write
 
     env:
+      # rattler-build build --channel s3://... uses AWS_* vars
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: us-west-2
+      # rattler-build upload s3 / rattler-index s3 use S3_* vars
       S3_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       S3_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      S3_REGION: ${{ env.AWS_REGION }}
+      S3_REGION: us-west-2
 
     steps:
       - uses: actions/checkout@v4
@@ -43,6 +48,12 @@ jobs:
       - name: Install rattler-build and rattler-index
         run: |
           pixi global install rattler-build rattler-index
+
+      - name: Authenticate rattler-build with S3
+        run: |
+          rattler-build auth login "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
+            --s3-access-key-id "$S3_ACCESS_KEY_ID" \
+            --s3-secret-access-key "$S3_SECRET_ACCESS_KEY"
 
       - name: Build espa-product-formatter
         run: |

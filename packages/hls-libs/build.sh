@@ -1,0 +1,28 @@
+#!/bin/bash
+set -euo pipefail
+
+export SOURCE_DATE_EPOCH=0
+export HDFINC="${PREFIX}/include"
+export HDFLIB="${PREFIX}/lib"
+export GCTPINC="${PREFIX}/include"
+export GCTPLIB="${PREFIX}/lib"
+export PROJINC="${PREFIX}/include"
+export PROJLIB="${PREFIX}/lib"
+export JPEGINC="${PREFIX}/include"
+export JPEGLIB="${PREFIX}/lib"
+export SZIPINC="${PREFIX}/include"
+export SZIPLIB="${PREFIX}/lib"
+export ZLIBINC="${PREFIX}/include"
+export ZLIBLIB="${PREFIX}/lib"
+export ESPAINC="${PREFIX}/include"
+export ESPALIB="${PREFIX}/lib"
+
+export GCTPLINK="-lGctp -lm"
+export HDFLINK="-lmfhdf -ldf -lm"
+
+export COMMON_DIR=${SRC_DIR}/common
+
+export CFLAGS="-std=gnu90"
+
+make -j${CPU_COUNT}
+make install
