@@ -22,16 +22,14 @@ jobs:
       # rattler-build build --channel s3://... uses AWS_* vars
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: us-west-2
       # rattler-build upload s3 / rattler-index s3 use S3_* vars
       S3_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       S3_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      S3_REGION: us-west-2
+      S3_REGION: ${{ env.AWS_REGION }}
+      S3_ENDPOINT_URL: https://s3.${{ env.AWS_REGION }}.amazonaws.com
 
     steps:
       - uses: actions/checkout@v4
-
-      - uses: ./.github/actions/free-disk-space
 
       - uses: prefix-dev/setup-pixi@v0.9.3
         with:
