@@ -35,9 +35,9 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Install rattler-build and conda-index
+      - name: Install rattler-build and rattler-index
         run: |
-          pixi global install rattler-build conda-index
+          pixi global install rattler-build rattler-index
 
       - name: Authenticate rattler-build with S3
         run: |
@@ -83,7 +83,7 @@ jobs:
 
       - name: Index channel
         if: steps.count.outputs.new_packages != '0'
-        run: python -m conda_index /tmp/conda-output
+        run: rattler-index /tmp/conda-output
 
       - name: Upload to S3
         if: steps.count.outputs.new_packages != '0'
