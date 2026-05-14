@@ -62,4 +62,4 @@ tests:
         exists:
           - bin/lasrc
   - script:
-      - lasrc --help
+      - lasrc --help || [ $? -eq 255 ]

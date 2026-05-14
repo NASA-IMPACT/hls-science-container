@@ -46,6 +46,10 @@ requirements:
     - openjpeg
     # for gdal_translate program
     - gdal
+  run_exports:
+    # lib_espa_common.a links against libxml2 for ESPA metadata (XML) parsing;
+    # downstream packages that link this static lib need it at runtime
+    - libxml2
 
 build:
   number: 0
