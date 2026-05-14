@@ -81,21 +81,21 @@ jobs:
           echo "new_packages=$n" >> "$GITHUB_OUTPUT"
           echo "New packages to publish: $n"
 
-      - name: Index channel
-        if: steps.count.outputs.new_packages != '0'
-        run: rattler-index /tmp/conda-output
-
-      - name: Upload to S3
+      - name: Upload packages to S3
         if: steps.count.outputs.new_packages != '0'
         run: |
           aws s3 sync /tmp/conda-output/ \
             s3://${{ secrets.CONDA_CHANNEL_BUCKET }}/ \
             --exclude '*' \
-            --include 'linux-64/*.conda' \
-            --include 'linux-64/repodata.json' \
-            --include 'linux-64/repodata.json.bz2' \
-            --include 'noarch/repodata.json' \
-            --include 'noarch/repodata.json.bz2'
+            --include 'linux-64/*.conda'
+
+      - name: Index channel
+        if: steps.count.outputs.new_packages != '0'
+        env:
+          S3_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          S3_REGION: ${{ env.AWS_REGION }}
+        run: rattler-index s3 s3://${{ secrets.CONDA_CHANNEL_BUCKET }}
 
       - name: Update pixi.lock and open PR
         if: steps.count.outputs.new_packages != '0'
