@@ -44,6 +44,12 @@ jobs:
         run: |
           pixi global install rattler-build rattler-index
 
+      - name: Authenticate rattler-build with S3
+        run: |
+          rattler-build auth login "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
+            --s3-access-key-id "$S3_ACCESS_KEY_ID" \
+            --s3-secret-access-key "$S3_SECRET_ACCESS_KEY"
+
       - name: Build espa-product-formatter
         run: |
           rattler-build build \
