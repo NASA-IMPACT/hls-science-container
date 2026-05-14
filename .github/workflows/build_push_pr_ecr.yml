@@ -4,13 +4,115 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   AWS_REGION: us-west-2
   ECR_REPOSITORY: hls-science-container
   BUILD_PLATFORM: linux/amd64
 
 jobs:
-  build_push_to_ecr:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.filter.outputs.packages }}
+      other: ${{ steps.filter.outputs.other }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            packages:
+              - 'packages/**'
+            other:
+              - '**'
+              - '!packages/**'
+
+  build-conda:
+    needs: changes
+    if: needs.changes.outputs.packages == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/free-disk-space
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          environments: ""
+          run-install: false
+
+      - name: Install rattler-build
+        run: pixi global install rattler-build
+
+      - name: Authenticate rattler-build with S3
+        run: |
+          rattler-build auth login "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
+            --s3-access-key-id "$AWS_ACCESS_KEY_ID" \
+            --s3-secret-access-key "$AWS_SECRET_ACCESS_KEY"
+
+      - name: Build espa-product-formatter
+        run: |
+          rattler-build build \
+            --recipe packages/espa-product-formatter/recipe.yml \
+            --output-dir /tmp/conda-output \
+            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
+            --channel conda-forge \
+            --skip-existing=all
+
+      - name: Build espa-surface-reflectance
+        run: |
+          rattler-build build \
+            --recipe packages/espa-surface-reflectance/recipe.yml \
+            --output-dir /tmp/conda-output \
+            --channel /tmp/conda-output \
+            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
+            --channel conda-forge \
+            --skip-existing=all
+
+      - name: Build hls-libs
+        run: |
+          rattler-build build \
+            --recipe packages/hls-libs/recipe.yml \
+            --output-dir /tmp/conda-output \
+            --channel /tmp/conda-output \
+            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
+            --channel conda-forge \
+            --skip-existing=all
+
+      - name: Verify new packages were built
+        # Skipped for docs:/chore:/ci: PRs where a version bump is not expected
+        if: |
+          !startsWith(github.event.pull_request.title, 'docs:') &&
+          !startsWith(github.event.pull_request.title, 'chore:') &&
+          !startsWith(github.event.pull_request.title, 'ci:')
+        run: |
+          count=$(find /tmp/conda-output/linux-64 -name "*.conda" 2>/dev/null | wc -l)
+          if [ "$count" -eq 0 ]; then
+            echo "::error::No new packages were built — all versions are already published. Bump the version in the recipe."
+            exit 1
+          fi
+          echo "Built $count new package(s)"
+
+  build-push-docker:
+    needs: [changes, build-conda]
+    if: |
+      always() &&
+      needs.changes.result == 'success' &&
+      needs.changes.outputs.other == 'true' &&
+      (needs.build-conda.result == 'success' || needs.build-conda.result == 'skipped')
     runs-on: ubuntu-latest
 
     steps:
