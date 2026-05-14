@@ -68,7 +68,7 @@ jobs:
           rattler-build build \
             --recipe packages/espa-product-formatter/recipe.yml \
             --output-dir /tmp/conda-output \
-            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}/conda" \
+            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
             --channel conda-forge \
             --skip-existing=all
 
@@ -78,7 +78,7 @@ jobs:
             --recipe packages/espa-surface-reflectance/recipe.yml \
             --output-dir /tmp/conda-output \
             --channel /tmp/conda-output \
-            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}/conda" \
+            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
             --channel conda-forge \
             --skip-existing=all
 
@@ -88,7 +88,7 @@ jobs:
             --recipe packages/hls-libs/recipe.yml \
             --output-dir /tmp/conda-output \
             --channel /tmp/conda-output \
-            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}/conda" \
+            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
             --channel conda-forge \
             --skip-existing=all
 

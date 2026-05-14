@@ -50,7 +50,7 @@ jobs:
           rattler-build build \
             --recipe packages/espa-product-formatter/recipe.yml \
             --output-dir /tmp/conda-output \
-            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}/conda" \
+            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
             --channel conda-forge \
             --skip-existing=all
 
@@ -60,7 +60,7 @@ jobs:
             --recipe packages/espa-surface-reflectance/recipe.yml \
             --output-dir /tmp/conda-output \
             --channel /tmp/conda-output \
-            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}/conda" \
+            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
             --channel conda-forge \
             --skip-existing=all
 
@@ -70,7 +70,7 @@ jobs:
             --recipe packages/hls-libs/recipe.yml \
             --output-dir /tmp/conda-output \
             --channel /tmp/conda-output \
-            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}/conda" \
+            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
             --channel conda-forge \
             --skip-existing=all
 
@@ -89,7 +89,7 @@ jobs:
         if: steps.count.outputs.new_packages != '0'
         run: |
           aws s3 sync /tmp/conda-output/ \
-            s3://${{ secrets.CONDA_CHANNEL_BUCKET }}/conda/ \
+            s3://${{ secrets.CONDA_CHANNEL_BUCKET }}/ \
             --exclude '*' \
             --include 'linux-64/*.conda' \
             --include 'linux-64/repodata.json' \
