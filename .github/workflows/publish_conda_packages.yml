@@ -39,11 +39,20 @@ jobs:
         run: |
           pixi global install rattler-build conda-index
 
+      - name: Authenticate rattler-build with S3
+        run: |
+          rattler-build auth login "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
+            --s3-access-key-id "$AWS_ACCESS_KEY_ID" \
+            --s3-secret-access-key "$AWS_SECRET_ACCESS_KEY"
+
       - name: Build espa-product-formatter
         run: |
           rattler-build build \
             --recipe packages/espa-product-formatter/recipe.yml \
-            --output-dir /tmp/conda-output
+            --output-dir /tmp/conda-output \
+            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}/conda" \
+            --channel conda-forge \
+            --skip-existing=all
 
       - name: Build espa-surface-reflectance
         run: |
@@ -51,7 +60,9 @@ jobs:
             --recipe packages/espa-surface-reflectance/recipe.yml \
             --output-dir /tmp/conda-output \
             --channel /tmp/conda-output \
-            --channel conda-forge
+            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}/conda" \
+            --channel conda-forge \
+            --skip-existing=all
 
       - name: Build hls-libs
         run: |
@@ -59,12 +70,23 @@ jobs:
             --recipe packages/hls-libs/recipe.yml \
             --output-dir /tmp/conda-output \
             --channel /tmp/conda-output \
-            --channel conda-forge
+            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}/conda" \
+            --channel conda-forge \
+            --skip-existing=all
+
+      - name: Count new packages
+        id: count
+        run: |
+          n=$(find /tmp/conda-output/linux-64 -name "*.conda" 2>/dev/null | wc -l)
+          echo "new_packages=$n" >> "$GITHUB_OUTPUT"
+          echo "New packages to publish: $n"
 
       - name: Index channel
+        if: steps.count.outputs.new_packages != '0'
         run: python -m conda_index /tmp/conda-output
 
       - name: Upload to S3
+        if: steps.count.outputs.new_packages != '0'
         run: |
           aws s3 sync /tmp/conda-output/ \
             s3://${{ secrets.CONDA_CHANNEL_BUCKET }}/conda/ \
@@ -76,6 +98,7 @@ jobs:
             --include 'noarch/repodata.json.bz2'
 
       - name: Update pixi.lock and open PR
+        if: steps.count.outputs.new_packages != '0'
         env:
           GH_TOKEN: ${{ github.token }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
