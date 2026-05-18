@@ -2,6 +2,8 @@
 ARG PLATFORM=linux/amd64
 FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi AS build
 
+ARG AWS_DEFAULT_REGION=us-west-2
+
 WORKDIR /app
 
 RUN apt update && \
@@ -27,11 +29,17 @@ COPY --parents pixi.toml pixi.lock packages src/ /app/
 # (which are non-deterministic) never collide with stale cached entries.
 ARG LOCK_HASH=default
 RUN --mount=type=cache,target=/root/.cache/rattler/cache,id=rattler-$LOCK_HASH \
+    --mount=type=secret,id=aws_access_key_id \
+    --mount=type=secret,id=aws_secret_access_key \
+    --mount=type=secret,id=aws_session_token \
     rm -rf \
         /root/.cache/rattler/cache/pkgs/espa-product-formatter-* \
         /root/.cache/rattler/cache/pkgs/espa-surface-reflectance-* \
         /root/.cache/rattler/cache/pkgs/hls-libs-* \
     2>/dev/null || true && \
+    AWS_ACCESS_KEY_ID=$(cat /run/secrets/aws_access_key_id 2>/dev/null) \
+    AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/aws_secret_access_key 2>/dev/null) \
+    AWS_SESSION_TOKEN=$(cat /run/secrets/aws_session_token 2>/dev/null) \
     pixi install --frozen
 ENV PREFIX=/app/.pixi/envs/default
 RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
