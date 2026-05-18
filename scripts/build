@@ -61,8 +61,24 @@ BUILD_ARGS=(
     --tag "$IMAGE_NAME:$TARGET"
     --file Dockerfile
     --build-arg "GIT_SHA=${GIT_SHA}"
-    .
 )
+
+# Export credentials from whatever source is configured (SSO, profiles, env vars, etc.)
+if [ -n "${ACCOUNT_ID:-}" ]; then
+    eval "$(aws configure export-credentials --format env)"
+fi
+
+# Pass AWS credentials as build secrets
+if [ -n "${AWS_ACCESS_KEY_ID:-}" ] && [ -n "${AWS_SECRET_ACCESS_KEY:-}" ]; then
+    BUILD_ARGS+=(
+        --secret "id=aws_access_key_id,env=AWS_ACCESS_KEY_ID"
+        --secret "id=aws_secret_access_key,env=AWS_SECRET_ACCESS_KEY"
+    )
+    [ -n "${AWS_SESSION_TOKEN:-}" ] && \
+        BUILD_ARGS+=( --secret "id=aws_session_token,env=AWS_SESSION_TOKEN" )
+fi
+
+BUILD_ARGS+=( . )
 
 # Inject cache-from if ECR is accessible
 if [ "$USE_CACHE" = true ]; then
