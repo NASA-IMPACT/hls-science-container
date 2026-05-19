@@ -179,8 +179,7 @@ jobs:
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
 
       - name: Run container tests
-        # run: scripts/test-container ${{ env.ECR_REPOSITORY }}:local
-        run: echo "placeholder"
+        run: scripts/test-container ${{ env.ECR_REPOSITORY }}:local
 
       - name: Push to ECR
         if: success()
