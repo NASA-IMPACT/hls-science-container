@@ -6,7 +6,7 @@ package:
   version: ${{ version }}
 
 build:
-  number: 0
+  number: 1
   script: build.sh
 
 source:
@@ -17,6 +17,7 @@ source:
 
 requirements:
   build:
+    - sysroot_linux-64 2.17.*
     - binutils
     - git
     - make

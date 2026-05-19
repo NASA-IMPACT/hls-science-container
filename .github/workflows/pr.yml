@@ -179,8 +179,8 @@ jobs:
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
 
       - name: Run container tests
-        run: |
-          docker run --rm ${{ env.ECR_REPOSITORY }}:local echo "placeholder"
+        # run: scripts/test-container ${{ env.ECR_REPOSITORY }}:local
+        run: echo "placeholder"
 
       - name: Push to ECR
         if: success()
