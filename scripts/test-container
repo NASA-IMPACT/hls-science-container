@@ -1,0 +1,12 @@
+#!/bin/bash
+set -euo pipefail
+
+IMAGE="${1:?Usage: test-container <image>}"
+
+run() {
+    docker run --rm "$IMAGE" "$1"
+}
+
+# lasrc --help exits 255 by design; any other exit (e.g. 127 = not found, 139 = segfault)
+# indicates a broken binary or missing shared library (e.g. glibc mismatch)
+run "lasrc --help; [ \$? -eq 255 ]"
