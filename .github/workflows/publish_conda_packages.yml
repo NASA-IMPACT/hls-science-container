@@ -85,9 +85,12 @@ jobs:
       - name: Count new packages
         id: count
         run: |
-          n=$(find /tmp/conda-output/linux-64 -name "*.conda" 2>/dev/null | wc -l)
+          files=$(find /tmp/conda-output/linux-64 -name "*.conda" 2>/dev/null)
+          n=$(echo "$files" | grep -c . || true)
+          packages=$(echo "$files" | xargs -I{} basename {} .conda | sed 's/-[0-9v].*//' | tr '\n' ' ')
           echo "new_packages=$n" >> "$GITHUB_OUTPUT"
-          echo "New packages to publish: $n"
+          echo "packages=$packages" >> "$GITHUB_OUTPUT"
+          echo "New packages to publish: $n ($packages)"
 
       - name: Upload and index packages
         if: steps.count.outputs.new_packages != '0'
@@ -105,11 +108,13 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
         run: |
+          echo "Updating pixi.lock for: ${{ steps.count.outputs.packages }}"
+          pixi update ${{ steps.count.outputs.packages }}
+          git diff --quiet pixi.lock && { echo "pixi.lock unchanged, nothing to commit"; exit 0; }
           branch="chore/update-pixi-lock-$(date +%Y%m%d-%H%M%S)"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
-          pixi lock
           git add pixi.lock
           git commit -m "chore: update pixi.lock after conda package publish"
           git push origin "$branch"
