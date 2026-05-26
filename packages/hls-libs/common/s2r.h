@@ -66,6 +66,7 @@ static char *VermoteS2sdsname[] = {
 #define SPCOVER  "spatial_coverage"
 #define CLCOVER  "cloud_coverage"
 #define ACCODE   "ACCODE"
+#define CLOUD_MASKING_CODE "CLOUD_MASKING_CODE"
 #define ZONEHEM "UTM_ZONE_HEMISPHERE"	/* Sep 23, 2020: Added for s2ang.h */
 
 #define ACMASK_NAME "ACmask"
@@ -136,6 +137,7 @@ typedef struct {
 	double xshift;
 	double yshift;
 	char accode[100];	/* Atmospheric correction code name. 11/21/17 */
+	char cloud_masking_code[100];	/* Cloud masking algorithm and version */
 
 	char tile_has_data;	/* Indicate whether a created tile has data */
 
