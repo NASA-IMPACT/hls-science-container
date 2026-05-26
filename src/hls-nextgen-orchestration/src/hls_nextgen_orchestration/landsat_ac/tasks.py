@@ -18,6 +18,7 @@ from hls_nextgen_orchestration.base import (
     Task,
     TaskFailure,
 )
+from hls_nextgen_orchestration.constants import FMASK_VERSION_STRINGS
 from hls_nextgen_orchestration.utils import validate_command
 
 from .assets import (
@@ -72,6 +73,9 @@ class EnvSource(DataSource):
             output_bucket=os.environ["OUTPUT_BUCKET"],
             prefix=os.environ["PREFIX"],
             ac_code=os.environ["ACCODE"],
+            cloud_masking_code=FMASK_VERSION_STRINGS[
+                "v5" if os.getenv("FMASK_VERSION") == "5" else "v4"
+            ],
             working_dir=working_dir,
             granule_dir=granule_dir,
             debug_bucket=os.environ.get("DEBUG_BUCKET"),
@@ -503,6 +507,7 @@ class AddFmaskSds(Task):
                 str(aerosol_qa),
                 str(inputs[MTL_FILE]),
                 config.ac_code,
+                config.cloud_masking_code,
                 str(output_hdf),
             ],
             check=True,

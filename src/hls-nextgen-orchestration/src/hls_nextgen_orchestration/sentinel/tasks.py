@@ -24,7 +24,11 @@ from hls_nextgen_orchestration.base import (
 )
 from hls_nextgen_orchestration.common import Paths
 from hls_nextgen_orchestration.common.commands import run_hdf_to_cog
-from hls_nextgen_orchestration.constants import HLS_VERSION, HlsVersion
+from hls_nextgen_orchestration.constants import (
+    FMASK_VERSION_STRINGS,
+    HLS_VERSION,
+    HlsVersion,
+)
 from hls_nextgen_orchestration.granules import HlsGranule, Sentinel2Granule
 from hls_nextgen_orchestration.utils import validate_command
 
@@ -109,6 +113,9 @@ class EnvSource(DataSource):
             output_bucket=os.environ["OUTPUT_BUCKET"],
             gibs_bucket=os.environ["GIBS_OUTPUT_BUCKET"],
             ac_code=os.environ["ACCODE"],
+            cloud_masking_code=FMASK_VERSION_STRINGS[
+                "v5" if os.getenv("FMASK_VERSION") == "5" else "v4"
+            ],
             working_dir=working_dir,
             debug_bucket=os.getenv("DEBUG_BUCKET"),
             replace_existing=os.getenv("REPLACE_EXISTING", "false").lower() == "true",

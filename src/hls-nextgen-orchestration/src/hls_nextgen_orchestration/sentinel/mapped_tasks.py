@@ -733,9 +733,6 @@ class AddFmaskSds(MappedTask):
 
         final_sr = config.working_dir / self.granule_id / "sr.hdf"
 
-        # sentinel-add-fmask-sds "$hls_sr_combined_hdf" "$fmaskbin" \
-        #   "$aerosol_qa" MTD_MSIL1C.xml MTD_TL.xml \
-        #   "$ACCODE" "$hls_sr_output_hdf"
         subprocess.run(
             [
                 "sentinel-add-fmask-sds",
@@ -745,6 +742,7 @@ class AddFmaskSds(MappedTask):
                 str(mtd_msil1c),
                 str(mtd_tl),
                 config.ac_code,
+                config.cloud_masking_code,
                 str(final_sr),
             ],
             check=True,
