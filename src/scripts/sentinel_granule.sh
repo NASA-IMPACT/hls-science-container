@@ -5,7 +5,6 @@ set -x
 # Exit on any error
 set -o errexit
 
-ACCODE="LaSRC v3.5.1.0"
 
 # granule, granuledir, inputbucket, angleoutput, granuleoutput variable set in sentinel.sh
 safedirectory="${granuledir}/${granule}.SAFE"
