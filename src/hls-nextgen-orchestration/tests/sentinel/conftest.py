@@ -284,6 +284,7 @@ def sentinel_config(tmp_path: Path) -> EnvConfig:
         granule_ids=["S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"],
         working_dir=working_dir,
         ac_code="LaSRC v3.5.1.8",
+        cloud_masking_code="Fmask v4.7",
         replace_existing=False,
     )
 
