@@ -393,7 +393,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
       - conda: s3://hls-conda-channels/linux-64/espa-product-formatter-3.5.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
-      - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.0-hb0f4dca_1.conda
+      - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.1-hb0f4dca_0.conda
       - conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.1/hls_vi-1.20.1-py3-none-any.whl
@@ -1091,7 +1091,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.0-pyhcf101f3_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-product-formatter-3.5.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
-      - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.0-hb0f4dca_1.conda
+      - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.1-hb0f4dca_0.conda
       - conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.1/hls_vi-1.20.1-py3-none-any.whl
@@ -13201,17 +13201,17 @@ packages:
   - liblzma >=5.8.3,<6.0a0
   size: 186045
   timestamp: 1779229679057
-- conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.0-hb0f4dca_1.conda
+- conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.1-hb0f4dca_0.conda
   subdir: linux-64
-  sha256: a2c91abcce4c3a21c5c2358229d0cf07c2ed7f645b3e8850cf6c9d301d970660
-  md5: 0a9009a2c0730b573d22eb308c744858
+  sha256: 291f2b8d2cb6e2c16a1495869fb9ec334f5461e72ad17b6119def01d73e3a4c7
+  md5: 0d6c1665fc7e5352762dc546d7544a80
   depends:
   - python
   - __glibc >=2.17,<3.0.a0
   - liblzma >=5.8.3,<6.0a0
   - libxml2
-  size: 453050
-  timestamp: 1779229687171
+  size: 453686
+  timestamp: 1779834768230
 - conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
   version: 5.0.1
   build: pyh4616a5c_0
