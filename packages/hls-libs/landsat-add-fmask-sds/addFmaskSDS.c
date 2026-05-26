@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
 	char fname_aeroQA[LINELEN];	/* Aerosol QA from USGS LaSRC*/
 	char fname_mtl[LINELEN];	/* mtl */
 	char accodename[LINELEN];	/* Atmospheric correction code name; to be added as hdf attribute */
+	char fmask_version[LINELEN];	/* Fmask version; to be added as hdf attribute */
 	char fname_out[LINELEN];	/* Output */
 
 	lsat_t lsatin, lsatout;
@@ -48,8 +49,8 @@ int main(int argc, char *argv[])
 
 	int ret;
 
-	if (argc != 7) {
-		fprintf(stderr, "%s lsat_in fmask aeroQA mtl accodename lsat_out\n", argv[0]);
+	if (argc != 8) {
+		fprintf(stderr, "%s lsat_in fmask aeroQA mtl accodename fmask_version lsat_out\n", argv[0]);
 		exit(1);
 	}
 
@@ -58,7 +59,8 @@ int main(int argc, char *argv[])
 	strcpy(fname_aeroQA, argv[3]);
 	strcpy(fname_mtl,   argv[4]);
 	strcpy(accodename,  argv[5]);
-	strcpy(fname_out,   argv[6]);
+	strcpy(fmask_version, argv[6]);
+	strcpy(fname_out,   argv[7]);
 
 	/*** Read the input ***/
 	strcpy(lsatin.fname, fname_in);
@@ -95,6 +97,8 @@ int main(int argc, char *argv[])
 	/* Additional metadata */
 	/* AC code name */
 	SDsetattr(lsatout.sd_id, "ACCODE", DFNT_CHAR8, strlen(accodename), (VOIDP)accodename);
+	/* Cloud masking (Fmask) code name */
+	SDsetattr(lsatout.sd_id, "CLOUD_MASKING_CODE", DFNT_CHAR8, strlen(fmask_version), (VOIDP)fmask_version);
 	/* time */
 	getcurrenttime(creationtime);
 	SDsetattr(lsatout.sd_id, "HLS_PROCESSING_TIME", DFNT_CHAR8, strlen(creationtime), (VOIDP)creationtime);
