@@ -151,7 +151,7 @@ sentinel-twohdf2one "$sr_hdf_one" "$sr_hdf_two" MTD_MSIL1C.xml MTD_TL.xml "$ACCO
 
 # Run addFmaskSDS
 echo "Adding Fmask SDS"
-sentinel-add-fmask-sds "$hls_sr_combined_hdf" "$fmaskbin" "$aerosol_qa" MTD_MSIL1C.xml MTD_TL.xml "$ACCODE" "$hls_sr_output_hdf"
+sentinel-add-fmask-sds "$hls_sr_combined_hdf" "$fmaskbin" "$aerosol_qa" MTD_MSIL1C.xml MTD_TL.xml "$ACCODE" "$FMASK_VERSION" "$hls_sr_output_hdf"
 
 # Trim edge pixels for spurious SR values
 echo "Trimming output hdf file"

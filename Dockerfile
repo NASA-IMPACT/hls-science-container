@@ -50,6 +50,7 @@ ENV FMASK_PREFIX=/opt/fmask
 
 # Set variable defining LaSRC version used in HLS product metadata
 ENV ACCODE="LaSRC v3.5.1.0"
+ENV FMASK_VERSION="Fmask v4.7"
 
 COPY --from=build /app/.pixi/envs/default /app/.pixi/envs/default
 COPY --from=build --chmod=0755 /app/entrypoint.sh /app/entrypoint.sh

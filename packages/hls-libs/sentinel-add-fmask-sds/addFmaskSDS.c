@@ -60,6 +60,7 @@ int main(int argc, char *argv[])
 	char fname_safexml[500];
 	char fname_granulexml[500];
 	char accodename[100];
+	char fmask_version[100];
 	char fname_s2rout[500];		/* S10, its QA sds is a combination of CLOUD and Fmask */
 
 	s2r_t s2rin; 			/* With CLOUD SDS */
@@ -68,8 +69,8 @@ int main(int argc, char *argv[])
 	char creationtime[100];
 	int ret;
 
-	if (argc != 8) {
-		fprintf(stderr, "%s s2rin fmask aeroQA safexml granulexml accodename s2rout \n", argv[0]);
+	if (argc != 9) {
+		fprintf(stderr, "%s s2rin fmask aeroQA safexml granulexml accodename fmask_version s2rout \n", argv[0]);
 		exit(1);
 	}
 
@@ -79,7 +80,8 @@ int main(int argc, char *argv[])
 	strcpy(fname_safexml, argv[4]);
 	strcpy(fname_granulexml, argv[5]);
 	strcpy(accodename,       argv[6]);
-	strcpy(fname_s2rout,     argv[7]);
+	strcpy(fmask_version,    argv[7]);
+	strcpy(fname_s2rout,     argv[8]);
 
 	/* Open the input for read*/
 	strcpy(s2rin.fname, fname_s2rin);
@@ -121,6 +123,7 @@ int main(int argc, char *argv[])
 		Error("Error in setinputmeta");
 		exit(1);
 	}
+	SDsetattr(s2rout.sd_id, "FMASK_VERSION", DFNT_CHAR8, strlen(fmask_version), (VOIDP)fmask_version);
 
 	/* Processing time */
 	getcurrenttime(creationtime);
