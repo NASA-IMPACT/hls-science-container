@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 		Error("Error in setinputmeta");
 		exit(1);
 	}
-	SDsetattr(s2rout.sd_id, "FMASK_VERSION", DFNT_CHAR8, strlen(fmask_version), (VOIDP)fmask_version);
+	SDsetattr(s2rout.sd_id, "CLOUD_MASKING_CODE", DFNT_CHAR8, strlen(fmask_version), (VOIDP)fmask_version);
 
 	/* Processing time */
 	getcurrenttime(creationtime);

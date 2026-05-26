@@ -197,16 +197,16 @@ int copy_metadata_AB(s2r_t *s2rA, s2r_t *s2rB, s2r_t *s2rO)
 	sprintf(attr, "%s + %s", s2rA->accode, s2rB->accode);
 	SDsetattr(s2rO->sd_id, ACCODE, DFNT_CHAR8, strlen(attr), (VOIDP)attr);
 
-	/* FMASK_VERSION — same for both granules, copy from A */
+	/* CLOUD_MASKING_CODE — same for both granules, copy from A */
 	{
-		int32 fv_idx = SDfindattr(s2rA->sd_id, "FMASK_VERSION");
+		int32 fv_idx = SDfindattr(s2rA->sd_id, "CLOUD_MASKING_CODE");
 		if (fv_idx != FAIL) {
 			char fv_name[MAX_NC_NAME], fmask_version[100];
 			int32 fv_type, fv_count;
 			SDattrinfo(s2rA->sd_id, fv_idx, fv_name, &fv_type, &fv_count);
 			SDreadattr(s2rA->sd_id, fv_idx, fmask_version);
 			fmask_version[fv_count] = '\0';
-			SDsetattr(s2rO->sd_id, "FMASK_VERSION", DFNT_CHAR8,
+			SDsetattr(s2rO->sd_id, "CLOUD_MASKING_CODE", DFNT_CHAR8,
 				strlen(fmask_version), (VOIDP)fmask_version);
 		}
 	}
