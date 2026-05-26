@@ -97,6 +97,7 @@ int main(int argc, char *argv[])
 	/* Additional metadata */
 	/* AC code name */
 	SDsetattr(lsatout.sd_id, "ACCODE", DFNT_CHAR8, strlen(accodename), (VOIDP)accodename);
+	/* Cloud masking (Fmask) code name */
 	SDsetattr(lsatout.sd_id, "CLOUD_MASKING_CODE", DFNT_CHAR8, strlen(fmask_version), (VOIDP)fmask_version);
 	/* time */
 	getcurrenttime(creationtime);

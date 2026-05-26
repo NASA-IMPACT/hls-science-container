@@ -198,18 +198,8 @@ int copy_metadata_AB(s2r_t *s2rA, s2r_t *s2rB, s2r_t *s2rO)
 	SDsetattr(s2rO->sd_id, ACCODE, DFNT_CHAR8, strlen(attr), (VOIDP)attr);
 
 	/* CLOUD_MASKING_CODE — same for both granules, copy from A */
-	{
-		int32 fv_idx = SDfindattr(s2rA->sd_id, "CLOUD_MASKING_CODE");
-		if (fv_idx != FAIL) {
-			char fv_name[MAX_NC_NAME], fmask_version[100];
-			int32 fv_type, fv_count;
-			SDattrinfo(s2rA->sd_id, fv_idx, fv_name, &fv_type, &fv_count);
-			SDreadattr(s2rA->sd_id, fv_idx, fmask_version);
-			fmask_version[fv_count] = '\0';
-			SDsetattr(s2rO->sd_id, "CLOUD_MASKING_CODE", DFNT_CHAR8,
-				strlen(fmask_version), (VOIDP)fmask_version);
-		}
-	}
+	SDsetattr(s2rO->sd_id, CLOUD_MASKING_CODE, DFNT_CHAR8,
+		strlen(s2rA->cloud_masking_code), (VOIDP)s2rA->cloud_masking_code);
 
 	SDsetattr(s2rO->sd_id, L1PROCTIME, DFNT_CHAR8, strlen(s2rA->l1proctime), (VOIDP)s2rA->l1proctime);
 	SDsetattr(s2rO->sd_id, HORIZONTAL_CS_NAME, DFNT_CHAR8, strlen(s2rA->cs_name), (VOIDP)s2rA->cs_name);

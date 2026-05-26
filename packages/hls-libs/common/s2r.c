@@ -1263,10 +1263,26 @@ int get_all_metadata(s2r_t *s2r)
 		Error(message);
 		return(-1);
 	}
-	s2r->accode[count] = '\0';  /* Forgot to add \0. Fixed on Jul 26, 2019. 
+	s2r->accode[count] = '\0';  /* Forgot to add \0. Fixed on Jul 26, 2019.
 				       But not a problem in v1.4?  It was a bug: v1.4 metadata contains garbage.*/
 
-
+	/* CLOUD_MASKING_CODE (Fmask) */
+	strcpy(attr_name, CLOUD_MASKING_CODE);
+	if ((attr_index = SDfindattr(s2r->sd_id, attr_name)) == FAIL) {
+		sprintf(message, "Attribute \"%s\" not found in %s", attr_name, s2r->fname);
+		Error(message);
+		return (-1);
+	}
+	if (SDattrinfo(s2r->sd_id, attr_index, attr_name, &data_type, &count) == FAIL) {
+		Error("Error in SDattrinfo");
+		return(-1);
+	}
+	if (SDreadattr(s2r->sd_id, attr_index, s2r->cloud_masking_code) == FAIL) {
+		sprintf(message, "Error read attribute \"%s\" in %s", attr_name, s2r->fname);
+		Error(message);
+		return(-1);
+	}
+	s2r->cloud_masking_code[count] = '\0';
 
 	/* Dec 26, 2016: If the AROP metadata are available, read them. They are not available
 	 * before post processing.
