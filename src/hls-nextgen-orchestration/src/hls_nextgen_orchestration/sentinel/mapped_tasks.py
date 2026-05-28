@@ -387,7 +387,7 @@ class RunFmask(MappedTask):
             capture_output=True,
         )
         l1c_report = result.stdout.strip()
-        l1c_invalid = l1c_report == "invalid"
+        l1c_invalid: bool = l1c_report == "invalid"
 
         # Read 2nd to last line of Fmask output
         with fmask_log.open() as src:
