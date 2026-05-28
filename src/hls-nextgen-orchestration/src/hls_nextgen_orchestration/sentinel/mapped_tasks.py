@@ -733,18 +733,21 @@ class AddFmaskSds(MappedTask):
 
         final_sr = config.working_dir / self.granule_id / "sr.hdf"
 
+        cmd = [
+            "sentinel-add-fmask-sds",
+            str(combined_hdf),
+            str(fmask_bin),
+            str(aerosol_qa),
+            str(mtd_msil1c),
+            str(mtd_tl),
+            config.ac_code,
+            config.cloud_masking_code,
+            str(final_sr),
+        ]
+        logger.info(f"Running FmaskAddSDS Step. Command: {cmd}")
+
         subprocess.run(
-            [
-                "sentinel-add-fmask-sds",
-                str(combined_hdf),
-                str(fmask_bin),
-                str(aerosol_qa),
-                str(mtd_msil1c),
-                str(mtd_tl),
-                config.ac_code,
-                config.cloud_masking_code,
-                str(final_sr),
-            ],
+            cmd,
             check=True,
         )
 
