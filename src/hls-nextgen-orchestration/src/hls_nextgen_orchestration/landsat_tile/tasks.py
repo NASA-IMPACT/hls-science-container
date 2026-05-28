@@ -4,7 +4,6 @@ import datetime as dt
 import logging
 import os
 import shutil
-import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -17,6 +16,7 @@ from hls_nextgen_orchestration.base import (
     Task,
     TaskFailure,
 )
+from hls_nextgen_orchestration.common.utils import run_command
 from hls_nextgen_orchestration.granules import HlsGranule
 from hls_nextgen_orchestration.utils import validate_command
 
@@ -255,7 +255,7 @@ class ProcessPathRows(Task):
 
             if idx == 0:
                 # Extract scene time from the first image
-                res = subprocess.run(
+                res = run_command(
                     ["extract_landsat_hms.py", landsat_ac],
                     capture_output=True,
                     text=True,
@@ -282,7 +282,7 @@ class ProcessPathRows(Task):
             nbar_angle = config.working_dir / nbar_names["angle"]
 
             logger.info(f"Running landsat-tile for {pathrow}")
-            subprocess.run(
+            run_command(
                 [
                     "landsat-tile",
                     config.mgrs,
@@ -297,7 +297,7 @@ class ProcessPathRows(Task):
             )
 
             logger.info(f"Running landsat-angle-tile for {pathrow}")
-            subprocess.run(
+            run_command(
                 [
                     "landsat-angle-tile",
                     config.mgrs,
@@ -373,7 +373,7 @@ class RunNbar(Task):
         if nbar_input.exists():
             shutil.copy(nbar_input, gridded_output)
 
-        subprocess.run(
+        run_command(
             ["landsat-nbar", str(nbar_input), str(nbar_angle), str(nbar_cfactor)],
             check=True,
         )
@@ -424,7 +424,7 @@ class ConvertToCogs(Task):
         os.chdir(config.working_dir)
 
         logger.info("Converting to COGs")
-        subprocess.run(
+        run_command(
             [
                 "hdf_to_cog",
                 str(output_hdf),
@@ -435,7 +435,7 @@ class ConvertToCogs(Task):
             ],
             check=True,
         )
-        subprocess.run(
+        run_command(
             [
                 "hdf_to_cog",
                 str(angle_hdf),
@@ -469,7 +469,7 @@ class CreateThumbnail(Task):
         os.chdir(config.working_dir)
 
         logger.info("Creating thumbnail")
-        subprocess.run(
+        run_command(
             [
                 "create_thumbnail",
                 "-i",
@@ -507,7 +507,7 @@ class CreateMetadata(Task):
         # Metadata
         logger.info("Creating metadata")
         meta_xml = f"{granule_id}.cmr.xml"
-        subprocess.run(
+        run_command(
             ["create_metadata", str(output_hdf), "--save", meta_xml],
             check=True,
         )
@@ -515,7 +515,7 @@ class CreateMetadata(Task):
         # STAC
         logger.info("Creating STAC metadata")
         stac_json = f"{granule_id}_stac.json"
-        subprocess.run(
+        run_command(
             [
                 "cmr_to_stac_item",
                 meta_xml,
@@ -558,7 +558,7 @@ class CreateSRManifest(Task):
 
         logger.info("Generating manifest")
         manifest_name = f"{granule_id}.json"
-        subprocess.run(
+        run_command(
             [
                 "create_manifest",
                 str(config.working_dir),
@@ -599,7 +599,7 @@ class ProcessGibs(Task):
         )
 
         logger.info("Generating GIBS browse subtiles")
-        subprocess.run(
+        run_command(
             ["granule_to_gibs", str(config.working_dir), str(gibs_dir), granule_id],
             check=True,
         )
@@ -620,7 +620,7 @@ class ProcessGibs(Task):
                 subtile_manifest = gibs_id_dir / f"{subtile_basename}.json"
                 gibs_id_bucket_key = f"{gibs_bucket_key}/{gibs_id}"
 
-                subprocess.run(
+                run_command(
                     [
                         "create_manifest",
                         str(gibs_id_dir),
@@ -668,7 +668,7 @@ class ProcessVi(Task):
         vi_bucket_key = f"s3://{config.output_bucket}/L30_VI/data/{config.year}{config.day_of_year}/{vi_output_name}"
 
         logger.info("Generating VI files")
-        subprocess.run(
+        run_command(
             [
                 "vi_generate_indices",
                 "-i",
@@ -681,12 +681,12 @@ class ProcessVi(Task):
             check=True,
         )
 
-        subprocess.run(
+        run_command(
             ["vi_generate_metadata", "-i", str(config.working_dir), "-o", str(vi_dir)],
             check=True,
         )
 
-        subprocess.run(
+        run_command(
             [
                 "vi_generate_stac_items",
                 "--cmr_xml",
@@ -703,7 +703,7 @@ class ProcessVi(Task):
 
         logger.info("Generating VI manifest")
         vi_manifest = vi_dir / f"{vi_output_name}.json"
-        subprocess.run(
+        run_command(
             [
                 "create_manifest",
                 str(vi_dir),
@@ -862,7 +862,7 @@ class UploadAll(Task):
         """Handles debug mode uploads."""
         logger.info("DEBUG MODE: Creating gridded debug COG")
         assert config.debug_bucket is not None
-        subprocess.run(
+        run_command(
             [
                 "hdf_to_cog",
                 str(gridded_hdf),

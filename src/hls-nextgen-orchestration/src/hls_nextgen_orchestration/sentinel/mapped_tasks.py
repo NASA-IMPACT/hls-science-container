@@ -9,7 +9,6 @@ import logging
 import os
 import re
 import shutil
-import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -22,6 +21,7 @@ from hls_nextgen_orchestration.base import (
     TaskFailure,
 )
 from hls_nextgen_orchestration.common import Paths
+from hls_nextgen_orchestration.common.utils import run_command
 from hls_nextgen_orchestration.utils import validate_command
 
 from .assets import (
@@ -77,9 +77,7 @@ class DownloadSentinelGranule(MappedTask):
         s3.download_file(config.input_bucket, f"{self.granule_id}.zip", str(zip_path))
 
         logger.info(f"Unzipping {zip_path}")
-        subprocess.run(
-            ["unzip", "-q", str(zip_path), "-d", str(granule_dir)], check=True
-        )
+        run_command(["unzip", "-q", str(zip_path), "-d", str(granule_dir)], check=True)
 
         safe_dir = granule_dir / f"{self.granule_id}.SAFE"
         if not safe_dir.exists():
@@ -117,9 +115,7 @@ class LocalSentinelGranule(MappedTask):
         shutil.copy(self.local_granule_zip, zip_path)
 
         logger.info(f"Unzipping {zip_path}")
-        subprocess.run(
-            ["unzip", "-q", str(zip_path), "-d", str(granule_dir)], check=True
-        )
+        run_command(["unzip", "-q", str(zip_path), "-d", str(granule_dir)], check=True)
 
         safe_dir = granule_dir / f"{self.granule_id}.SAFE"
         if not safe_dir.exists():
@@ -190,7 +186,7 @@ class CheckSolarZenith(MappedTask):
         mtd_tl = bundle[self.requires[0]]
 
         logger.info("Checking solar zenith angle")
-        result = subprocess.run(
+        result = run_command(
             ["check_solar_zenith_sentinel", str(mtd_tl)],
             capture_output=True,
             text=True,
@@ -244,7 +240,7 @@ class FindFootprint(MappedTask):
         if detfoo06.suffix == ".jp2":
             detfoo06_bin = config.working_dir / self.granule_id / "MSK_DETFOO_B06.bin"
             logger.info(f"Converting {detfoo06} to {detfoo06_bin}")
-            subprocess.run(
+            run_command(
                 ["gdal_translate", "-of", "ENVI", str(detfoo06), str(detfoo06_bin)],
                 check=True,
             )
@@ -269,7 +265,7 @@ class ApplyQualityMask(MappedTask):
     def run(self, bundle: AssetBundle) -> AssetBundle:
         inner_dir = bundle[granule_dir_asset(self.granule_id)]
         logger.info(f"Applying quality mask in {inner_dir}")
-        subprocess.run(["apply_s2_quality_mask", str(inner_dir)], check=True)
+        run_command(["apply_s2_quality_mask", str(inner_dir)], check=True)
         return {quality_mask_applied_asset(self.granule_id): True}
 
 
@@ -300,7 +296,7 @@ class DeriveAngles(MappedTask):
         detfoo_temp = config.working_dir / self.granule_id / "detfoo.hdf"
 
         logger.info("Running sentinel-derive-angle")
-        subprocess.run(
+        run_command(
             [
                 "sentinel-derive-angle",
                 str(mtd_tl),
@@ -348,7 +344,7 @@ class RunFmask(MappedTask):
         logger.info(f"Running Fmask in {safe_inner_dir}")
         fmask_log = safe_inner_dir / "fmask_out.txt"
         with open(fmask_log, "w") as outfile:
-            subprocess.run(
+            run_command(
                 ["run_Fmask.sh"], cwd=safe_inner_dir, stdout=outfile, check=True
             )
 
@@ -363,7 +359,7 @@ class RunFmask(MappedTask):
         fmask_bin = config.working_dir / self.granule_id / "fmask.bin"
 
         logger.info(f"Converting {fmask_tif} to {fmask_bin}")
-        subprocess.run(
+        run_command(
             ["gdal_translate", "-of", "ENVI", str(fmask_tif), str(fmask_bin)],
             check=True,
         )
@@ -384,7 +380,7 @@ class RunFmask(MappedTask):
         """
         # Check Sentinel-2 L1C metadata
         logger.info("Checking Sentinel-2 metadata cloud cover...")
-        result = subprocess.run(
+        result = run_command(
             ["check_sentinel_clouds", str(mtd_msil1c)],
             check=True,
             text=True,
@@ -397,7 +393,7 @@ class RunFmask(MappedTask):
         with fmask_log.open() as src:
             fmask_report = src.readlines()[-2]
 
-        result = subprocess.run(
+        result = run_command(
             ["parse_fmask", fmask_report],
             check=True,
             text=True,
@@ -446,7 +442,7 @@ class RunFmaskV5(MappedTask):
             "--dshadow=5",
         ]
         logger.info(f"Running Fmask v5 on {safe_dir}")
-        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        result = run_command(cmd, check=True, capture_output=True, text=True)
 
         if self.check_invalid_cloud_cover(mtd_msil1c, result.stdout):
             raise TaskFailure("Fmask reports no clear pixels. Exiting now", exit_code=4)
@@ -457,7 +453,7 @@ class RunFmaskV5(MappedTask):
 
         fmask_bin = config.working_dir / self.granule_id / "fmask.bin"
         logger.info(f"Converting {fmask_tif} to {fmask_bin}")
-        subprocess.run(
+        run_command(
             ["gdal_translate", "-of", "ENVI", str(fmask_tif), str(fmask_bin)],
             check=True,
         )
@@ -487,7 +483,7 @@ class RunFmaskV5(MappedTask):
         2. Fmask v5 summary shows less than 2% clear pixels.
         """
         logger.info("Checking Sentinel-2 metadata cloud cover...")
-        result = subprocess.run(
+        result = run_command(
             ["check_sentinel_clouds", str(mtd_msil1c)],
             check=True,
             text=True,
@@ -550,11 +546,11 @@ class PrepareEspaInput(MappedTask):
             base_dir=safe_dir.name,
         )
 
-        subprocess.run(
+        run_command(
             ["unpackage_s2.py", "-i", str(masked_zip), "-o", str(granule_dir)],
             check=True,
         )
-        subprocess.run(["convert_sentinel_to_espa"], cwd=safe_dir, check=True)
+        run_command(["convert_sentinel_to_espa"], cwd=safe_dir, check=True)
 
         # FIXME: if not debug, delete JP2 files to save space
 
@@ -594,7 +590,7 @@ class RunLaSRC(MappedTask):
         # The script runs in the directory of the XML
         output_dir = espa_xml.parent
 
-        subprocess.run(
+        run_command(
             ["do_lasrc_sentinel.py", "--xml", str(espa_xml)], cwd=output_dir, check=True
         )
 
@@ -641,12 +637,12 @@ class ProcessHdfParts(MappedTask):
             out_hdf = espa_xml.parent / f"{espa_id}_sr_{suffix}.hdf"
 
             # create_sr_hdf_xml "$espa_xml" "$hls_espa_one_xml" one
-            subprocess.run(
+            run_command(
                 ["create_sr_hdf_xml", espa_xml.name, hls_xml.name, part], check=True
             )
 
             # convert_espa_to_hdf --xml="$hls_espa_one_xml" --hdf="$sr_hdf_one"
-            subprocess.run(
+            run_command(
                 [
                     "convert_espa_to_hdf",
                     f"--xml={hls_xml.name}",
@@ -687,7 +683,7 @@ class CombineHdf(MappedTask):
         os.chdir(espa_xml.parent)
 
         # sentinel-twohdf2one "$sr_hdf_one" "$sr_hdf_two" MTD_MSIL1C.xml MTD_TL.xml "$ACCODE" "$hls_sr_combined_hdf"
-        subprocess.run(
+        run_command(
             [
                 "sentinel-twohdf2one",
                 parts[0].name,
@@ -746,7 +742,7 @@ class AddFmaskSds(MappedTask):
         ]
         logger.info(f"Running FmaskAddSDS Step. Command: {cmd}")
 
-        subprocess.run(
+        run_command(
             cmd,
             check=True,
         )
@@ -769,6 +765,6 @@ class TrimHdf(MappedTask):
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         hdf = bundle[final_sr_hdf_asset(self.granule_id)]
-        subprocess.run(["sentinel-trim", str(hdf)], check=True)
+        run_command(["sentinel-trim", str(hdf)], check=True)
         # FIXME: cleanup .SAFE directory if not debug mode
         return {trimmed_hdf_asset(self.granule_id): hdf}

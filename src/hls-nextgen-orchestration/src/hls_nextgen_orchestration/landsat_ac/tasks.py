@@ -4,7 +4,6 @@ import datetime as dt
 import logging
 import os
 import shutil
-import subprocess
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -18,6 +17,7 @@ from hls_nextgen_orchestration.base import (
     Task,
     TaskFailure,
 )
+from hls_nextgen_orchestration.common.utils import run_command
 from hls_nextgen_orchestration.constants import FMASK_VERSION_STRINGS
 from hls_nextgen_orchestration.utils import validate_command
 
@@ -113,7 +113,7 @@ class DownloadGranule(Task):
         config: EnvConfig = inputs[CONFIG]
 
         logger.info(f"Downloading {config.granule} from {config.input_bucket}...")
-        result = subprocess.run(
+        result = run_command(
             [
                 "download_landsat",
                 config.input_bucket,
@@ -227,7 +227,7 @@ class CheckSolarZenith(Task):
     def run(self, inputs: AssetBundle) -> AssetBundle:
         mtl_path: Path = inputs[MTL_FILE]
         logger.info("Checking Solar Zenith...")
-        result = subprocess.run(
+        result = run_command(
             ["check_solar_zenith_landsat", str(mtl_path)],
             capture_output=True,
             text=True,
@@ -262,11 +262,11 @@ class RunFmask(Task):
         logger.info("Running Fmask...")
         os.chdir(granule_dir)
         with open("fmask_out.txt", "a") as outfile:
-            subprocess.run(["run_Fmask.sh"], stdout=outfile, check=True)
+            run_command(["run_Fmask.sh"], stdout=outfile, check=True)
         fmask_tif = f"{config.granule}_Fmask4.tif"
 
         logger.info("Converting Fmask to ENVI binary...")
-        subprocess.run(
+        run_command(
             ["gdal_translate", "-of", "ENVI", fmask_tif, fmask_bin_path.name],
             check=True,
         )
@@ -301,14 +301,14 @@ class RunFmaskV5(Task):
             "--dshadow=5",
         ]
         logger.info("Running Fmask v5...")
-        subprocess.run(cmd, check=True)
+        run_command(cmd, check=True)
 
         fmask_tif = granule_dir / f"{granule_dir.name}_{model_name}.tif"
         if not fmask_tif.exists():
             raise RuntimeError(f"Expected Fmask v5 output missing: {fmask_tif}")
 
         logger.info("Converting Fmask v5 output to ENVI binary...")
-        subprocess.run(
+        run_command(
             ["gdal_translate", "-of", "ENVI", str(fmask_tif), str(fmask_bin_path)],
             check=True,
         )
@@ -336,7 +336,7 @@ class ConvertScanline(Task):
         logger.info(f"Converting {len(tifs)} TIFs to scanline...")
         for f in tifs:
             scan_name = f.with_name(f"{f.stem}_scan.tif")
-            subprocess.run(
+            run_command(
                 ["gdal_translate", "-co", "TILED=NO", str(f), str(scan_name)],
                 check=True,
             )
@@ -365,7 +365,7 @@ class ConvertToEspa(Task):
 
         logger.info("Convert to ESPA")
         os.chdir(granule_dir)
-        subprocess.run(["convert_lpgs_to_espa", f"--mtl={mtl_path}"], check=True)
+        run_command(["convert_lpgs_to_espa", f"--mtl={mtl_path}"], check=True)
 
         if not espa_xml_path.exists():
             raise RuntimeError(f"Output file missing: {espa_xml_path}")
@@ -390,7 +390,7 @@ class RunLaSRC(Task):
 
         os.chdir(granule_dir)
         logger.info("Run LaSRC")
-        subprocess.run(["do_lasrc_landsat.py", "--xml", str(xml_file)], check=True)
+        run_command(["do_lasrc_landsat.py", "--xml", str(xml_file)], check=True)
 
         # FIXME: check that we expected output files exist
         return {LASRC_DONE: True}
@@ -442,7 +442,7 @@ class CreateHlsXml(Task):
 
         logger.info("Creating updated ESPA XML")
         os.chdir(granule_dir)
-        subprocess.run(
+        run_command(
             ["create_landsat_sr_hdf_xml", str(espa_xml), str(hls_xml.name)], check=True
         )
 
@@ -469,7 +469,7 @@ class ConvertToHdf(Task):
 
         logger.info("Convert to HDF")
         os.chdir(granule_dir)
-        subprocess.run(
+        run_command(
             ["convert_espa_to_hdf", f"--xml={xml}", f"--hdf={sr_hdf}"], check=True
         )
 
@@ -499,7 +499,7 @@ class AddFmaskSds(Task):
 
         logger.info("Run addFmaskSDS")
         os.chdir(granule_dir)
-        subprocess.run(
+        run_command(
             [
                 "landsat-add-fmask-sds",
                 str(sr_hdf),

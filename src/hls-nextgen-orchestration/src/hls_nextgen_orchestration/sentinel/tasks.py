@@ -8,7 +8,6 @@ from __future__ import annotations
 import logging
 import os
 import shutil
-import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -24,6 +23,7 @@ from hls_nextgen_orchestration.base import (
 )
 from hls_nextgen_orchestration.common import Paths
 from hls_nextgen_orchestration.common.commands import run_hdf_to_cog
+from hls_nextgen_orchestration.common.utils import run_command
 from hls_nextgen_orchestration.constants import (
     FMASK_VERSION_STRINGS,
     HLS_VERSION,
@@ -172,10 +172,10 @@ class ConsolidateGranules(MergeTask):
             consolidated_sr = config.working_dir / "consolidated_sr.hdf"
             consolidated_angle = config.working_dir / "consolidated_angle.hdf"
 
-            subprocess.run(
+            run_command(
                 ["sentinel-consolidate", *sr_list, str(consolidated_sr)], check=True
             )
-            subprocess.run(
+            run_command(
                 ["sentinel-consolidate-angle", *angle_list, str(consolidated_angle)],
                 check=True,
             )
@@ -212,7 +212,7 @@ class Resample30m(Task):
         resampled_output = config.working_dir / "resample30m.hdf"
         resampled_output_hdr = resampled_output.with_suffix(".hdf.hdr")
 
-        subprocess.run(
+        run_command(
             ["sentinel-create-s2at30m", str(sr_hdf), str(resampled_output)],
             check=True,
         )
@@ -259,7 +259,7 @@ class DeriveNbar(Task):
         # cfactor.hdf is created as part of NBAR correction
         cfactor = config.working_dir / "cfactor.hdf"
 
-        subprocess.run(
+        run_command(
             ["sentinel-derive-nbar", str(nbar_hdf), str(angle_hdf), str(cfactor)],
             check=True,
         )
@@ -288,7 +288,7 @@ class BandpassCorrection(Task):
         hls_libs_share = Path(binary).parents[1] / "share" / "hls-libs"
         param_file = hls_libs_share / f"bandpass_parameter.{granule.mission}.txt"
 
-        subprocess.run(["sentinel-l8-like", param_file, str(nbar_hdf)], check=True)
+        run_command(["sentinel-l8-like", param_file, str(nbar_hdf)], check=True)
 
         return {FINAL_OUTPUT_HDF: nbar_hdf}
 
@@ -388,7 +388,7 @@ class CreateThumbnail(Task):
         thumb_path = config.working_dir / f"{base_name}.jpg"
 
         logger.info("Creating Thumbnail")
-        subprocess.run(
+        run_command(
             [
                 "create_thumbnail",
                 "-i",
@@ -426,12 +426,10 @@ class CreateMetadata(Task):
         stac_json = config.working_dir / f"{base_name}_stac.json"
 
         logger.info("Creating Metadata")
-        subprocess.run(
-            ["create_metadata", str(hdf), "--save", str(cmr_xml)], check=True
-        )
+        run_command(["create_metadata", str(hdf), "--save", str(cmr_xml)], check=True)
 
         logger.info("Creating STAC Item")
-        subprocess.run(
+        run_command(
             [
                 "cmr_to_stac_item",
                 str(cmr_xml),
@@ -464,7 +462,7 @@ class CreateManifest(Task):
         manifest_path = config.working_dir / f"{base_name}.json"
 
         logger.info("Creating Manifest")
-        subprocess.run(
+        run_command(
             [
                 "create_manifest",
                 str(config.working_dir),
@@ -502,7 +500,7 @@ class ProcessGibs(Task):
         gibs_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info("Generating GIBS tiles")
-        subprocess.run(
+        run_command(
             ["granule_to_gibs", str(config.working_dir), str(gibs_dir), base_name],
             check=True,
         )
@@ -521,7 +519,7 @@ class ProcessGibs(Task):
                 manifest = gibs_id_path / f"{subtile_base}.json"
                 gibs_bucket_key = f"{gibs_bucket_key_root}/{gibs_id}"
 
-                subprocess.run(
+                run_command(
                     [
                         "create_manifest",
                         str(gibs_id_path),
@@ -566,7 +564,7 @@ class ProcessVi(Task):
         ).to_str()
 
         logger.info("Generating VI files")
-        subprocess.run(
+        run_command(
             [
                 "vi_generate_indices",
                 "-i",
@@ -579,12 +577,12 @@ class ProcessVi(Task):
             check=True,
         )
 
-        subprocess.run(
+        run_command(
             ["vi_generate_metadata", "-i", str(config.working_dir), "-o", str(vi_dir)],
             check=True,
         )
 
-        subprocess.run(
+        run_command(
             [
                 "vi_generate_stac_items",
                 "--cmr_xml",
@@ -601,7 +599,7 @@ class ProcessVi(Task):
 
         logger.info("Generating VI Manifest")
         manifest = vi_dir / f"{vi_base_name}.json"
-        subprocess.run(
+        run_command(
             [
                 "create_manifest",
                 str(vi_dir),

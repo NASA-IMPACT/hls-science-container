@@ -1,10 +1,11 @@
-"""Convenience functions for running common CLI commands"""
+"""HLS-specific CLI command wrappers"""
 
 from __future__ import annotations
 
 import logging
-import subprocess
 from pathlib import Path
+
+from hls_nextgen_orchestration.common.utils import run_command
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +43,5 @@ def run_hdf_to_cog(
     if debug_mode:
         cmd.append("--debug-mode")
 
-    logger.info(f"Running hdf_to_cog: {' '.join(cmd)}")
-
-    # In debug mode, existing logic sets check=False to allow continuation even if conversion fails
-    # In production, check=True ensures integrity
-    subprocess.run(cmd, check=not debug_mode)
+    # In debug mode, check=False allows continuation even if conversion fails
+    run_command(cmd, check=not debug_mode)
