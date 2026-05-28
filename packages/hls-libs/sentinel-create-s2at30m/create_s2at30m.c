@@ -130,6 +130,7 @@ int copy_metadata(s2r_t *s2r, s2at30m_t *s2at30m)
 	SDsetattr(s2at30m->sd_id, SPCOVER, DFNT_INT16, 1, (VOIDP)&(s2r->spcover));
 	SDsetattr(s2at30m->sd_id, CLCOVER, DFNT_INT16, 1, (VOIDP)&(s2r->clcover));
 	SDsetattr(s2at30m->sd_id, ACCODE,  DFNT_CHAR8, strlen(s2r->accode), (VOIDP)s2r->accode); 
+	SDsetattr(s2at30m->sd_id, CLOUD_MASKING_CODE,  DFNT_CHAR8, strlen(s2r->cloud_masking_code), (VOIDP)s2r->cloud_masking_code);
 
 	/* AROP related */
 	SDsetattr(s2at30m->sd_id, S_AROP_REFIMG, DFNT_CHAR8, strlen(s2r->refimg), (VOIDP)s2r->refimg);
