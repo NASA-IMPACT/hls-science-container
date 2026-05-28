@@ -633,8 +633,7 @@ class UploadAll(Task):
         THUMBNAIL_FILE,
         # Intermediate assets needed for Debug Mode
         RESAMPLED_HDF,
-        # This is the intermediate NBAR before L8Like
-        NBAR_HDF,
+        RENAMED_HDF,
     )
     provides = (UPLOAD_COMPLETE,)
 
@@ -764,7 +763,7 @@ class UploadAll(Task):
         assert config.debug_bucket is not None
 
         resample_hdf = bundle[RESAMPLED_HDF]
-        nbar_intermediate = bundle[NBAR_HDF]
+        final_hdf = bundle[RENAMED_HDF]
 
         # Convert intermediate HDFs to COGs for debug using helper
         logger.info("DEBUG: Generating intermediate COGs")
@@ -775,7 +774,7 @@ class UploadAll(Task):
             debug_mode=True,
         )
         run_hdf_to_cog(
-            input_file=nbar_intermediate,
+            input_file=final_hdf,
             output_dir=config.working_dir,
             product="S30",
             debug_mode=True,
