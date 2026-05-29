@@ -39,7 +39,7 @@ click = "*"
 zip = "*"
 unzip = "*"
 # Fmask v5.0.1-1
-fmask = { git = "https://github.com/NASA-IMPACT/fmask-v5", rev = "47c04feecae1f52838b4d344389a083b14251ce0" }
+fmask = { git = "https://github.com/NASA-IMPACT/fmask-v5", branch = "chore/merge-v5.0.2-dirty" }
 
 [feature.dev.dependencies]
 ruff = "*"
