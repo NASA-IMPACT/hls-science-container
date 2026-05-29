@@ -109,7 +109,7 @@ def test_pipeline_end_to_end(
     assert context.get(UPLOAD_COMPLETE) is True
 
     # 4. Verify Side Effects (S3 Upload)
-    # Check Main Product
+    # Check main product
     objs = s3_client.list_objects(
         Bucket=tile_context.out_bucket, Prefix=tile_context.expected_s3_prefix
     )

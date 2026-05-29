@@ -59,6 +59,7 @@ def mock_config(tmp_path: Path) -> Generator[EnvConfig, None, None]:
         output_bucket=BUCKET_OUT,
         prefix="L8",
         ac_code="LaSRC",
+        cloud_masking_code="Fmask v4.7",
         working_dir=tmp_path / "jo-id",
         granule_dir=tmp_path / "jo-id" / "granule",
     )

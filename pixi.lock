@@ -393,15 +393,15 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.1-pyhcf101f3_0.conda
       - conda: s3://hls-conda-channels/linux-64/espa-product-formatter-3.5.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
-      - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.0-hb0f4dca_1.conda
+      - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
       - conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.1/hls_vi-1.20.1-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
-      - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.8#5e6c15b0c98fdb3b2ceec371bef6cabdc9f22796
+      - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.1#177e6473591b5305f2448aeee9df06be7ea55796
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.8#e14dd8c59f1e187ece77a0c92ee1463ee26558a8
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/NASA-IMPACT/hls-utilities?tag=v1.11.3#3da1685235f11a1231d54dd8863847029411401f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -744,10 +744,10 @@ environments:
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.1/hls_vi-1.20.1-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
-      - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.8#5e6c15b0c98fdb3b2ceec371bef6cabdc9f22796
+      - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.1#177e6473591b5305f2448aeee9df06be7ea55796
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.8#e14dd8c59f1e187ece77a0c92ee1463ee26558a8
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/NASA-IMPACT/hls-utilities?tag=v1.11.3#3da1685235f11a1231d54dd8863847029411401f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -1091,15 +1091,15 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-3.23.0-pyhcf101f3_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-product-formatter-3.5.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
-      - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.0-hb0f4dca_1.conda
+      - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
       - conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.1/hls_vi-1.20.1-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
-      - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.8#5e6c15b0c98fdb3b2ceec371bef6cabdc9f22796
+      - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.1#177e6473591b5305f2448aeee9df06be7ea55796
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.8#e14dd8c59f1e187ece77a0c92ee1463ee26558a8
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/NASA-IMPACT/hls-utilities?tag=v1.11.3#3da1685235f11a1231d54dd8863847029411401f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -1358,10 +1358,10 @@ environments:
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.1/hls_vi-1.20.1-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
-      - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.8#5e6c15b0c98fdb3b2ceec371bef6cabdc9f22796
+      - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.1#177e6473591b5305f2448aeee9df06be7ea55796
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.8#e14dd8c59f1e187ece77a0c92ee1463ee26558a8
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/NASA-IMPACT/hls-utilities?tag=v1.11.3#3da1685235f11a1231d54dd8863847029411401f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -13201,17 +13201,17 @@ packages:
   - liblzma >=5.8.3,<6.0a0
   size: 186045
   timestamp: 1779229679057
-- conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.0-hb0f4dca_1.conda
+- conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
   subdir: linux-64
-  sha256: a2c91abcce4c3a21c5c2358229d0cf07c2ed7f645b3e8850cf6c9d301d970660
-  md5: 0a9009a2c0730b573d22eb308c744858
+  sha256: 5972d6501ddd3fe799acac7c1ce561faf669000de9ba2135b129089db3ed48ed
+  md5: cfa20fbc76a81c882e70326798188204
   depends:
   - python
   - __glibc >=2.17,<3.0.a0
   - liblzma >=5.8.3,<6.0a0
   - libxml2
-  size: 453050
-  timestamp: 1779229687171
+  size: 449268
+  timestamp: 1780008456214
 - conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
   version: 5.0.1
   build: pyh4616a5c_0
@@ -13364,9 +13364,9 @@ packages:
   - lxml
   - pytest ; extra == 'test'
   - flake8 ; extra == 'test'
-- pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.8#5e6c15b0c98fdb3b2ceec371bef6cabdc9f22796
+- pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
   name: hls-cmr-stac
-  version: '1.8'
+  version: '1.9'
   requires_dist:
   - click
   - pystac[validation]>=1.0.0rc2,<1.12.0
@@ -13406,9 +13406,9 @@ packages:
   - black ; extra == 'dev'
   - flake8 ; extra == 'test'
   - pytest ; extra == 'test'
-- pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.8#e14dd8c59f1e187ece77a0c92ee1463ee26558a8
+- pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
   name: metadata-creator
-  version: '2.8'
+  version: '2.9'
   requires_dist:
   - click
   - numpy

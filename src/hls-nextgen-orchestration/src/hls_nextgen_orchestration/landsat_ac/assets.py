@@ -41,6 +41,7 @@ class EnvConfig:
     output_bucket: str
     prefix: str
     ac_code: str
+    cloud_masking_code: str
     working_dir: Path
     granule_dir: Path
     debug_bucket: str | None = None

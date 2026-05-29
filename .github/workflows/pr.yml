@@ -29,8 +29,12 @@ jobs:
             packages:
               - 'packages/**'
             other:
-              - '**'
-              - '!packages/**'
+              - 'src/**'
+              - 'Dockerfile'
+              - 'pixi.toml'
+              - 'pixi.lock'
+              - 'scripts/**'
+              - '.github/**'
 
   build-conda:
     needs: changes
@@ -111,8 +115,7 @@ jobs:
     if: |
       always() &&
       needs.changes.result == 'success' &&
-      needs.changes.outputs.other == 'true' &&
-      (needs.build-conda.result == 'success' || needs.build-conda.result == 'skipped')
+      needs.changes.outputs.other == 'true'
     runs-on: ubuntu-latest
 
     steps:

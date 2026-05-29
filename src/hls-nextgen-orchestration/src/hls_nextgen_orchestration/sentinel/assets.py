@@ -22,6 +22,7 @@ class EnvConfig:
     gibs_bucket: str
     working_dir: Path
     ac_code: str
+    cloud_masking_code: str
     debug_bucket: str | None = None
     replace_existing: bool = False
 

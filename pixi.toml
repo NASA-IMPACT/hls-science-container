@@ -10,16 +10,16 @@ conda-pypi-map = {}
 # C packages can only be compiled on Linux x86_64
 espa-product-formatter = "=3.5.0"
 espa-surface-reflectance = "=v3.5.1.0"
-hls-libs = "=v3.5.1.0"
+hls-libs = "=v3.5.1.2"
 
 [pypi-dependencies]
 hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = false}
 # Remote repositories
 hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", tag = "v1.8"}
-hls-cmr_stac = { git = "https://github.com/NASA-IMPACT/hls-cmr_stac", tag = "v1.8" }
+hls-cmr_stac = { git = "https://github.com/NASA-IMPACT/hls-cmr_stac", tag = "v1.9" }
 hls-hdf_to_cog = { git = "https://github.com/NASA-IMPACT/hls-hdf_to_cog", tag = "v2.2" }
 hls-manifest = { git = "https://github.com/NASA-IMPACT/hls-manifest", tag = "v2.1" }
-metadata-creator = { git = "https://github.com/NASA-IMPACT/hls-metadata", tag = "v2.8" }
+metadata-creator = { git = "https://github.com/NASA-IMPACT/hls-metadata", tag = "v2.9" }
 hls-thumbnails = { git = "https://github.com/NASA-IMPACT/hls-thumbnails", tag=  "v1.3" }
 hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", tag = "v1.11.3" }
 hls-vi = { url = "https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.1/hls_vi-1.20.1-py3-none-any.whl" }

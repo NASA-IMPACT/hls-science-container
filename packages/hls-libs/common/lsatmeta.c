@@ -324,6 +324,15 @@ int write_input_metadata(lsat_t *lsat, lsatmeta_t *lsatmeta)
 		}
 	}
 
+	/* L_CLOUD_MASKING_CODE */
+	if (strlen(lsatmeta->cloud_masking_code) > 0) {
+		ret = SDsetattr(lsat->sd_id, L_CLOUD_MASKING_CODE, DFNT_CHAR8, strlen(lsatmeta->cloud_masking_code), (VOIDP)lsatmeta->cloud_masking_code);
+		if (ret != 0) {
+			Error("Error in SDsetattr");
+			return(-1);
+		}
+	}
+
 	return(0);
 }
 
@@ -344,6 +353,7 @@ int set_input_metadata(lsat_t *lsat, char *mtl)
 	/* Nov 21, 2017. ACCODE attribute is set elsewhere. Set a flag (.i.e., null string) 
 	 * for write_input_metadata to ignore it  */
 	lsatmeta.accode[0] = '\0';
+	lsatmeta.cloud_masking_code[0] = '\0';
 	lsatmeta.nscene = 1; /* Since this is for AC output, only one scene (not for a tile where they there may be two of the same day */
 	ret = write_input_metadata(lsat, &lsatmeta);
 	if (ret != 0) {
@@ -674,6 +684,24 @@ int get_input_metadata(lsat_t *lsat, lsatmeta_t *lsatmeta)
 		return(-1);
 	}
 	lsatmeta->accode[count] = '\0';
+
+	/* L_CLOUD_MASKING_CODE */
+	strcpy(attr_name, L_CLOUD_MASKING_CODE);
+	if ((attr_index = SDfindattr(lsat->sd_id, attr_name)) == FAIL) {
+		sprintf(message, "Attribute \"%s\" not found in %s", attr_name, lsat->fname);
+		Error(message);
+		return (-1);
+	}
+	if (SDattrinfo(lsat->sd_id, attr_index, attr_name, &data_type, &count) == FAIL) {
+		Error("Error in SDattrinfo");
+		return(-1);
+	}
+	if (SDreadattr(lsat->sd_id, attr_index, lsatmeta->cloud_masking_code) == FAIL) {
+		sprintf(message, "Error read attribute \"%s\" in %s", attr_name, lsat->fname);
+		Error(message);
+		return(-1);
+	}
+	lsatmeta->cloud_masking_code[count] = '\0';
 
 	return(0);
 }

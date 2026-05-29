@@ -43,6 +43,7 @@
 #define L_CLCOVER  "cloud_coverage"
 
 #define L_ACCODE "ACCODE"	/* atmospheric correction code.  Nov 21, 2017 */
+#define L_CLOUD_MASKING_CODE "CLOUD_MASKING_CODE"
 #define L_HLSTIME "HLS_PROCESSING_TIME"	      /* Set directly in C code after processing??? 11/21/17 */
 
 typedef struct {
@@ -82,6 +83,7 @@ typedef struct {
 	int16 spcover;		/* Spatial coverage in percentage */
 	int16 clcover; 		/* Cloud coverage in percentage */
 	char accode[100]; 	/* atmospheric correction code name */
+	char cloud_masking_code[100];	/* cloud masking code name */
 	char hlstime[300];
 } lsatmeta_t;
 
