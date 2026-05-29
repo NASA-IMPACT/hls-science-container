@@ -664,7 +664,7 @@ class UploadAll(Task):
         config: EnvConfig,
     ) -> None:
         """Uploads standard HLS S30 product files and manifest."""
-        logger.info(f"Uploading Main Product to {config.output_bucket_prefix}")
+        logger.info(f"Uploading main product to s3://{config.output_bucket}/{config.output_bucket_prefix}")
 
         # Include patterns: *.tif, *.xml, *.jpg, *_stac.json
         include = (
@@ -701,7 +701,7 @@ class UploadAll(Task):
         config: EnvConfig,
     ) -> None:
         """Uploads GIBS tiles and manifests."""
-        logger.info("Uploading GIBS")
+        logger.info(f"Uploading GIBS to s3://{config.gibs_bucket}/{config.gibs_bucket_prefix}")
         gibs_dir = bundle[GIBS_DIR]
 
         for gibs_id_path in gibs_dir.iterdir():
@@ -733,7 +733,7 @@ class UploadAll(Task):
         config: EnvConfig,
     ) -> None:
         """Uploads Vegetation Index files and manifest."""
-        logger.info("Uploading VI")
+        logger.info(f"Uploading VI product to s3://{config.output_bucket}/{config.vi_bucket_prefix}")
         vi_dir = bundle[VI_DIR]
 
         include = (

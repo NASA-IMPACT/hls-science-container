@@ -599,7 +599,7 @@ class UploadResults(Task):
             raise ValueError("Debug bucket must be set for debug upload")
 
         base_key = f"{config.granule}_{timestamp}"
-        logger.info("Copy files to debug bucket")
+        logger.info(f"Uploading debug files to s3://{bucket}/{base_key}")
 
         for f in granule_dir.rglob("*"):
             if f.is_file():

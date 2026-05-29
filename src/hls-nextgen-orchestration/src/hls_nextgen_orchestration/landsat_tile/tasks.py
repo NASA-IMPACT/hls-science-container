@@ -771,7 +771,7 @@ class UploadAll(Task):
         manifest_file: Path,
     ) -> None:
         """Helper to handle all production upload logic."""
-        logger.info("Uploading Main Product to S3")
+        logger.info("Uploading main product to S3")
         self._upload_main_product(s3, config, granule_id, manifest_file)
 
         logger.info("Uploading GIBS tiles")
@@ -789,6 +789,7 @@ class UploadAll(Task):
     ) -> None:
         """Uploads main product files and manifest."""
         bucket_key_path = f"L30/data/{config.year}{config.day_of_year}/{granule_id}"
+        logger.info(f"Uploading main product to s3://{config.output_bucket}/{bucket_key_path}")
         include_patterns = ["*.tif", "*.xml", "*.jpg", "*_stac.json"]
 
         for pattern in include_patterns:
@@ -806,6 +807,7 @@ class UploadAll(Task):
     def _upload_gibs(self, s3: S3Client, config: EnvConfig, gibs_dir: Path) -> None:
         """Uploads GIBS tiles and manifests."""
         gibs_bucket_key_base = f"L30/data/{config.year}{config.day_of_year}"
+        logger.info(f"Uploading GIBS to s3://{config.gibs_bucket}/{gibs_bucket_key_base}")
 
         for gibs_id_dir in gibs_dir.iterdir():
             if gibs_id_dir.is_dir():
@@ -840,6 +842,7 @@ class UploadAll(Task):
         vi_bucket_key_path = (
             f"L30_VI/data/{config.year}{config.day_of_year}/{vi_output_name}"
         )
+        logger.info(f"Uploading VI to s3://{config.output_bucket}/{vi_bucket_key_path}")
         include_patterns = ["*.tif", "*.xml", "*.jpg", "*_stac.json"]
 
         for pattern in include_patterns:
@@ -860,6 +863,7 @@ class UploadAll(Task):
         self, s3: S3Client, config: EnvConfig, granule_id: str, gridded_hdf: Path
     ) -> None:
         """Handles debug mode uploads."""
+        logger.info(f"DEBUG MODE: Uploading all files to s3://{config.debug_bucket}/{granule_id}")
         logger.info("DEBUG MODE: Creating gridded debug COG")
         assert config.debug_bucket is not None
         run_command(
