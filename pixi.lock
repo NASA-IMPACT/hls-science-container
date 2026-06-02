@@ -316,7 +316,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-product-formatter-3.5.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
-      - conda_source: fmask[b0a1035f] @ git+https://github.com/nasa-impact/fmask-v5?branch=chore%2Fmerge-v5.0.2-dirty#02e871f85bb2f8899ea34a3eae26e8c44474d2af
+      - conda_source: fmask[b0a1035f] @ git+https://github.com/nasa-impact/fmask-v5?rev=2c50af34f5ddc31051c9fdeade45a4431b0f5b5c#2c50af34f5ddc31051c9fdeade45a4431b0f5b5c
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
@@ -610,7 +610,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.3.2-h8088a28_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-ng-2.3.3-hed4e4f5_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
-      - conda_source: fmask[7e9dc5d8] @ git+https://github.com/nasa-impact/fmask-v5?branch=chore%2Fmerge-v5.0.2-dirty#02e871f85bb2f8899ea34a3eae26e8c44474d2af
+      - conda_source: fmask[7e9dc5d8] @ git+https://github.com/nasa-impact/fmask-v5?rev=2c50af34f5ddc31051c9fdeade45a4431b0f5b5c#2c50af34f5ddc31051c9fdeade45a4431b0f5b5c
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
@@ -1053,7 +1053,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-product-formatter-3.5.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
-      - conda_source: fmask[b0a1035f] @ git+https://github.com/nasa-impact/fmask-v5?branch=chore%2Fmerge-v5.0.2-dirty#02e871f85bb2f8899ea34a3eae26e8c44474d2af
+      - conda_source: fmask[b0a1035f] @ git+https://github.com/nasa-impact/fmask-v5?rev=2c50af34f5ddc31051c9fdeade45a4431b0f5b5c#2c50af34f5ddc31051c9fdeade45a4431b0f5b5c
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
@@ -1399,7 +1399,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.3.2-h8088a28_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-ng-2.3.3-hed4e4f5_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
-      - conda_source: fmask[7e9dc5d8] @ git+https://github.com/nasa-impact/fmask-v5?branch=chore%2Fmerge-v5.0.2-dirty#02e871f85bb2f8899ea34a3eae26e8c44474d2af
+      - conda_source: fmask[7e9dc5d8] @ git+https://github.com/nasa-impact/fmask-v5?rev=2c50af34f5ddc31051c9fdeade45a4431b0f5b5c#2c50af34f5ddc31051c9fdeade45a4431b0f5b5c
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
@@ -1751,7 +1751,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-product-formatter-3.5.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
-      - conda_source: fmask[b0a1035f] @ git+https://github.com/nasa-impact/fmask-v5?branch=chore%2Fmerge-v5.0.2-dirty#02e871f85bb2f8899ea34a3eae26e8c44474d2af
+      - conda_source: fmask[b0a1035f] @ git+https://github.com/nasa-impact/fmask-v5?rev=2c50af34f5ddc31051c9fdeade45a4431b0f5b5c#2c50af34f5ddc31051c9fdeade45a4431b0f5b5c
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
@@ -2013,7 +2013,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-1.3.1-h8359307_2.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-ng-2.3.3-hed4e4f5_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
-      - conda_source: fmask[7e9dc5d8] @ git+https://github.com/nasa-impact/fmask-v5?branch=chore%2Fmerge-v5.0.2-dirty#02e871f85bb2f8899ea34a3eae26e8c44474d2af
+      - conda_source: fmask[7e9dc5d8] @ git+https://github.com/nasa-impact/fmask-v5?rev=2c50af34f5ddc31051c9fdeade45a4431b0f5b5c#2c50af34f5ddc31051c9fdeade45a4431b0f5b5c
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
@@ -16292,7 +16292,7 @@ packages:
   - libxml2
   size: 449268
   timestamp: 1780008456214
-- conda_source: fmask[7e9dc5d8] @ git+https://github.com/nasa-impact/fmask-v5?branch=chore%2Fmerge-v5.0.2-dirty#02e871f85bb2f8899ea34a3eae26e8c44474d2af
+- conda_source: fmask[7e9dc5d8] @ git+https://github.com/nasa-impact/fmask-v5?rev=2c50af34f5ddc31051c9fdeade45a4431b0f5b5c#2c50af34f5ddc31051c9fdeade45a4431b0f5b5c
   version: 5.0.2
   build: pyh4616a5c_0
   subdir: noarch
@@ -16348,7 +16348,7 @@ packages:
   - conda: https://conda.anaconda.org/conda-forge/osx-arm64/readline-8.3-h46df422_0.conda
   - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-h010d191_3.conda
   - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
-- conda_source: fmask[b0a1035f] @ git+https://github.com/nasa-impact/fmask-v5?branch=chore%2Fmerge-v5.0.2-dirty#02e871f85bb2f8899ea34a3eae26e8c44474d2af
+- conda_source: fmask[b0a1035f] @ git+https://github.com/nasa-impact/fmask-v5?rev=2c50af34f5ddc31051c9fdeade45a4431b0f5b5c#2c50af34f5ddc31051c9fdeade45a4431b0f5b5c
   version: 5.0.2
   build: pyh4616a5c_0
   subdir: noarch

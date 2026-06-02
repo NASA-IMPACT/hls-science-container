@@ -38,8 +38,8 @@ shapely = ">=2,<3"
 click = "*"
 zip = "*"
 unzip = "*"
-# Fmask v5.0.1-1
-fmask = { git = "https://github.com/NASA-IMPACT/fmask-v5", branch = "chore/merge-v5.0.2-dirty" }
+# Fmask v5.0.2 (pre-release)
+fmask = { git = "https://github.com/NASA-IMPACT/fmask-v5", rev = "2c50af34f5ddc31051c9fdeade45a4431b0f5b5c" }
 
 [feature.dev.dependencies]
 ruff = "*"
