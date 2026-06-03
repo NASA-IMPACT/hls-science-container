@@ -13,7 +13,7 @@ FMASK_VERSION = Literal["v4", "v5"]
 
 FMASK_VERSION_STRINGS: dict[str, str] = {
     "v4": "Fmask v4.7",
-    "v5": "Fmask v5.0.1",
+    "v5": "Fmask v5.0.2",
 }
 
 
