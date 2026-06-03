@@ -38,6 +38,7 @@ parser.add_argument("--imagepath", "-i", required=True)
 parser.add_argument("--model", default="UPL")
 parser.add_argument("--dcloud", type=int, default=3)
 parser.add_argument("--dshadow", type=int, default=5)
+parser.add_argument("--nthreads", type=int, default=0)
 args = parser.parse_args()
 
 image_dir = Path(args.imagepath)

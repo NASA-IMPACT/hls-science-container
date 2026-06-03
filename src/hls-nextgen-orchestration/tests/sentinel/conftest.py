@@ -59,6 +59,7 @@ parser.add_argument("--model", default="UPL")
 parser.add_argument("--print_summary", default="no")
 parser.add_argument("--dcloud", type=int, default=3)
 parser.add_argument("--dshadow", type=int, default=5)
+parser.add_argument("--nthreads", type=int, default=0)
 args = parser.parse_args()
 
 safe_dir = Path(args.imagepath)
