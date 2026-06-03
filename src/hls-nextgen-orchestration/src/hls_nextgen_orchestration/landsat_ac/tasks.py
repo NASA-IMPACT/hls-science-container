@@ -293,12 +293,14 @@ class RunFmaskV5(Task):
         fmask_bin_path = granule_dir / "fmask.bin"
 
         model_name = "UPL"
+        nthreads = os.getenv("OMP_NUM_THREADS", "2")
         cmd = [
             "fmask",
             f"--imagepath={granule_dir}",
             f"--model={model_name}",
             "--dcloud=1",
             "--dshadow=5",
+            f"--nthreads={nthreads}",
         ]
         logger.info("Running Fmask v5...")
         run_command(cmd, check=True)

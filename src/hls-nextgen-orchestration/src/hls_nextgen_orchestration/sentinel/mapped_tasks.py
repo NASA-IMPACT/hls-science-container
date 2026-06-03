@@ -433,6 +433,7 @@ class RunFmaskV5(MappedTask):
         mtd_msil1c: Path = bundle[mtd_msil1c_asset(self.granule_id)]
 
         model_name = "UPL"
+        nthreads = os.getenv("OMP_NUM_THREADS", "2")
         cmd = [
             "fmask",
             f"--imagepath={safe_dir}",
@@ -440,6 +441,7 @@ class RunFmaskV5(MappedTask):
             "--print_summary=yes",
             "--dcloud=0",
             "--dshadow=5",
+            f"--nthreads={nthreads}",
         ]
         logger.info(f"Running Fmask v5 on {safe_dir}")
         result = run_command(cmd, check=True, capture_output=True, text=True)
