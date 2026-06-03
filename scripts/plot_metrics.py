@@ -395,7 +395,7 @@ def plot():
 
 
 @plot.command()
-@click.argument("input", default="metrics.parquet")
+@click.argument("inputs", nargs=-1, default="metrics.parquet")
 @click.option(
     "--dimension",
     default="fmask_version",
@@ -415,9 +415,12 @@ def plot():
     help="Task(s) to plot (repeat for multiple, e.g. --tasks Fmask --tasks LaSRC). Defaults to all tasks in the data.",
 )
 @click.option("--output", default=None, help="Save figure to file instead of showing")
-def scatter(input, dimension, x_val, y_val, tasks, output):
+def scatter(inputs: list[str], dimension, x_val, y_val, tasks, output):
     """Paired scatter: dimension x vs y, one point per granule."""
-    df = pd.read_parquet(input)
+    dfs = []
+    for input_ in inputs:
+        dfs.append(pd.read_parquet(input_))
+    df = pd.concat(dfs)
 
     has_granule = df.get("input_granule_id", pd.Series(pd.NA, index=df.index))
     df = df[has_granule.notna() & (has_granule != "")]
