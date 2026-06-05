@@ -396,7 +396,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
       - conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
-      - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.1/hls_vi-1.20.1-py3-none-any.whl
+      - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
@@ -742,7 +742,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - conda_source: fmask[c1185896] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
-      - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.1/hls_vi-1.20.1-py3-none-any.whl
+      - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
@@ -1094,7 +1094,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
       - conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
-      - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.1/hls_vi-1.20.1-py3-none-any.whl
+      - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
@@ -1356,7 +1356,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - conda_source: fmask[c1185896] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
-      - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.1/hls_vi-1.20.1-py3-none-any.whl
+      - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
@@ -13339,9 +13339,9 @@ packages:
   - ruff>=0.9.0 ; extra == 'dev'
   - types-psutil>=7.2.2.20260408 ; extra == 'dev'
   requires_python: '>=3.13'
-- pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.1/hls_vi-1.20.1-py3-none-any.whl
+- pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
   name: hls-vi
-  version: 1.20.1
+  version: 1.20.2
   requires_dist:
   - geojson
   - importlib-resources
