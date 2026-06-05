@@ -32,7 +32,9 @@ def lasrc_aux_dir(tmp_path_factory: pytest.TempPathFactory) -> None:
     if os.environ.get("LASRC_AUX_DIR"):
         return
     if not _AUX_BUCKET or not _AUX_PREFIX:
-        pytest.skip("LASRC_AUX_DIR not set and BENCHMARK_AUX_BUCKET/AUX_PREFIX not configured")
+        pytest.skip(
+            "LASRC_AUX_DIR not set and BENCHMARK_AUX_BUCKET/AUX_PREFIX not configured"
+        )
     aux_dir = tmp_path_factory.mktemp("lasrc_aux")
     subprocess.run(
         ["aws", "s3", "sync", f"s3://{_AUX_BUCKET}/{_AUX_PREFIX}", str(aux_dir)],
