@@ -1,3 +1,6 @@
+[tool.pytest.ini_options]
+addopts = "--ignore=src/hls-nextgen-orchestration/tests/benchmarks"
+
 [tool.ruff]
 line-length = 88
 target-version = "py312"
