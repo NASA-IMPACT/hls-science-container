@@ -17,7 +17,7 @@ _S2_GRANULE_IDS = [
     [pytest.param(gid, id=gid) for gid in _S2_GRANULE_IDS]
     or [pytest.param("", id="env-not-set")],
 )
-def test_s30_fmask_v5(
+def test_s30(
     benchmark: pytest.FixtureRequest,
     granule_id: str,
     s2_local_zips: dict[str, Path],

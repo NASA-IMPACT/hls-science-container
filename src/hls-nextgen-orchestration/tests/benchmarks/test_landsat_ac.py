@@ -17,7 +17,7 @@ _LS_GRANULE_IDS = [
     [pytest.param(gid, id=gid) for gid in _LS_GRANULE_IDS]
     or [pytest.param("", id="env-not-set")],
 )
-def test_l30_ac_fmask_v5(
+def test_l30_ac(
     benchmark: pytest.FixtureRequest,
     granule_id: str,
     ls_local_dirs: dict[str, Path],
