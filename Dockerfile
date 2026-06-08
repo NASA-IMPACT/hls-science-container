@@ -115,4 +115,5 @@ CMD [ "/bin/bash" ]
 # ===== Benchmark image (extends dev — tests already live at src/.../tests/)
 FROM dev AS benchmark
 
-RUN /app/.pixi/envs/default/bin/pip install pytest pytest-benchmark
+RUN --mount=type=cache,target=/root/.cache/rattler/cache \
+    pixi install --frozen -e benchmark

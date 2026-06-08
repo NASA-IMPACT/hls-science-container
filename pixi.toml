@@ -57,6 +57,10 @@ py-spy = "*"
 [feature.dev.pypi-dependencies]
 hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = true, extras = ["dev"] }
 
+[feature.benchmark.pypi-dependencies]
+hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = true, extras = ["dev"] }
+
 [environments]
 dev = { features = ["dev"], no-default-feature = true }
 debug = { features = ["dev", "debug"], no-default-feature = false }
+benchmark = { features = ["benchmark"] }
