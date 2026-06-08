@@ -105,7 +105,7 @@ docker run --rm \
   -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
   -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
   hls-science-container:benchmark \
-  "cd /app && pytest tests/benchmarks -v --benchmark-json=/output/benchmark.json"
+  "cd /app && pytest src/hls-nextgen-orchestration/tests/benchmarks -v --benchmark-json=/output/benchmark.json"
 ```
 
 Alternatively, let the fixture download ancillary data from S3 by providing `BENCHMARK_AUX_BUCKET` and

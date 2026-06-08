@@ -112,8 +112,7 @@ COPY src/scripts/*.sh /app/.pixi/envs/default/bin
 ENTRYPOINT [ "/app/entrypoint.sh", "/bin/bash", "-c" ]
 CMD [ "/bin/bash" ]
 
-# ===== Benchmark image (extends prod with pytest-benchmark)
-FROM prod AS benchmark
+# ===== Benchmark image (extends dev — tests already live at src/.../tests/)
+FROM dev AS benchmark
 
-COPY src/hls-nextgen-orchestration/tests /app/tests
 RUN /app/.pixi/envs/default/bin/pip install pytest pytest-benchmark
