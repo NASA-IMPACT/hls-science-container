@@ -85,7 +85,7 @@ jobs:
       - name: Count new packages
         id: count
         run: |
-          files=$(find /tmp/conda-output/linux-64 -name "*.conda" 2>/dev/null)
+          files=$(find /tmp/conda-output/linux-64 -name "*.conda" 2>/dev/null || true)
           n=$(echo "$files" | grep -c . || true)
           packages=$(echo "$files" | xargs -I{} basename {} .conda | sed 's/-[0-9v].*//' | tr '\n' ' ')
           echo "new_packages=$n" >> "$GITHUB_OUTPUT"

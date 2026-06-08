@@ -1,0 +1,91 @@
+name: Benchmark
+
+on:
+  push:
+    branches: [main]
+
+# Allow only one benchmark run at a time so results are stored sequentially.
+concurrency:
+  group: benchmark
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  deployments: write
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  ECR_REPOSITORY: hls-science-container
+  BUILD_PLATFORM: linux/amd64
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/free-disk-space
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Compute pixi.lock hash
+        run: echo "LOCK_HASH=$(sha256sum pixi.lock | awk '{print $1}')" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build benchmark image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          load: true
+          provenance: false
+          sbom: false
+          target: benchmark
+          build-args: |
+            PLATFORM=${{ env.BUILD_PLATFORM }}
+            LOCK_HASH=${{ env.LOCK_HASH }}
+            GIT_SHA=${{ github.sha }}
+          secrets: |
+            aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          tags: ${{ env.ECR_REPOSITORY }}:benchmark
+          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
+
+      - name: Run benchmarks
+        run: |
+          mkdir -p benchmark-output
+          docker run --rm \
+            -v "${{ github.workspace }}/benchmark-output:/output" \
+            -e BENCHMARK_S2_GRANULE_IDS="${{ vars.BENCHMARK_S2_GRANULE_IDS }}" \
+            -e BENCHMARK_LS_GRANULE_IDS="${{ vars.BENCHMARK_LS_GRANULE_IDS }}" \
+            -e BENCHMARK_INPUT_BUCKET="${{ secrets.BENCHMARK_INPUT_BUCKET }}" \
+            -e BENCHMARK_INPUT_PREFIX="${{ vars.BENCHMARK_INPUT_PREFIX }}" \
+            -e BENCHMARK_AUX_BUCKET="${{ secrets.BENCHMARK_AUX_BUCKET }}" \
+            -e BENCHMARK_AUX_PREFIX="${{ vars.BENCHMARK_AUX_PREFIX }}" \
+            -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+            -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+            -e AWS_DEFAULT_REGION="${{ env.AWS_REGION }}" \
+            "${{ env.ECR_REPOSITORY }}:benchmark" \
+            "cd /app && pytest tests/benchmarks -v --benchmark-json=/output/benchmark.json"
+
+      - name: Publish benchmark results to GitHub Pages
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: pytest
+          output-file-path: benchmark-output/benchmark.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          comment-on-alert: true
+          alert-threshold: "150%"
+          fail-on-alert: false
