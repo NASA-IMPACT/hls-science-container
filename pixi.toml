@@ -60,6 +60,14 @@ hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable
 [feature.benchmark.pypi-dependencies]
 hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = true, extras = ["dev"] }
 
+[feature.benchmark.tasks]
+benchmark = {
+    cmd = "pytest src/hls-nextgen-orchestration/tests/benchmarks -v --benchmark-json=$BENCHMARK_OUTPUT",
+    env = {
+        BENCHMARK_OUTPUT = "benchmark-output/benchmark.json"
+    }
+}
+
 [environments]
 dev = { features = ["dev"], no-default-feature = true }
 debug = { features = ["dev", "debug"], no-default-feature = false }
