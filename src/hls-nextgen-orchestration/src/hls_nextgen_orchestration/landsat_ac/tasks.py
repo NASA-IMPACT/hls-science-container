@@ -167,15 +167,15 @@ class LocalGranule(Task):
     def run(self, inputs: AssetBundle) -> dict[Asset[Any], Any]:
         config: EnvConfig = inputs[CONFIG]
 
-        mtl_paths = list(self.local_granule_dir.glob("*_MTL.txt"))
+        logger.info(f"Copying {self.local_granule_dir} to {config.granule_dir=}")
+        shutil.copytree(self.local_granule_dir, config.granule_dir, dirs_exist_ok=True)
+
+        mtl_paths = list(config.granule_dir.glob("*_MTL.txt"))
         if len(mtl_paths) != 1:
             raise RuntimeError("Cannot locate the _MTL.txt file")
         mtl_path = mtl_paths[0]
         granule = mtl_path.name.rstrip("_MTL.txt")
-        logger.info(f"Found {granule=} inside of {self.local_granule_dir}")
-
-        logger.info(f"Copying {self.local_granule_dir} to {config.granule_dir=}")
-        shutil.copytree(self.local_granule_dir, config.granule_dir, dirs_exist_ok=True)
+        logger.info(f"Found {granule=} inside of {config.granule_dir}")
 
         return {
             CONFIG: replace(config, granule=granule),
