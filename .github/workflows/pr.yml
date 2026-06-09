@@ -67,44 +67,15 @@ jobs:
             --s3-access-key-id "$S3_ACCESS_KEY_ID" \
             --s3-secret-access-key "$S3_SECRET_ACCESS_KEY"
 
-      - name: Build espa-product-formatter
-        run: |
-          rattler-build build \
-            --recipe packages/espa-product-formatter/recipe.yml \
-            --output-dir /tmp/conda-output \
-            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
-            --channel conda-forge \
-            --skip-existing=all
-
-      - name: Build espa-surface-reflectance
-        run: |
-          rattler-build build \
-            --recipe packages/espa-surface-reflectance/recipe.yml \
-            --output-dir /tmp/conda-output \
-            --channel /tmp/conda-output \
-            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
-            --channel conda-forge \
-            --skip-existing=all
-
-      - name: Build hls-libs
-        run: |
-          rattler-build build \
-            --recipe packages/hls-libs/recipe.yml \
-            --output-dir /tmp/conda-output \
-            --channel /tmp/conda-output \
-            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
-            --channel conda-forge \
-            --skip-existing=all
-
-      - name: Build lasrc-rs
-        run: |
-          rattler-build build \
-            --recipe packages/lasrc-rs/recipe.yml \
-            --output-dir /tmp/conda-output \
-            --channel /tmp/conda-output \
-            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
-            --channel conda-forge \
-            --skip-existing=all
+      - name: Build conda packages
+        uses: ./.github/actions/build-conda-packages
+        with:
+          channel-bucket: ${{ secrets.CONDA_CHANNEL_BUCKET }}
+          recipes: |
+            packages/espa-product-formatter/recipe.yml
+            packages/espa-surface-reflectance/recipe.yml
+            packages/hls-libs/recipe.yml
+            packages/lasrc-rs/recipe.yml
 
       - name: Verify new packages were built
         # Skipped for docs:/chore:/ci: PRs where a version bump is not expected

@@ -1,0 +1,39 @@
+name: Build conda packages
+description: >
+  Build one or more conda recipes with rattler-build against the local output
+  directory, the project S3 channel, and conda-forge. Recipes are built in the
+  order given so a later recipe can resolve an earlier one from the local
+  output directory (used as a channel). Assumes rattler-build is already
+  installed and authenticated against the S3 channel by the calling job.
+
+inputs:
+  recipes:
+    description: Newline-separated list of recipe.yml paths, in dependency order.
+    required: true
+  channel-bucket:
+    description: Name of the S3 bucket backing the conda channel (no s3:// prefix).
+    required: true
+  output-dir:
+    description: Directory for built packages; also used as a local channel.
+    required: false
+    default: /tmp/conda-output
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p "${{ inputs.output-dir }}"
+        while IFS= read -r recipe; do
+          [ -z "$recipe" ] && continue
+          echo "::group::Build $recipe"
+          rattler-build build \
+            --recipe "$recipe" \
+            --output-dir "${{ inputs.output-dir }}" \
+            --channel "${{ inputs.output-dir }}" \
+            --channel "s3://${{ inputs.channel-bucket }}" \
+            --channel conda-forge \
+            --skip-existing=all
+          echo "::endgroup::"
+        done <<< "${{ inputs.recipes }}"
