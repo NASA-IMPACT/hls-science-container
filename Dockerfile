@@ -23,6 +23,17 @@ RUN wget -q -O /tmp/Fmask.install https://fmask4installer.s3.us-west-2.amazonaws
     /tmp/Fmask.install -destinationFolder /opt/fmask -agreeToLicense yes -mode silent && \
     rm /tmp/Fmask.install
 
+# ----- Install Fmask v5 models and ancillary data
+# Unpack data/ + model/ directly (stripping the ZIP's top-level dir, matching
+# fmask.cli.data:install) so this layer caches independently of the pixi env.
+# FMASK_DATA points to a fixed path so all pixi envs (default, benchmark, …) share one copy.
+ENV FMASK_DATA=/opt/fmask-data
+RUN wget -q -O /tmp/fmask_5_0_1.zip https://fmask4installer.s3.us-west-2.amazonaws.com/fmask_5_0_1.zip && \
+    unzip -q /tmp/fmask_5_0_1.zip -d /tmp/fmask_5_0_1 && \
+    mkdir -p ${FMASK_DATA} && \
+    mv /tmp/fmask_5_0_1/*/data /tmp/fmask_5_0_1/*/model ${FMASK_DATA}/ && \
+    rm -rf /tmp/fmask_5_0_1.zip /tmp/fmask_5_0_1
+
 # ----- Install package dependencies
 COPY --parents pixi.toml pixi.lock packages src/ /app/
 # LOCK_HASH scopes the rattler cache by pixi.lock so workspace package builds
@@ -46,13 +57,6 @@ ENV PREFIX=/app/.pixi/envs/default
 RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
     pixi shell-hook --frozen -e default -s bash >> /app/entrypoint.sh && \
     echo 'exec "$@"' >> /app/entrypoint.sh
-
-# ----- Install Fmask v5 models and ancillary data
-# FMASK_DATA points to a fixed path so all pixi envs (default, benchmark, …) share one copy
-ENV FMASK_DATA=/opt/fmask-data
-RUN wget -q -O /tmp/fmask_5_0_1.zip https://fmask4installer.s3.us-west-2.amazonaws.com/fmask_5_0_1.zip && \
-    pixi run --frozen fmask-data install /tmp/fmask_5_0_1.zip && \
-    rm /tmp/fmask_5_0_1.zip
 
 # ===== Development installation
 FROM build AS dev
