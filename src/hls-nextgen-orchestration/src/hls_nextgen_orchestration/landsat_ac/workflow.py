@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from hls_nextgen_orchestration.constants import FMASK_VERSION
-from hls_nextgen_orchestration.metrics import MetricsCollector
+from hls_nextgen_orchestration.metrics import MetricsCollector, MetricSink
 from hls_nextgen_orchestration.pipeline import Pipeline, PipelineBuilder
 
 from .tasks import (
@@ -32,6 +32,7 @@ def construct_pipeline(
     local_granule_dir: Path | None = None,
     fmask_version: FMASK_VERSION = "v4",
     upload: bool = True,
+    metric_sink: MetricSink | None = None,
 ) -> Pipeline:
     """Create the Landsat atmospheric correction (AC) pipeline
 
@@ -96,7 +97,8 @@ def construct_pipeline(
 
     return builder.build(
         metrics=MetricsCollector(
-            pipeline_dims={"workflow": "landsat-ac", "input_granule_id": granule_id}
+            pipeline_dims={"workflow": "landsat-ac", "input_granule_id": granule_id},
+            sink=metric_sink,
         )
     )
 

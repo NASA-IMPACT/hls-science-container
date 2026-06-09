@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 from hls_nextgen_orchestration.constants import FMASK_VERSION
-from hls_nextgen_orchestration.metrics import MetricsCollector
+from hls_nextgen_orchestration.metrics import MetricsCollector, MetricSink
 from hls_nextgen_orchestration.pipeline import Pipeline, PipelineBuilder
 
 from .mapped_tasks import (
@@ -50,6 +50,7 @@ def construct_pipeline(
     local_granule_zips: list[Path] | None = None,
     fmask_version: FMASK_VERSION = "v4",
     upload: bool = True,
+    metric_sink: MetricSink | None = None,
 ) -> Pipeline:
     """Constructs the Sentinel-2 (S30) Preprocessing Pipeline.
 
@@ -143,7 +144,9 @@ def construct_pipeline(
         builder = builder.add(UploadAll("Upload"))
 
     return builder.build(
-        metrics=MetricsCollector(pipeline_dims={"workflow": "sentinel-ac"})
+        metrics=MetricsCollector(
+            pipeline_dims={"workflow": "sentinel-ac"}, sink=metric_sink
+        )
     )
 
 

@@ -10,12 +10,14 @@ commit-by-commit performance history and automatic regression alerts.
 
 ## How it works
 
-Each benchmark test is parametrized over a list of granule IDs. The granule ID becomes the pytest node ID, which becomes
-the chart series key in GitHub Pages — so each granule is tracked independently across commits:
+Each benchmark test is parametrized over a list of granule IDs, so each granule runs independently. Every metric is
+published as a `customSmallerIsBetter` series keyed by `{task} {metric} [{granule}]`, so each granule (and each
+instrumented pipeline stage) is tracked independently across commits:
 
 ```
-test_s30[S2B_MSIL1C_20260127T160429_N0511_R097_T18UYA_20260127T193526]
-test_s30[S2B_MSIL1C_20260122T083139_N0511_R021_T36QTD_20260122T120506]
+sentinel-ac runtime_seconds [S2B_MSIL1C_20260127T160429_N0511_R097_T18UYA_20260127T193526]
+sentinel-ac peak_memory_mb  [S2B_MSIL1C_20260127T160429_N0511_R097_T18UYA_20260127T193526]
+LaSRC avg_cpu_percent       [S2B_MSIL1C_20260127T160429_N0511_R097_T18UYA_20260127T193526]
 ```
 
 Granule input data and LaSRC ancillary data are downloaded from S3 in session-scoped fixtures (outside the timed
@@ -23,6 +25,24 @@ section) and reused across all tests in a run.
 
 Benchmarks run inside the production Docker image (so fmask, lasrc, and all other binaries are the real ones, not
 mocks). A `benchmark` Docker target extends `prod` by adding pytest and pytest-benchmark.
+
+## Runtime, memory, and CPU in one chart group
+
+`github-action-benchmark` uses one parser (`tool`) per publish step, and the `pytest` tool only charts runtime. To
+track **runtime, peak memory, and average CPU** together — including the heavy subprocesses (Fmask MCR, LaSRC) where
+most of the work happens — all three are emitted into a single `customSmallerIsBetter` JSON and published in one step
+(chart group "HLS pipeline benchmarks").
+
+The measurements reuse the same sampler the pipelines use in production: `hls_nextgen_orchestration.metrics`. Its
+`_PollingThread` samples the whole process tree's peak RSS and rolls up subprocess CPU via `cpu_times()`. Each benchmark
+injects an `InMemorySink` into `construct_pipeline(..., metric_sink=...)`, so the pipeline's existing per-task
+(`collect()`, gated by `instrument=True`) and aggregate (`collect_pipeline()`) measurements are captured locally instead
+of being shipped to CloudWatch. After the run, the conftest's `resource_metrics` collector writes
+`benchmark-output/resources.json` (alongside pytest-benchmark's own `benchmark.json`, which is kept as a local artifact
+but no longer published separately).
+
+Per-task series are naturally limited to the `instrument=True` stages (e.g. `LaSRC`, `Fmask`), plus the pipeline
+aggregate (`sentinel-ac` / `landsat-ac`).
 
 ## GitHub Actions setup
 
