@@ -4,9 +4,13 @@ import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import boto3
 import pytest
+
+if TYPE_CHECKING:
+    from _pytest.mark.structures import ParameterSet
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +59,7 @@ def _split_ids(var: str) -> list[str]:
     return [g for g in os.environ.get(var, "").split(",") if g]
 
 
-def granule_params(granule_ids: list[str]) -> list[pytest.ParameterSet]:
+def granule_params(granule_ids: list[str]) -> list[ParameterSet]:
     """Build parametrize params keyed by granule ID (the chart series key).
 
     Falls back to a single placeholder param when no IDs are configured, so the
