@@ -35,6 +35,7 @@ libgdal-jp2openjpeg = "*"
 rasterio = "*"
 pyproj = ">=3.7.2,<4"
 shapely = ">=2,<3"
+click = "*"
 zip = "*"
 unzip = "*"
 # Fmask v5.0.1-1
@@ -44,9 +45,11 @@ fmask = { git = "https://github.com/NASA-IMPACT/fmask-v5", rev = "47c04feecae1f5
 ruff = "*"
 mypy = "*"
 pytest = "*"
+# dev env is no-default-feature, so core deps (incl. click) aren't inherited;
+# click is needed to lint/typecheck the CLI module.
+click = "*"
 
 [feature.debug.dependencies]
-click = "*"
 ipython = "*"
 matplotlib = "*"
 pandas = "*"

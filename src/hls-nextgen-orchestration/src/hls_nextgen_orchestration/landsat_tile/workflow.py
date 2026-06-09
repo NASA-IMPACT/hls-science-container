@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import logging
-import sys
 from pathlib import Path
 
 from hls_nextgen_orchestration.metrics import MetricsCollector
@@ -69,19 +67,6 @@ def construct_pipeline(
 
 
 if __name__ == "__main__":
-    import os
+    from hls_nextgen_orchestration.cli import cli
 
-    logging.basicConfig(level=logging.INFO)
-
-    local_pathrows_dir = Path(_) if (_ := os.getenv("LOCAL_PATHROWS_DIR")) else None
-    try:
-        pipeline = construct_pipeline(local_pathrows_dir=local_pathrows_dir)
-        print(pipeline)
-        with pipeline.metrics.collect_pipeline(
-            pipeline_class="Pipeline", pipeline_name="landsat-tile"
-        ):
-            context = pipeline.run()
-        sys.exit(context.exit_code)
-    except Exception as e:
-        logging.error(f"Pipeline failed initialization: {e}")
-        sys.exit(1)
+    cli(["landsat-tile"])
