@@ -4,11 +4,12 @@
 
 # No package / installers
 **/Fmask*install
-
 **/.DS_Store
 
 scripts/.docker_bash_history
 scripts/.cache/
+
+benchmark-output/
 
 # ===== Github default Python.gitignore below
 # Byte-compiled / optimized / DLL files
