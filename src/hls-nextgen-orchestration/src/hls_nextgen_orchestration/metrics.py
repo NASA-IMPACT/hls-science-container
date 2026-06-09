@@ -7,7 +7,7 @@ import threading
 import time
 from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 import boto3
 import psutil
@@ -36,6 +36,106 @@ class _Sample:
     peak_memory_mb: float = 0.0
     avg_cpu_percent: float = 0.0
     exit_code: int = 0
+
+
+@dataclass(frozen=True)
+class MetricRecord:
+    """A single measured task/pipeline execution, ready for any publisher.
+
+    ``dimensions`` carries the full set of resolved key/value pairs (task
+    class/name, job id, git sha, granule, experiment + pipeline dims) so a sink
+    can publish them however it likes; the numeric fields are pulled out for
+    convenience.
+    """
+
+    task_class: str
+    task_name: str
+    runtime_seconds: float
+    peak_memory_mb: float
+    avg_cpu_percent: float
+    exit_code: int
+    dimensions: dict[str, str]
+
+
+class MetricSink(Protocol):
+    """A publisher for measured :class:`MetricRecord`s."""
+
+    def emit(self, record: MetricRecord) -> None: ...
+
+
+@dataclass
+class InMemorySink:
+    """Collects records in a list. Used by benchmarks to read metrics back."""
+
+    records: list[MetricRecord] = field(default_factory=list)
+
+    def emit(self, record: MetricRecord) -> None:
+        self.records.append(record)
+
+
+@dataclass
+class CloudWatchSink:
+    """Publishes records to CloudWatch Logs in EMF format."""
+
+    log_group: str
+    client: CloudWatchLogsClient = field(default_factory=lambda: boto3.client("logs"))
+    job_id: str = field(
+        default_factory=lambda: os.environ.get("AWS_BATCH_JOB_ID", "local_job")
+    )
+
+    def __post_init__(self) -> None:
+        try:
+            self.client.create_log_stream(
+                logGroupName=self.log_group,
+                logStreamName=self.job_id,
+            )
+        except self.client.exceptions.ResourceAlreadyExistsException:
+            pass
+
+    def emit(self, record: MetricRecord) -> None:
+        dims = record.dimensions
+        payload: dict[str, Any] = {
+            "_aws": {
+                "Timestamp": int(time.time() * 1000),
+                "CloudWatchMetrics": [
+                    {
+                        "Namespace": _NAMESPACE,
+                        "Dimensions": [list(dims.keys())],
+                        "Metrics": [
+                            {"Name": "runtime_seconds", "Unit": "Seconds"},
+                            {"Name": "peak_memory_mb", "Unit": "Megabytes"},
+                            {"Name": "avg_cpu_percent", "Unit": "Percent"},
+                            {"Name": "exit_code", "Unit": "None"},
+                        ],
+                    }
+                ],
+            },
+            **dims,
+            "runtime_seconds": record.runtime_seconds,
+            "peak_memory_mb": record.peak_memory_mb,
+            "avg_cpu_percent": record.avg_cpu_percent,
+            "exit_code": record.exit_code,
+        }
+        try:
+            self.client.put_log_events(
+                logGroupName=self.log_group,
+                logStreamName=self.job_id,
+                logEvents=[
+                    {
+                        "timestamp": int(time.time() * 1000),
+                        "message": json.dumps(payload),
+                    }
+                ],
+            )
+            logger.debug(
+                f"Emitted metrics for {record.task_name}: "
+                f"runtime={record.runtime_seconds:.1f}s "
+                f"peak_mem={record.peak_memory_mb:.0f}MB "
+                f"avg_cpu={record.avg_cpu_percent:.0f}% "
+                f"exit_code={record.exit_code}"
+            )
+        except Exception:
+            logger.warning("Failed to emit task metrics", exc_info=True)
 
 
 @dataclass(eq=False)
@@ -129,15 +229,22 @@ class _MetricsContext:
             sample.exit_code = exc_val.exit_code
         else:
             sample.exit_code = 1
-        self.collector._emit(self.node, runtime, sample)
+        record = self.collector._build_record(self.node, runtime, sample)
+        if self.collector.sink is not None:
+            self.collector.sink.emit(record)
 
 
 @dataclass
 class MetricsCollector:
     """
-    Collects task metrics and emits them to CloudWatch Logs in EMF format.
+    Gathers task metrics (peak memory, CPU, runtime) and hands each measured
+    :class:`MetricRecord` to a pluggable :class:`MetricSink`.
 
-    Enabled when ``METRIC_LOG_GROUP_NAME`` is set in the environment.
+    With no explicit ``sink``, defaults to a :class:`CloudWatchSink` when
+    ``METRIC_LOG_GROUP_NAME`` is set in the environment (production behavior).
+    Pass an explicit sink (e.g. :class:`InMemorySink`) to capture metrics
+    elsewhere — gathering happens whenever any sink is configured.
+
     Experiment dimensions are sourced from any envvar prefixed with
     ``HLS_EXPERIMENT_`` (e.g. ``HLS_EXPERIMENT_FMASK_VERSION=v5`` adds
     dimension ``fmask_version=v5``).
@@ -154,7 +261,8 @@ class MetricsCollector:
         },
     )
     pipeline_dims: dict[str, str] = field(default_factory=dict)
-    client: CloudWatchLogsClient = field(default_factory=lambda: boto3.client("logs"))
+    client: CloudWatchLogsClient | None = None
+    sink: MetricSink | None = None
     enabled: bool = field(init=False)
     _job_id: str = field(
         default_factory=lambda: os.environ.get("AWS_BATCH_JOB_ID", "local_job"),
@@ -166,15 +274,13 @@ class MetricsCollector:
     )
 
     def __post_init__(self) -> None:
-        self.enabled = bool(self.log_group)
-        if self.log_group:
-            try:
-                self.client.create_log_stream(
-                    logGroupName=self.log_group,
-                    logStreamName=self._job_id,
-                )
-            except self.client.exceptions.ResourceAlreadyExistsException:
-                pass
+        if self.sink is None and self.log_group:
+            self.sink = CloudWatchSink(
+                self.log_group,
+                self.client or boto3.client("logs"),
+                self._job_id,
+            )
+        self.enabled = self.sink is not None
 
     def collect(self, node: NodeBase) -> AbstractContextManager[None]:
         """Return a context manager that measures a task's execution.
@@ -199,15 +305,15 @@ class MetricsCollector:
             return nullcontext()
         return _MetricsContext(self, _PipelineNode(pipeline_class, pipeline_name))
 
-    def _emit(
+    def _build_record(
         self, node: NodeBase | _PipelineNode, runtime: float, sample: _Sample
-    ) -> None:
-        if not self.enabled:
-            return
+    ) -> MetricRecord:
+        task_class = getattr(node, "_class", type(node).__name__)
+        task_name = node.name
 
         fixed: dict[str, str] = {
-            "task_class": getattr(node, "_class", type(node).__name__),
-            "task_name": node.name,
+            "task_class": task_class,
+            "task_name": task_name,
             "job_id": self._job_id,
         }
         if self._git_sha:
@@ -217,47 +323,12 @@ class MetricsCollector:
 
         dims = {**fixed, **self.pipeline_dims, **self.experiment_dims}
 
-        record: dict[str, Any] = {
-            "_aws": {
-                "Timestamp": int(time.time() * 1000),
-                "CloudWatchMetrics": [
-                    {
-                        "Namespace": _NAMESPACE,
-                        "Dimensions": [list(dims.keys())],
-                        "Metrics": [
-                            {"Name": "runtime_seconds", "Unit": "Seconds"},
-                            {"Name": "peak_memory_mb", "Unit": "Megabytes"},
-                            {"Name": "avg_cpu_percent", "Unit": "Percent"},
-                            {"Name": "exit_code", "Unit": "None"},
-                        ],
-                    }
-                ],
-            },
-            **dims,
-            "runtime_seconds": round(runtime, 3),
-            "peak_memory_mb": round(sample.peak_memory_mb, 1),
-            "avg_cpu_percent": round(sample.avg_cpu_percent, 1),
-            "exit_code": sample.exit_code,
-        }
-
-        assert self.log_group is not None
-        try:
-            self.client.put_log_events(
-                logGroupName=self.log_group,
-                logStreamName=self._job_id,
-                logEvents=[
-                    {
-                        "timestamp": int(time.time() * 1000),
-                        "message": json.dumps(record),
-                    }
-                ],
-            )
-            logger.debug(
-                f"Emitted metrics for {node.name}: "
-                f"runtime={runtime:.1f}s "
-                f"peak_mem={sample.peak_memory_mb:.0f}MB "
-                f"avg_cpu={sample.avg_cpu_percent:.0f}% "
-                f"exit_code={sample.exit_code}"
-            )
-        except Exception:
-            logger.warning("Failed to emit task metrics", exc_info=True)
+        return MetricRecord(
+            task_class=task_class,
+            task_name=task_name,
+            runtime_seconds=round(runtime, 3),
+            peak_memory_mb=round(sample.peak_memory_mb, 1),
+            avg_cpu_percent=round(sample.avg_cpu_percent, 1),
+            exit_code=sample.exit_code,
+            dimensions=dims,
+        )
