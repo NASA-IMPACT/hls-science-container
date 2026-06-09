@@ -25,7 +25,7 @@ def _s3_sync(bucket: str, prefix: str, local_dir: Path) -> None:
     for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
         for obj in page.get("Contents", []):
             key = obj["Key"]
-            rel = key[len(prefix):].lstrip("/")
+            rel = key[len(prefix) :].lstrip("/")
             if not rel:
                 continue
             dest = local_dir / rel
