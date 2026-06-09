@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import logging
 import os
-import sys
 from pathlib import Path
 
 from hls_nextgen_orchestration.constants import FMASK_VERSION
-from hls_nextgen_orchestration.metrics import MetricsCollector
+from hls_nextgen_orchestration.metrics import MetricsCollector, MetricSink
 from hls_nextgen_orchestration.pipeline import Pipeline, PipelineBuilder
 
 from .mapped_tasks import (
@@ -51,6 +50,7 @@ def construct_pipeline(
     local_granule_zips: list[Path] | None = None,
     fmask_version: FMASK_VERSION = "v4",
     upload: bool = True,
+    metric_sink: MetricSink | None = None,
 ) -> Pipeline:
     """Constructs the Sentinel-2 (S30) Preprocessing Pipeline.
 
@@ -144,41 +144,13 @@ def construct_pipeline(
         builder = builder.add(UploadAll("Upload"))
 
     return builder.build(
-        metrics=MetricsCollector(pipeline_dims={"workflow": "sentinel-ac"})
+        metrics=MetricsCollector(
+            pipeline_dims={"workflow": "sentinel-ac"}, sink=metric_sink
+        )
     )
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    from hls_nextgen_orchestration.cli import cli
 
-    granule_ids: list[str] | None
-    if env := os.getenv("GRANULE_LIST"):
-        granule_ids = env.split(",")
-    else:
-        granule_ids = None
-
-    local_granule_zips: list[Path] | None
-    if env := os.getenv("LOCAL_GRANULE_ZIPS"):
-        local_granule_zips = [Path(zf) for zf in env.split(",")]
-        granule_ids = [granule_zip.stem for granule_zip in local_granule_zips]
-        os.environ["GRANULE_LIST"] = ",".join(granule_ids)
-    else:
-        local_granule_zips = None
-
-    fmask_version: FMASK_VERSION = "v5" if os.getenv("FMASK_VERSION") == "5" else "v4"
-
-    try:
-        pipeline = construct_pipeline(
-            granule_ids=granule_ids,
-            local_granule_zips=local_granule_zips,
-            fmask_version=fmask_version,
-        )
-        print(pipeline)
-        with pipeline.metrics.collect_pipeline(
-            pipeline_class="Pipeline", pipeline_name="sentinel-ac"
-        ):
-            context = pipeline.run()
-        sys.exit(context.exit_code)
-    except Exception as e:
-        logging.error(f"Pipeline failed: {e}")
-        sys.exit(1)
+    cli(["sentinel"])

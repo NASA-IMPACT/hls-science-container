@@ -5,5 +5,5 @@
 # Exit on any error
 set -o errexit
 
-python -m "hls_nextgen_orchestration.sentinel.workflow"
+hls-nextgen-orchestration sentinel
 exit $?

@@ -2,5 +2,5 @@
 
 # Exit on any error
 set -o errexit
-python -m "hls_nextgen_orchestration.landsat_tile.workflow"
+hls-nextgen-orchestration landsat-tile
 exit $?

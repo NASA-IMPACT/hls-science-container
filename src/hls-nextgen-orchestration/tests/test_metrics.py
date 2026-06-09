@@ -15,7 +15,11 @@ from hls_nextgen_orchestration.base import (
     Task,
     TaskFailure,
 )
-from hls_nextgen_orchestration.metrics import MetricsCollector, _MetricsContext
+from hls_nextgen_orchestration.metrics import (
+    InMemorySink,
+    MetricsCollector,
+    _MetricsContext,
+)
 from hls_nextgen_orchestration.pipeline import PipelineBuilder
 
 A = Asset("A", str)
@@ -317,6 +321,7 @@ def test_emit_does_not_raise_on_cloudwatch_error(
 # ----- Pipeline integration
 def test_pipeline_emits_metrics_for_instrumented_tasks(
     metric_collector: MetricsCollector,
+    metrics_env: CloudWatchLogsClient,
     log_group: str,
     log_stream: str,
 ) -> None:
@@ -325,15 +330,56 @@ def test_pipeline_emits_metrics_for_instrumented_tasks(
 
     PipelineBuilder().add(src).add(task).build(metrics=metric_collector).run()
 
-    events = metric_collector.client.get_log_events(
+    events = metrics_env.get_log_events(
         logGroupName=log_group, logStreamName=log_stream
     )
     assert len(events["events"]) == 1
     assert json.loads(events["events"][0]["message"])["task_name"] == "T1"
 
 
+# ----- Pluggable sinks
+def test_explicit_sink_enables_without_log_group(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An explicit sink enables gathering even without METRIC_LOG_GROUP_NAME."""
+    monkeypatch.delenv("METRIC_LOG_GROUP_NAME", raising=False)
+    assert MetricsCollector(sink=InMemorySink()).enabled
+
+
+def test_in_memory_sink_captures_record(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("METRIC_LOG_GROUP_NAME", raising=False)
+    sink = InMemorySink()
+    node = simple_task(requires=(), provides=(A,), instrument=True)("T1")
+
+    with MetricsCollector(sink=sink).collect(node):
+        pass
+
+    assert len(sink.records) == 1
+    record = sink.records[0]
+    assert record.task_class == "Task"
+    assert record.task_name == "T1"
+    assert record.exit_code == 0
+    assert record.runtime_seconds >= 0
+    assert record.dimensions["task_name"] == "T1"
+
+
+def test_in_memory_sink_captures_exit_code_on_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("METRIC_LOG_GROUP_NAME", raising=False)
+    sink = InMemorySink()
+    node = simple_task(requires=(), provides=(A,), instrument=True)("T1")
+
+    with pytest.raises(TaskFailure):
+        with MetricsCollector(sink=sink).collect(node):
+            raise TaskFailure("oom", exit_code=137)
+
+    assert sink.records[0].exit_code == 137
+
+
 def test_pipeline_skips_uninstrumented_tasks(
     metric_collector: MetricsCollector,
+    metrics_env: CloudWatchLogsClient,
     log_group: str,
     log_stream: str,
 ) -> None:
@@ -342,7 +388,7 @@ def test_pipeline_skips_uninstrumented_tasks(
 
     PipelineBuilder().add(src).add(task).build(metrics=metric_collector).run()
 
-    events = metric_collector.client.get_log_events(
+    events = metrics_env.get_log_events(
         logGroupName=log_group, logStreamName=log_stream
     )
     assert len(events["events"]) == 0

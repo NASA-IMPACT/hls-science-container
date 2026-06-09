@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import boto3
 import pytest
+
+from hls_nextgen_orchestration.metrics import MetricRecord
 
 if TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
@@ -200,3 +204,50 @@ def ls_local_dirs(
         )
         result[granule_id] = granule_dir
     return result
+
+
+@dataclass
+class ResourceMetrics:
+    """Accumulates per-granule :class:`MetricRecord`s from the pipeline's own
+    sampler and writes a single github-action-benchmark ``customSmallerIsBetter``
+    JSON covering runtime, peak memory, and CPU per task/pipeline — so one chart
+    group (and one publish step) tracks all three metrics together.
+    """
+
+    _items: list[tuple[str, list[MetricRecord]]] = field(default_factory=list)
+
+    def add(self, granule_id: str, records: list[MetricRecord]) -> None:
+        self._items.append((granule_id, records))
+
+    def write(self) -> None:
+        if not self._items:
+            return
+
+        entries: list[dict[str, object]] = []
+        for granule_id, records in self._items:
+            for rec in records:
+                for metric, unit, value in (
+                    ("runtime_seconds", "s", rec.runtime_seconds),
+                    ("peak_memory_mb", "MB", rec.peak_memory_mb),
+                    ("avg_cpu_percent", "%", rec.avg_cpu_percent),
+                ):
+                    entries.append(
+                        {
+                            "name": f"{rec.task_name} {metric} [{granule_id}]",
+                            "unit": unit,
+                            "value": value,
+                        }
+                    )
+
+        out_dir = Path(os.environ.get("BENCHMARK_OUTPUT_DIR", "benchmark-output"))
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out = out_dir / "resources.json"
+        out.write_text(json.dumps(entries, indent=2))
+        logger.info("Wrote %d benchmark metric(s) to %s", len(entries), out)
+
+
+@pytest.fixture(scope="session")
+def resource_metrics() -> Iterator[ResourceMetrics]:
+    collector = ResourceMetrics()
+    yield collector
+    collector.write()

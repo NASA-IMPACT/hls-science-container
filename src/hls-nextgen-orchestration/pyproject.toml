@@ -9,11 +9,12 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "boto3>=1.42.34",
+    "click>=8.1",
     "psutil>=6.0",
 ]
 
 [project.scripts]
-hls-nextgen-orchestration = "hls_nextgen_orchestration:main"
+hls-nextgen-orchestration = "hls_nextgen_orchestration.cli:cli"
 
 [build-system]
 requires = ["hatchling"]
@@ -25,7 +26,6 @@ dev = [
     "moto[s3]>=5.0.0",
     "mypy>=1.14.0",
     "pytest>=9.0.2",
-    "pytest-benchmark>=5.1.0",
     "ruff>=0.9.0",
     "types-psutil>=7.2.2.20260408",
 ]

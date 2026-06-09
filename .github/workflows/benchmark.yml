@@ -74,11 +74,15 @@ jobs:
           BENCHMARK_AUX_PREFIX: ${{ vars.BENCHMARK_AUX_PREFIX }}
         run: scripts/benchmark
 
-      - name: Publish benchmark results to GitHub Pages
+      # One chart group covering runtime + peak memory + CPU. The pytest tool
+      # only charts runtime, so all three metrics are emitted to resources.json
+      # (customSmallerIsBetter) and published in a single step.
+      - name: Publish benchmarks to GitHub Pages
         uses: benchmark-action/github-action-benchmark@v1
         with:
-          tool: pytest
-          output-file-path: benchmark-output/benchmark.json
+          name: HLS pipeline benchmarks
+          tool: customSmallerIsBetter
+          output-file-path: benchmark-output/resources.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
           comment-on-alert: true

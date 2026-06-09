@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import logging
-import os
-import sys
 from pathlib import Path
 
 from hls_nextgen_orchestration.constants import FMASK_VERSION
-from hls_nextgen_orchestration.metrics import MetricsCollector
+from hls_nextgen_orchestration.metrics import MetricsCollector, MetricSink
 from hls_nextgen_orchestration.pipeline import Pipeline, PipelineBuilder
 
 from .tasks import (
@@ -35,6 +32,7 @@ def construct_pipeline(
     local_granule_dir: Path | None = None,
     fmask_version: FMASK_VERSION = "v4",
     upload: bool = True,
+    metric_sink: MetricSink | None = None,
 ) -> Pipeline:
     """Create the Landsat atmospheric correction (AC) pipeline
 
@@ -99,30 +97,13 @@ def construct_pipeline(
 
     return builder.build(
         metrics=MetricsCollector(
-            pipeline_dims={"workflow": "landsat-ac", "input_granule_id": granule_id}
+            pipeline_dims={"workflow": "landsat-ac", "input_granule_id": granule_id},
+            sink=metric_sink,
         )
     )
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    from hls_nextgen_orchestration.cli import cli
 
-    granule_id = os.environ["GRANULE"]
-    local_granule_dir = Path(_) if (_ := os.getenv("LOCAL_GRANULE_DIR")) else None
-    fmask_version: FMASK_VERSION = "v5" if os.getenv("FMASK_VERSION") == "5" else "v4"
-
-    try:
-        pipeline = construct_pipeline(
-            granule_id=granule_id,
-            local_granule_dir=local_granule_dir,
-            fmask_version=fmask_version,
-        )
-        print(pipeline)
-        with pipeline.metrics.collect_pipeline(
-            pipeline_class="Pipeline", pipeline_name="landsat-ac"
-        ):
-            context = pipeline.run()
-        sys.exit(context.exit_code)
-    except Exception as e:
-        logging.error(f"Pipeline failed: {e}")
-        sys.exit(1)
+    cli(["landsat-ac"])
