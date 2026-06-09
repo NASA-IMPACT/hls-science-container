@@ -96,6 +96,16 @@ jobs:
             --channel conda-forge \
             --skip-existing=all
 
+      - name: Build lasrc-rs
+        run: |
+          rattler-build build \
+            --recipe packages/lasrc-rs/recipe.yml \
+            --output-dir /tmp/conda-output \
+            --channel /tmp/conda-output \
+            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
+            --channel conda-forge \
+            --skip-existing=all
+
       - name: Verify new packages were built
         # Skipped for docs:/chore:/ci: PRs where a version bump is not expected
         if: |
