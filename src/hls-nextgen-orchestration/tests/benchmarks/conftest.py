@@ -165,7 +165,9 @@ def s2_local_zips(
     for granule_id in config.s2_granule_ids:
         zip_path = session_dir / f"{granule_id}.zip"
         s3.download_file(
-            config.input_bucket, f"{config.input_prefix}/{granule_id}.zip", str(zip_path)
+            config.input_bucket,
+            f"{config.input_prefix}/{granule_id}.zip",
+            str(zip_path),
         )
         result[granule_id] = zip_path
     return result
@@ -189,6 +191,8 @@ def ls_local_dirs(
     for granule_id in config.ls_granule_ids:
         granule_dir = session_dir / granule_id
         granule_dir.mkdir()
-        _s3_sync(config.input_bucket, f"{config.input_prefix}/{granule_id}/", granule_dir)
+        _s3_sync(
+            config.input_bucket, f"{config.input_prefix}/{granule_id}/", granule_dir
+        )
         result[granule_id] = granule_dir
     return result
