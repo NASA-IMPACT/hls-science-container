@@ -48,8 +48,11 @@ RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
     echo 'exec "$@"' >> /app/entrypoint.sh
 
 # ----- Install Fmask v5 models and ancillary data
+# FMASK_DATA points to a fixed path so all pixi envs (default, benchmark, …) share one copy
+ENV FMASK_DATA=/opt/fmask-data
 RUN wget -q -O /tmp/fmask_5_0_1.zip https://fmask4installer.s3.us-west-2.amazonaws.com/fmask_5_0_1.zip && \
-    pixi run --frozen fmask-data install /tmp/fmask_5_0_1.zip
+    pixi run --frozen fmask-data install /tmp/fmask_5_0_1.zip && \
+    rm /tmp/fmask_5_0_1.zip
 
 # ===== Development installation
 FROM build AS dev
@@ -100,10 +103,12 @@ ENV PYSTAC_STAC_VERSION_OVERRIDE=1.0.0
 ENV GDAL_MEM_ENABLE_OPEN=YES
 # Define where Fmask lives (for `run_Fmask.sh`)
 ENV FMASK_PREFIX=/opt/fmask
+ENV FMASK_DATA=/opt/fmask-data
 # Set variable defining LaSRC version used in HLS product metadata
 ENV ACCODE="LaSRC v3.5.1.0"
 
 COPY --from=build /app/.pixi/envs/default /app/.pixi/envs/default
+COPY --from=build /opt/fmask-data /opt/fmask-data
 COPY --from=build --chmod=0755 /app/entrypoint.sh /app/entrypoint.sh
 COPY --from=build /opt/fmask ${FMASK_PREFIX}
 COPY packages/fmask4/run_Fmask.sh /app/.pixi/envs/default/bin

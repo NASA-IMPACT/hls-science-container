@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import subprocess
 from pathlib import Path
 
 import boto3
@@ -20,6 +19,20 @@ _INPUT_BUCKET = os.environ.get("BENCHMARK_INPUT_BUCKET", "")
 _INPUT_PREFIX = os.environ.get("BENCHMARK_INPUT_PREFIX", "")
 
 
+def _s3_sync(bucket: str, prefix: str, local_dir: Path) -> None:
+    s3 = boto3.client("s3")
+    paginator = s3.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+        for obj in page.get("Contents", []):
+            key = obj["Key"]
+            rel = key[len(prefix) :].lstrip("/")
+            if not rel:
+                continue
+            dest = local_dir / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            s3.download_file(bucket, key, str(dest))
+
+
 @pytest.fixture(scope="session", autouse=True)
 def lasrc_aux_dir(tmp_path_factory: pytest.TempPathFactory) -> None:
     """Ensure LASRC_AUX_DIR is set before any benchmark runs.
@@ -36,10 +49,7 @@ def lasrc_aux_dir(tmp_path_factory: pytest.TempPathFactory) -> None:
             "LASRC_AUX_DIR not set and BENCHMARK_AUX_BUCKET/AUX_PREFIX not configured"
         )
     aux_dir = tmp_path_factory.mktemp("lasrc_aux")
-    subprocess.run(
-        ["aws", "s3", "sync", f"s3://{_AUX_BUCKET}/{_AUX_PREFIX}", str(aux_dir)],
-        check=True,
-    )
+    _s3_sync(_AUX_BUCKET, _AUX_PREFIX, aux_dir)
     os.environ["LASRC_AUX_DIR"] = str(aux_dir)
 
 
@@ -104,15 +114,6 @@ def ls_local_dirs(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Path]:
     for granule_id in _LS_GRANULE_IDS:
         granule_dir = session_dir / granule_id
         granule_dir.mkdir()
-        subprocess.run(
-            [
-                "aws",
-                "s3",
-                "sync",
-                f"s3://{_INPUT_BUCKET}/{_INPUT_PREFIX}/{granule_id}/",
-                str(granule_dir),
-            ],
-            check=True,
-        )
+        _s3_sync(_INPUT_BUCKET, f"{_INPUT_PREFIX}/{granule_id}/", granule_dir)
         result[granule_id] = granule_dir
     return result

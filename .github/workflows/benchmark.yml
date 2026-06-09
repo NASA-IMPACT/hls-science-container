@@ -61,23 +61,18 @@ jobs:
             aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}
           tags: ${{ env.ECR_REPOSITORY }}:benchmark
           cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache
+          cache-to: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:cache,mode=max,image-manifest=true,oci-mediatypes=true
 
       - name: Run benchmarks
-        run: |
-          mkdir -p benchmark-output
-          docker run --rm \
-            -v "${{ github.workspace }}/benchmark-output:/output" \
-            -e BENCHMARK_S2_GRANULE_IDS="${{ vars.BENCHMARK_S2_GRANULE_IDS }}" \
-            -e BENCHMARK_LS_GRANULE_IDS="${{ vars.BENCHMARK_LS_GRANULE_IDS }}" \
-            -e BENCHMARK_INPUT_BUCKET="${{ secrets.BENCHMARK_INPUT_BUCKET }}" \
-            -e BENCHMARK_INPUT_PREFIX="${{ vars.BENCHMARK_INPUT_PREFIX }}" \
-            -e BENCHMARK_AUX_BUCKET="${{ secrets.BENCHMARK_AUX_BUCKET }}" \
-            -e BENCHMARK_AUX_PREFIX="${{ vars.BENCHMARK_AUX_PREFIX }}" \
-            -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
-            -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
-            -e AWS_DEFAULT_REGION="${{ env.AWS_REGION }}" \
-            "${{ env.ECR_REPOSITORY }}:benchmark" \
-            "cd /app && pixi run -e benchmark pytest src/hls-nextgen-orchestration/tests/benchmarks -v --benchmark-json=/output/benchmark.json"
+        env:
+          IMAGE: ${{ env.ECR_REPOSITORY }}:benchmark
+          BENCHMARK_S2_GRANULE_IDS: ${{ vars.BENCHMARK_S2_GRANULE_IDS }}
+          BENCHMARK_LS_GRANULE_IDS: ${{ vars.BENCHMARK_LS_GRANULE_IDS }}
+          BENCHMARK_INPUT_BUCKET: ${{ secrets.BENCHMARK_INPUT_BUCKET }}
+          BENCHMARK_INPUT_PREFIX: ${{ vars.BENCHMARK_INPUT_PREFIX }}
+          BENCHMARK_AUX_BUCKET: ${{ secrets.BENCHMARK_AUX_BUCKET }}
+          BENCHMARK_AUX_PREFIX: ${{ vars.BENCHMARK_AUX_PREFIX }}
+        run: scripts/benchmark
 
       - name: Publish benchmark results to GitHub Pages
         uses: benchmark-action/github-action-benchmark@v1
