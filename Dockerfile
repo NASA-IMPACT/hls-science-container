@@ -40,7 +40,8 @@ RUN --mount=type=cache,target=/root/.cache/rattler/cache,id=rattler-$LOCK_HASH \
     AWS_ACCESS_KEY_ID=$(cat /run/secrets/aws_access_key_id 2>/dev/null) \
     AWS_SECRET_ACCESS_KEY=$(cat /run/secrets/aws_secret_access_key 2>/dev/null) \
     AWS_SESSION_TOKEN=$(cat /run/secrets/aws_session_token 2>/dev/null) \
-    pixi install --frozen
+    pixi install --frozen && \
+    pixi install --frozen -e benchmark
 ENV PREFIX=/app/.pixi/envs/default
 RUN echo '#!/bin/bash' > /app/entrypoint.sh && \
     pixi shell-hook --frozen -e default -s bash >> /app/entrypoint.sh && \
@@ -113,7 +114,5 @@ ENTRYPOINT [ "/app/entrypoint.sh", "/bin/bash", "-c" ]
 CMD [ "/bin/bash" ]
 
 # ===== Benchmark image (extends dev — tests already live at src/.../tests/)
+# benchmark env is installed in the build stage (same conda packages, credentials already available)
 FROM dev AS benchmark
-
-RUN --mount=type=cache,target=/root/.cache/rattler/cache \
-    pixi install --frozen -e benchmark
