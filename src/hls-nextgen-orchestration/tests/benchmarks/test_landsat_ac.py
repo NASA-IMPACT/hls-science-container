@@ -1,21 +1,16 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 import pytest
 
 from hls_nextgen_orchestration.landsat_ac.workflow import construct_pipeline
 
-_LS_GRANULE_IDS = [
-    g for g in os.environ.get("BENCHMARK_LS_GRANULE_IDS", "").split(",") if g
-]
+from .conftest import BenchmarkConfig, granule_params
 
 
 @pytest.mark.parametrize(
-    "granule_id",
-    [pytest.param(gid, id=gid) for gid in _LS_GRANULE_IDS]
-    or [pytest.param("", id="env-not-set")],
+    "granule_id", granule_params(BenchmarkConfig.from_env().ls_granule_ids)
 )
 def test_l30_ac(
     benchmark: pytest.FixtureRequest,

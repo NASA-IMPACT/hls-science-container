@@ -7,15 +7,11 @@ import pytest
 
 from hls_nextgen_orchestration.sentinel.workflow import construct_pipeline
 
-_S2_GRANULE_IDS = [
-    g for g in os.environ.get("BENCHMARK_S2_GRANULE_IDS", "").split(",") if g
-]
+from .conftest import BenchmarkConfig, granule_params
 
 
 @pytest.mark.parametrize(
-    "granule_id",
-    [pytest.param(gid, id=gid) for gid in _S2_GRANULE_IDS]
-    or [pytest.param("", id="env-not-set")],
+    "granule_id", granule_params(BenchmarkConfig.from_env().s2_granule_ids)
 )
 def test_s30(
     benchmark: pytest.FixtureRequest,
