@@ -219,7 +219,7 @@ class ResourceMetrics:
     def add(self, granule_id: str, records: list[MetricRecord]) -> None:
         self._items.append((granule_id, records))
 
-    def write(self, config: pytest.Config) -> None:
+    def write(self) -> None:
         if not self._items:
             return
 
@@ -239,22 +239,15 @@ class ResourceMetrics:
                         }
                     )
 
-        # Write next to --benchmark-json so both land in the same output dir.
-        try:
-            bench_json = config.getoption("benchmark_json")
-        except ValueError:
-            bench_json = None
-        out = (
-            Path(bench_json).parent / "resources.json"
-            if bench_json
-            else Path("resources.json")
-        )
+        out_dir = Path(os.environ.get("BENCHMARK_OUTPUT_DIR", "benchmark-output"))
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out = out_dir / "resources.json"
         out.write_text(json.dumps(entries, indent=2))
         logger.info("Wrote %d benchmark metric(s) to %s", len(entries), out)
 
 
 @pytest.fixture(scope="session")
-def resource_metrics(request: pytest.FixtureRequest) -> Iterator[ResourceMetrics]:
+def resource_metrics() -> Iterator[ResourceMetrics]:
     collector = ResourceMetrics()
     yield collector
-    collector.write(request.config)
+    collector.write()

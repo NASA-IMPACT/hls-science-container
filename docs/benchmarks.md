@@ -1,8 +1,8 @@
 # Performance Benchmarks
 
-End-to-end benchmarks for the Sentinel-2 (S30) and Landsat AC (L30-AC) pipelines, using
-[pytest-benchmark](https://pytest-benchmark.readthedocs.io/) to time each full `construct_pipeline().run()` call against
-real input data and real binaries.
+End-to-end benchmarks for the Sentinel-2 (S30) and Landsat AC (L30-AC) pipelines. Each test runs a full
+`construct_pipeline().run()` against real input data and real binaries, recording runtime, peak memory, and CPU from
+the pipeline's own metrics sampler.
 
 Results are published to GitHub Pages after every merge to `main` via
 [benchmark-action/github-action-benchmark](https://github.com/benchmark-action/github-action-benchmark), giving a
@@ -24,7 +24,7 @@ Granule input data and LaSRC ancillary data are downloaded from S3 in session-sc
 section) and reused across all tests in a run.
 
 Benchmarks run inside the production Docker image (so fmask, lasrc, and all other binaries are the real ones, not
-mocks). A `benchmark` Docker target extends `prod` by adding pytest and pytest-benchmark.
+mocks). A `benchmark` Docker target extends the image with pytest and the test files.
 
 ## Runtime, memory, and CPU in one chart group
 
@@ -38,8 +38,7 @@ The measurements reuse the same sampler the pipelines use in production: `hls_ne
 injects an `InMemorySink` into `construct_pipeline(..., metric_sink=...)`, so the pipeline's existing per-task
 (`collect()`, gated by `instrument=True`) and aggregate (`collect_pipeline()`) measurements are captured locally instead
 of being shipped to CloudWatch. After the run, the conftest's `resource_metrics` collector writes
-`benchmark-output/resources.json` (alongside pytest-benchmark's own `benchmark.json`, which is kept as a local artifact
-but no longer published separately).
+`resources.json` into `$BENCHMARK_OUTPUT_DIR` (default `benchmark-output/`).
 
 Per-task series are naturally limited to the `instrument=True` stages (e.g. `LaSRC`, `Fmask`), plus the pipeline
 aggregate (`sentinel-ac` / `landsat-ac`).
@@ -122,11 +121,14 @@ docker run --rm \
   -e BENCHMARK_S2_GRANULE_IDS="S2B_MSIL1C_..." \
   -e BENCHMARK_INPUT_BUCKET="my-bucket" \
   -e BENCHMARK_INPUT_PREFIX="inputs" \
+  -e BENCHMARK_OUTPUT_DIR=/output \
   -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
   -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
   hls-science-container:benchmark \
-  "cd /app && pytest src/hls-nextgen-orchestration/tests/benchmarks -v --benchmark-json=/output/benchmark.json"
+  "cd /app && pytest src/hls-nextgen-orchestration/tests/benchmarks -v"
 ```
+
+The metrics (runtime, peak memory, CPU) are written to `$BENCHMARK_OUTPUT_DIR/resources.json`.
 
 Alternatively, let the fixture download ancillary data from S3 by providing `BENCHMARK_AUX_BUCKET` and
 `BENCHMARK_AUX_PREFIX` instead of `LASRC_AUX_DIR`.

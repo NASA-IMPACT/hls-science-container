@@ -15,7 +15,6 @@ from .conftest import BenchmarkConfig, ResourceMetrics, granule_params
     "granule_id", granule_params(BenchmarkConfig.from_env().s2_granule_ids)
 )
 def test_s30(
-    benchmark: pytest.FixtureRequest,
     granule_id: str,
     s2_local_zips: dict[str, Path],
     tmp_path: Path,
@@ -38,12 +37,11 @@ def test_s30(
         metric_sink=sink,
     )
 
-    def run() -> None:
-        # Aggregate metrics; per-task metrics are captured inside pipeline.run().
-        with pipeline.metrics.collect_pipeline(
-            pipeline_class="Pipeline", pipeline_name="sentinel-ac"
-        ):
-            pipeline.run()
+    # Runtime/memory/CPU come from the pipeline's own sampler (the InMemorySink).
+    # Aggregate metrics here; per-task metrics are captured inside pipeline.run().
+    with pipeline.metrics.collect_pipeline(
+        pipeline_class="Pipeline", pipeline_name="sentinel-ac"
+    ):
+        pipeline.run()
 
-    benchmark.pedantic(run, rounds=1, iterations=1)  # type: ignore[attr-defined]
     resource_metrics.add(granule_id, sink.records)

@@ -18,5 +18,6 @@ docker run --rm \
     -e AWS_SECRET_ACCESS_KEY \
     -e AWS_DEFAULT_REGION \
     -e PIXI_FROZEN=true \
+    -e BENCHMARK_OUTPUT_DIR=/output \
     "$IMAGE" \
-    "mkdir -p /output && pixi run -e benchmark pytest src/hls-nextgen-orchestration/tests/benchmarks -v --benchmark-json=/output/benchmark.json"
+    "mkdir -p /output && pixi run -e benchmark pytest src/hls-nextgen-orchestration/tests/benchmarks -v"
