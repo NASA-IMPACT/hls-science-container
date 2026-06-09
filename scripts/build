@@ -28,23 +28,16 @@ if [ $? -eq 0 ]; then
     ECR_BASE="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
     ECR_REPO="${ECR_BASE}/${IMAGE_NAME}"
 
-    # 2. Check for existing Docker credentials
-    # Search docker config for the ECR registry URL
-    if grep -q "$ECR_BASE" ~/.docker/config.json 2>/dev/null; then
-        echo "   ✨ Existing ECR session detected. Skipping login."
+    # 2. Authenticate to ECR (tokens expire after 12h so always refresh)
+    echo "   🔑 Authenticating to ECR ($REGION)..."
+    aws ecr get-login-password --region "${REGION}" 2>/dev/null | \
+        docker login --username AWS --password-stdin "$ECR_BASE" >/dev/null 2>&1
+
+    if [ $? -eq 0 ]; then
+        echo "   ✅ Login successful! Remote cache enabled."
         USE_CACHE=true
     else
-        echo "   🔑 No active ECR session. Authenticating ($REGION)..."
-        
-        aws ecr get-login-password --region "${REGION}" 2>/dev/null | \
-            docker login --username AWS --password-stdin "$ECR_BASE" >/dev/null 2>&1
-        
-        if [ $? -eq 0 ]; then
-            echo "   ✅ Login successful! Remote cache enabled."
-            USE_CACHE=true
-        else
-            echo "   ⚠️  Login failed. Proceeding with local layers only."
-        fi
+        echo "   ⚠️  Login failed. Proceeding with local layers only."
     fi
 else
     echo "   ☁️  No active AWS session. Skipping remote cache."
@@ -60,6 +53,7 @@ BUILD_ARGS=(
     --target "${TARGET}"
     --tag "$IMAGE_NAME:$TARGET"
     --file Dockerfile
+    --build-arg "PLATFORM=linux/amd64"
     --build-arg "GIT_SHA=${GIT_SHA}"
 )
 
