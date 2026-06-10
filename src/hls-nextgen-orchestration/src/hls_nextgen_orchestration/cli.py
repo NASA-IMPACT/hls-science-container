@@ -23,20 +23,20 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _normalize_fmask(
-    ctx: click.Context, param: click.Parameter, value: str | None
-) -> FMASK_VERSION:
-    """Map FMASK_VERSION (``5``/``v5`` → v5, anything else → v4)."""
-    return "v5" if value in ("5", "v5") else "v4"
-
-
 def _fmask_option[F: Callable[..., Any]](func: F) -> F:
     """Shared ``--fmask-version`` option (env: FMASK_VERSION, also accepts '5')."""
+
+    def _normalize(
+        ctx: click.Context, param: click.Parameter, value: str | None
+    ) -> FMASK_VERSION:
+        # FMASK_VERSION 5/v5 -> v5, anything else -> v4
+        return "v5" if value in ("5", "v5") else "v4"
+
     return click.option(
         "--fmask-version",
         envvar="FMASK_VERSION",
         default="v4",
-        callback=_normalize_fmask,
+        callback=_normalize,
         help="Fmask version: v4 or v5 (env: FMASK_VERSION, also accepts '5').",
     )(func)
 
