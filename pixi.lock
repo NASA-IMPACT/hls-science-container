@@ -42,6 +42,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gmp-6.3.0-hac33072_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.3.0-py313h86d8783_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/graphite2-1.3.15-hecca717_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/h5py-3.16.0-nompi_py313h253c126_102.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/harfbuzz-14.2.1-h6083320_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/hdf4-4.2.15-h2a13503_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/hdf5-1.14.6-nompi_h19486de_110.conda
@@ -163,6 +164,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pixman-0.46.4-h54a6638_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/proj-9.7.1-he0df7b0_3.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pthread-stubs-0.4-hb9d3cd8_1002.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/pyhdf-0.11.6-py313h24023b0_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pyogrio-0.12.1-py313hae45665_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pyproj-3.7.2-py313h446daf0_3.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pyside6-6.11.1-py313hcd51b16_1.conda
@@ -229,6 +231,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/awscliv2-2.3.1-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/branca-0.8.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.5.20-hbd8a1cb_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/cached-property-1.5.2-hd8ed1ab_1.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/noarch/cached_property-1.5.2-pyha770c72_1.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/certifi-2026.5.20-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/charset-normalizer-3.4.7-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/click-8.4.1-pyhc90fa1f_0.conda
@@ -316,6 +320,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-product-formatter-3.5.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
+      - conda: s3://hls-conda-channels/linux-64/lasrc-rs-0.1.0-hb0f4dca_0.conda
       - conda_source: fmask[983fa79a] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
@@ -721,6 +726,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gmp-6.3.0-hac33072_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.3.0-py313h86d8783_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/graphite2-1.3.14-hecca717_2.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/h5py-3.16.0-nompi_py313h253c126_102.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/harfbuzz-14.2.0-h6083320_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/hdf4-4.2.15-h2a13503_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/hdf5-1.14.6-nompi_h19486de_109.conda
@@ -868,6 +874,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pyarrow-24.0.0-py313h78bf25f_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pyarrow-core-24.0.0-py313h98bfbea_0_cpu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pydantic-core-2.46.3-py313h843e2db_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/pyhdf-0.11.6-py313h24023b0_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pyogrio-0.12.1-py313hae45665_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pyproj-3.7.2-py313h446daf0_3.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pyside6-6.11.0-py313hcd51b16_2.conda
@@ -941,6 +948,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/awscliv2-2.3.1-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/branca-0.8.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.4.22-hbd8a1cb_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/cached-property-1.5.2-hd8ed1ab_1.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/noarch/cached_property-1.5.2-pyha770c72_1.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/certifi-2026.4.22-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/charset-normalizer-3.4.7-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/click-8.3.3-pyhc90fa1f_0.conda
@@ -1053,6 +1062,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-product-formatter-3.5.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
+      - conda: s3://hls-conda-channels/linux-64/lasrc-rs-0.1.0-hb0f4dca_0.conda
       - conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
@@ -1476,6 +1486,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gmp-6.3.0-hac33072_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/gmpy2-2.3.0-py313h86d8783_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/graphite2-1.3.14-hecca717_2.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/h5py-3.16.0-nompi_py313h253c126_102.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/harfbuzz-12.3.2-h6083320_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/hdf4-4.2.15-h2a13503_7.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/hdf5-1.14.6-nompi_h1b119a7_104.conda
@@ -1597,6 +1608,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pixman-0.46.4-h54a6638_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/proj-9.7.1-h99ae125_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pthread-stubs-0.4-hb9d3cd8_1002.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/pyhdf-0.11.6-py313h24023b0_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pyogrio-0.12.1-py313hae45665_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pyproj-3.7.2-py313h77f6078_2.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/pyside6-6.10.2-py313hcd51b16_2.conda
@@ -1664,6 +1676,8 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/awscliv2-2.3.1-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/branca-0.8.2-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.1.4-hbd8a1cb_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/cached-property-1.5.2-hd8ed1ab_1.tar.bz2
+      - conda: https://conda.anaconda.org/conda-forge/noarch/cached_property-1.5.2-pyha770c72_1.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/certifi-2026.1.4-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/charset-normalizer-3.4.7-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/click-8.3.1-pyh8f84b5b_1.conda
@@ -1751,6 +1765,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-product-formatter-3.5.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
+      - conda: s3://hls-conda-channels/linux-64/lasrc-rs-0.1.0-hb0f4dca_0.conda
       - conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
@@ -3216,6 +3231,23 @@ packages:
   - pkg:pypi/graphite2
   size: 100054
   timestamp: 1780454302233
+- conda: https://conda.anaconda.org/conda-forge/linux-64/h5py-3.16.0-nompi_py313h253c126_102.conda
+  sha256: 4247b5c4921abbdf3d493f55540fe7b4fdb99907c948d2d851f597dad0f737b4
+  md5: 1d2259f89c6d038ab7193e8c3961e067
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - cached-property
+  - hdf5 >=1.14.6,<1.14.7.0a0
+  - libgcc >=14
+  - numpy >=1.23,<3
+  - python >=3.13,<3.14.0a0
+  - python_abi 3.13.* *_cp313
+  license: BSD-3-Clause
+  license_family: BSD
+  purls:
+  - pkg:pypi/h5py
+  size: 1331707
+  timestamp: 1775581269133
 - conda: https://conda.anaconda.org/conda-forge/linux-64/harfbuzz-12.3.2-h6083320_0.conda
   sha256: 92015faf283f9c0a8109e2761042cd47ae7a4505e24af42a53bc3767cb249912
   md5: d170a70fc1d5c605fcebdf16851bd54a
@@ -7382,6 +7414,25 @@ packages:
   - pkg:pypi/pydantic-core
   size: 1909995
   timestamp: 1776704319736
+- conda: https://conda.anaconda.org/conda-forge/linux-64/pyhdf-0.11.6-py313h24023b0_2.conda
+  sha256: dea880748447c103b90ad3ec28ffeb22b15262ed5a0b30706837b43c01bb1370
+  md5: 58fa08b00e3ea0d1726d2fbc9e357172
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - hdf4 >=4.2.15,<4.2.16.0a0
+  - libgcc >=14
+  - libstdcxx >=14
+  - libzlib >=1.3.1,<2.0a0
+  - numpy >=1.23,<3
+  - python >=3.13,<3.14.0a0
+  - python_abi 3.13.* *_cp313
+  - zlib
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/pyhdf
+  size: 198305
+  timestamp: 1760611555570
 - conda: https://conda.anaconda.org/conda-forge/linux-64/pyogrio-0.12.1-py313hae45665_0.conda
   sha256: 36d91e089f7c6fa3466a07e9c2167a64b97837433c09b6f3ba632c978cce22a3
   md5: fa543477ad16de26ce5f2fd5bcd249fa
@@ -9218,6 +9269,29 @@ packages:
   - pkg:pypi/ca-certificates
   size: 129868
   timestamp: 1779289852439
+- conda: https://conda.anaconda.org/conda-forge/noarch/cached-property-1.5.2-hd8ed1ab_1.tar.bz2
+  noarch: python
+  sha256: 561e6660f26c35d137ee150187d89767c988413c978e1b712d53f27ddf70ea17
+  md5: 9b347a7ec10940d3f7941ff6c460b551
+  depends:
+  - cached_property >=1.5.2,<1.5.3.0a0
+  license: BSD-3-Clause
+  license_family: BSD
+  purls:
+  - pkg:pypi/cached-property
+  size: 4134
+  timestamp: 1615209571450
+- conda: https://conda.anaconda.org/conda-forge/noarch/cached_property-1.5.2-pyha770c72_1.tar.bz2
+  sha256: 6dbf7a5070cc43d90a1e4c2ec0c541c69d8e30a0e25f50ce9f6e4a432e42c5d7
+  md5: 576d629e47797577ab0f1b351297ef4a
+  depends:
+  - python >=3.6
+  license: BSD-3-Clause
+  license_family: BSD
+  purls:
+  - pkg:pypi/cached-property
+  size: 11065
+  timestamp: 1615209567874
 - conda: https://conda.anaconda.org/conda-forge/noarch/certifi-2026.1.4-pyhd8ed1ab_0.conda
   sha256: 110338066d194a715947808611b763857c15458f8b3b97197387356844af9450
   md5: eacc711330cd46939f66cd401ff9c44b
@@ -16387,6 +16461,23 @@ packages:
   - libxml2
   size: 449268
   timestamp: 1780008456214
+- conda: s3://hls-conda-channels/linux-64/lasrc-rs-0.1.0-hb0f4dca_0.conda
+  subdir: linux-64
+  sha256: 259d3f981fbe75c69dec0d31fee64a76d08cb4e72ddd3c69c180aa4e047205fe
+  md5: 30964e42e12ba66877a0c283a44ef277
+  depends:
+  - python 3.13.*
+  - numpy >=1.24
+  - rasterio >=1.3
+  - h5py >=3.8
+  - pyhdf >=0.10
+  - lxml >=4.9
+  - click >=8.1
+  - python_abi 3.13.* *_cp313
+  constrains:
+  - __glibc >=2.17
+  size: 351382
+  timestamp: 1781099807974
 - conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
   version: 5.0.1
   build: pyh4616a5c_0
