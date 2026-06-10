@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import shutil
+import tempfile
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -126,6 +128,14 @@ def _s3_sync(bucket: str, prefix: str, local_dir: Path) -> None:
 @pytest.fixture(scope="session")
 def config() -> BenchmarkConfig:
     return BenchmarkConfig.from_env()
+
+
+@pytest.fixture
+def work_dir() -> Iterator[Path]:
+    """Per-test working dir, removed right after (unlike pytest's tmp_path)."""
+    d = Path(tempfile.mkdtemp(prefix="benchmark-"))
+    yield d
+    shutil.rmtree(d, ignore_errors=True)
 
 
 @pytest.fixture(scope="session", autouse=True)
