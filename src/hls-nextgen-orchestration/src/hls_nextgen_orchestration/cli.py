@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any
 
 import click
 
-from hls_nextgen_orchestration.constants import FMASK_VERSION
+from hls_nextgen_orchestration.constants import FMASK_VERSION, LASRC_VERSION
 
 if TYPE_CHECKING:
     from hls_nextgen_orchestration.pipeline import Pipeline
@@ -38,6 +38,24 @@ def _fmask_option[F: Callable[..., Any]](func: F) -> F:
         default="v4",
         callback=_normalize,
         help="Fmask version: v4 or v5 (env: FMASK_VERSION, also accepts '5').",
+    )(func)
+
+
+def _lasrc_option[F: Callable[..., Any]](func: F) -> F:
+    """Shared ``--lasrc-version`` option (env: LASRC_VERSION, also accepts 'rs')."""
+
+    def _normalize(
+        ctx: click.Context, param: click.Parameter, value: str | None
+    ) -> LASRC_VERSION:
+        # LASRC_VERSION rust/rs -> rust, anything else -> c
+        return "rust" if value in ("rust", "rs") else "c"
+
+    return click.option(
+        "--lasrc-version",
+        envvar="LASRC_VERSION",
+        default="c",
+        callback=_normalize,
+        help="LaSRC version: c or rust (env: LASRC_VERSION, also accepts 'rs').",
     )(func)
 
 
@@ -147,6 +165,44 @@ def landsat_tile(local_pathrows_dir: Path | None) -> None:
     from hls_nextgen_orchestration.landsat_tile.workflow import construct_pipeline
 
     _run(construct_pipeline(local_pathrows_dir=local_pathrows_dir), "landsat-tile")
+
+
+@cli.command("lasrc")
+@click.option(
+    "--granule",
+    envvar="GRANULE",
+    required=True,
+    help="Sentinel-2 or Landsat granule ID, auto-detected (env: GRANULE).",
+)
+@click.option(
+    "--local-granule",
+    envvar="LOCAL_GRANULE",
+    default=None,
+    type=click.Path(path_type=Path),
+    help="Pre-downloaded granule (.zip for S2, dir for Landsat) (env: LOCAL_GRANULE).",
+)
+@_lasrc_option
+def lasrc(
+    granule: str,
+    local_granule: Path | None,
+    lasrc_version: LASRC_VERSION,
+) -> None:
+    """Run the standalone LaSRC pipeline (Download -> LaSRC -> Upload).
+
+    Temporary pipeline for C vs Rust (lasrc-rs) intercomparison. The Rust path
+    runs straight off the downloaded scene; the C path runs the ESPA-conversion
+    chain it requires. Neither path runs Fmask (LaSRC does not consume it).
+    """
+    from hls_nextgen_orchestration.lasrc import construct_pipeline
+
+    _run(
+        construct_pipeline(
+            granule_id=granule,
+            lasrc_version=lasrc_version,
+            local_granule=local_granule,
+        ),
+        "lasrc",
+    )
 
 
 if __name__ == "__main__":
