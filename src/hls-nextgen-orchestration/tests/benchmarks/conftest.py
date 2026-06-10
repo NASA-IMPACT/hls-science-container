@@ -6,17 +6,26 @@ import os
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast, get_args
 
 import boto3
 import pytest
 
+from hls_nextgen_orchestration.constants import FMASK_VERSION
 from hls_nextgen_orchestration.metrics import MetricRecord
 
 if TYPE_CHECKING:
     from _pytest.mark.structures import ParameterSet
 
 logger = logging.getLogger(__name__)
+
+
+def _available_cpus() -> int:
+    """CPUs usable by this process (respects cgroup/affinity limits on Linux)."""
+    sched_getaffinity = getattr(os, "sched_getaffinity", None)  # Linux only
+    if sched_getaffinity is not None:
+        return len(sched_getaffinity(0))
+    return os.cpu_count() or 1
 
 
 def pytest_configure(config: pytest.Config) -> None:
@@ -46,6 +55,7 @@ class BenchmarkConfig:
     input_prefix: str = ""
     s2_granule_ids: list[str] = field(default_factory=list)
     ls_granule_ids: list[str] = field(default_factory=list)
+    num_threads: int = 2  # clamped to available CPUs at runtime
 
     @classmethod
     def from_env(cls) -> BenchmarkConfig:
@@ -56,11 +66,23 @@ class BenchmarkConfig:
             input_prefix=os.environ.get("BENCHMARK_INPUT_PREFIX", ""),
             s2_granule_ids=_split_ids("BENCHMARK_S2_GRANULE_IDS"),
             ls_granule_ids=_split_ids("BENCHMARK_LS_GRANULE_IDS"),
+            num_threads=int(os.environ.get("BENCHMARK_NUM_THREADS", "2")),
         )
 
 
 def _split_ids(var: str) -> list[str]:
     return [g for g in os.environ.get(var, "").split(",") if g]
+
+
+def fmask_versions() -> list[FMASK_VERSION]:
+    """Fmask versions from BENCHMARK_FMASK_VERSIONS (default v4,v5)."""
+    valid = set(get_args(FMASK_VERSION))
+    versions = [
+        cast(FMASK_VERSION, v)
+        for v in os.environ.get("BENCHMARK_FMASK_VERSIONS", "v4,v5").split(",")
+        if v in valid
+    ]
+    return versions or ["v4", "v5"]
 
 
 def granule_params(granule_ids: list[str]) -> list[ParameterSet]:
@@ -143,6 +165,13 @@ def benchmark_env(config: BenchmarkConfig) -> None:
     GRANULE_LIST is intentionally not set here — each Sentinel benchmark
     test sets it to its own granule_id before calling pipeline.run().
     """
+    # Pin threads (clamped to available CPUs) for consistent timings; inherited
+    # by child subprocesses (LaSRC, Fmask).
+    cpus = _available_cpus()
+    threads = max(1, min(config.num_threads, cpus))
+    os.environ["OMP_NUM_THREADS"] = str(threads)
+    logger.info("Pinned OMP_NUM_THREADS=%d (%d CPUs available)", threads, cpus)
+
     defaults: dict[str, str] = {
         "ACCODE": "LaSRC v3.5.1.0",
         "INPUT_BUCKET": config.input_bucket,
@@ -214,17 +243,18 @@ class ResourceMetrics:
     group (and one publish step) tracks all three metrics together.
     """
 
+    # (series_label, records) — label is the bracket key, e.g. "<granule> (v5)".
     _items: list[tuple[str, list[MetricRecord]]] = field(default_factory=list)
 
-    def add(self, granule_id: str, records: list[MetricRecord]) -> None:
-        self._items.append((granule_id, records))
+    def add(self, label: str, records: list[MetricRecord]) -> None:
+        self._items.append((label, records))
 
     def write(self) -> None:
         if not self._items:
             return
 
         entries: list[dict[str, object]] = []
-        for granule_id, records in self._items:
+        for label, records in self._items:
             for rec in records:
                 for metric, unit, value in (
                     ("runtime_seconds", "s", rec.runtime_seconds),
@@ -233,7 +263,7 @@ class ResourceMetrics:
                 ):
                     entries.append(
                         {
-                            "name": f"{rec.task_name} {metric} [{granule_id}]",
+                            "name": f"{rec.task_name} {metric} [{label}]",
                             "unit": unit,
                             "value": value,
                         }
