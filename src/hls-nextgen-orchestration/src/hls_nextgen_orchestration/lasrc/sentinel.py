@@ -1,0 +1,133 @@
+"""Sentinel-2 tasks specific to the standalone "just-LaSRC" pipeline.
+
+Kept out of the production ``sentinel`` package so the main S30 pipeline stays
+clean; this whole module is expected to be removed once the Rust LaSRC is
+validated and wired into the main pipeline.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+import logging
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+import boto3
+
+from hls_nextgen_orchestration.base import AssetBundle, MappedTask, TaskFailure
+from hls_nextgen_orchestration.common.lasrc_aux import resolve_lasrc_aux_paths
+from hls_nextgen_orchestration.granules import Sentinel2Granule
+from hls_nextgen_orchestration.sentinel.assets import (
+    CONFIG,
+    UPLOAD_COMPLETE,
+    EnvConfig,
+    angle_hdf_asset,
+    lasrc_aerosol_qa_asset,
+    safe_dir_asset,
+)
+from hls_nextgen_orchestration.sentinel.mapped_tasks import PrepareEspaInput
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3 import S3Client
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, kw_only=True)
+class PrepareEspaInputNoFmask(PrepareEspaInput):
+    """PrepareEspaInput without the Fmask ordering dependency.
+
+    PrepareEspaInput normally requires ``fmask_bin_asset`` solely to force Fmask
+    to run before the SAFE is repackaged. The standalone LaSRC pipeline runs no
+    Fmask, so that ordering constraint is dropped (the angle dependency, which
+    LaSRC genuinely needs, is kept).
+    """
+
+    requires_factory = lambda gid: (CONFIG, safe_dir_asset(gid), angle_hdf_asset(gid))
+
+
+@dataclass(frozen=True, kw_only=True)
+class RunLaSRCRust(MappedTask):
+    """Runs the Rust LaSRC for Sentinel directly on the SAFE scene.
+
+    Calls the Rust ``lasrc.pipeline.process_scene`` Python API (imported lazily
+    so the linux-64-only package isn't required to build pipelines or run unit
+    tests). Unlike the C path it consumes the raw .SAFE directory and resolves
+    its ancillary inputs from ``LASRC_AUX_DIR``. Output is written in ESPA format
+    for intercomparison with the C LaSRC, and it provides the same
+    ``lasrc_aerosol_qa_asset`` so downstream ordering is identical.
+    """
+
+    instrument = True
+    requires_factory = lambda gid: (CONFIG, safe_dir_asset(gid))
+    provides_factory = lambda gid: (lasrc_aerosol_qa_asset(gid),)
+
+    def run(self, bundle: AssetBundle) -> AssetBundle:
+        from lasrc.pipeline import AuxFilePaths, process_scene
+
+        config: EnvConfig = bundle[CONFIG]
+        safe_dir = bundle[safe_dir_asset(self.granule_id)]
+
+        granule = Sentinel2Granule.from_str(self.granule_id)
+        aux_files = AuxFilePaths(
+            **resolve_lasrc_aux_paths(
+                is_sentinel=True, acquisition=granule.acquisition_time
+            )
+        )
+
+        output_dir = config.working_dir / self.granule_id / "lasrc_rs_output"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # mission "S2B" -> sensor "SENTINEL_2B"
+        process_scene(
+            input_path=safe_dir,
+            aux_files=aux_files,
+            output_path=output_dir,
+            sensor_name=f"SENTINEL_2{granule.mission[-1]}",
+            output_format="espa",
+        )
+
+        aerosol_qa = next(iter(output_dir.rglob("*aerosol_qa*.img")), None)
+        if aerosol_qa is None:
+            raise TaskFailure(
+                "Cannot find the Rust LaSRC aerosol QA output "
+                f"(expected '*aerosol_qa*.img' under {output_dir})"
+            )
+
+        return {lasrc_aerosol_qa_asset(self.granule_id): aerosol_qa}
+
+
+@dataclass(frozen=True, kw_only=True)
+class UploadLaSRCDebug(MappedTask):
+    """Recursively upload the working dir to the debug bucket (just-LaSRC pipeline).
+
+    Lightweight upload for the standalone LaSRC pipeline, which stops after
+    LaSRC and has none of the downstream products the full ``UploadAll``
+    requires. Depends on the LaSRC aerosol QA output purely to order after
+    LaSRC. No-ops (with a warning) when ``DEBUG_BUCKET`` is unset.
+    """
+
+    requires_factory = lambda gid: (CONFIG, lasrc_aerosol_qa_asset(gid))
+    provides = (UPLOAD_COMPLETE,)
+
+    def run(self, bundle: AssetBundle) -> AssetBundle:
+        config: EnvConfig = bundle[CONFIG]
+
+        if not config.debug_bucket:
+            logger.warning("DEBUG_BUCKET not set; skipping LaSRC debug upload")
+            return {UPLOAD_COMPLETE: True}
+
+        s3: S3Client = boto3.client("s3")
+        timestamp = dt.datetime.now().strftime("%Y_%m_%d_%H_%M")
+        base_key = f"{self.granule_id}_{timestamp}"
+        logger.info(
+            f"Uploading LaSRC debug files to s3://{config.debug_bucket}/{base_key}"
+        )
+
+        for f in config.working_dir.rglob("*"):
+            if f.is_file():
+                rel_path = f.relative_to(config.working_dir)
+                key = f"{base_key}/{rel_path}"
+                s3.upload_file(str(f), config.debug_bucket, key)
+
+        return {UPLOAD_COMPLETE: True}
