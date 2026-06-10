@@ -21,8 +21,14 @@
   <h1>HLS pipeline benchmarks</h1>
   <div class="meta"><span id="last-update"></span> &middot; <a id="repo-link" rel="noopener"></a></div>
   <div class="controls">
-    <label><input type="checkbox" id="combine" checked /> Combine workflows (one chart per metric)</label>
-    <label><input type="checkbox" id="agg-only" checked /> Pipeline aggregate only (hide per-task series)</label>
+    <label><input type="checkbox" id="combine" checked /> Combine series (one chart per group)</label>
+    <label>View:
+      <select id="view">
+        <option value="agg" selected>Pipeline aggregate</option>
+        <option value="tasks">By task (Fmask, LaSRC)</option>
+        <option value="all">All series</option>
+      </select>
+    </label>
     <button id="download">Download data as JSON</button>
   </div>
   <div id="charts"></div>
@@ -69,18 +75,22 @@
         a.click();
       };
 
-      // metric -> ("<task> [<granule>]" -> values aligned to commits)
-      function gather(aggOnly) {
+      // metric -> task -> (granule -> values aligned to commits)
+      // view: "agg" (pipeline tasks only) | "tasks" (per-task only) | "all"
+      function gather(view) {
         const byMetric = new Map(METRICS.map((m) => [m.key, new Map()]));
         entries.forEach((e, i) => {
           for (const b of e.benches) {
             const p = parseName(b.name);
             if (!p || !byMetric.has(p.metric)) continue;
-            if (aggOnly && !AGG_TASKS.has(p.task)) continue;
-            const entity = `${p.task} [${p.granule}]`;
-            const series = byMetric.get(p.metric);
-            if (!series.has(entity)) series.set(entity, new Array(entries.length).fill(null));
-            series.get(entity)[i] = b.value;
+            const isAgg = AGG_TASKS.has(p.task);
+            if (view === "agg" && !isAgg) continue;
+            if (view === "tasks" && isAgg) continue;
+            const byTask = byMetric.get(p.metric);
+            if (!byTask.has(p.task)) byTask.set(p.task, new Map());
+            const byGranule = byTask.get(p.task);
+            if (!byGranule.has(p.granule)) byGranule.set(p.granule, new Array(entries.length).fill(null));
+            byGranule.get(p.granule)[i] = b.value;
           }
         });
         return byMetric;
@@ -116,33 +126,50 @@
 
       function render() {
         const combine = document.getElementById("combine").checked;
-        const aggOnly = document.getElementById("agg-only").checked;
+        const view = document.getElementById("view").value;
         charts.forEach((c) => c.destroy());
         charts.length = 0;
         document.getElementById("charts").innerHTML = "";
         document.getElementById("empty").hidden = entries.length > 0;
 
-        const byMetric = gather(aggOnly);
+        const byMetric = gather(view);
         for (const metric of METRICS) {
-          const series = byMetric.get(metric.key);
-          if (!series || series.size === 0) continue;
-          if (combine) {
-            // One chart per metric; one line per workflow/task.
-            const datasets = [...series.entries()].map(([name, vals], idx) => dataset(name, vals, idx));
-            makeChart(metric.label, datasets, metric.label);
+          const byTask = byMetric.get(metric.key);
+          if (!byTask || byTask.size === 0) continue;
+
+          if (view === "tasks") {
+            // One chart per task (Fmask, LaSRC); one line per (granule, version).
+            for (const [task, byGranule] of byTask) {
+              if (combine) {
+                const datasets = [...byGranule.entries()].map(([g, vals], idx) => dataset(g, vals, idx));
+                makeChart(`${task} - ${metric.label}`, datasets, metric.label);
+              } else {
+                let idx = 0;
+                for (const [g, vals] of byGranule) {
+                  makeChart(`${task} - ${g} - ${metric.label}`, [dataset(g, vals, idx)], metric.label);
+                  idx++;
+                }
+              }
+            }
           } else {
-            // One chart per series (no workflow combining).
-            let idx = 0;
-            for (const [name, vals] of series) {
-              makeChart(`${name} — ${metric.label}`, [dataset(name, vals, idx)], metric.label);
-              idx++;
+            // Aggregate / all: flatten to one line per "<task> [<granule>]".
+            const flat = [];
+            for (const [task, byGranule] of byTask)
+              for (const [g, vals] of byGranule) flat.push([`${task} [${g}]`, vals]);
+            if (combine) {
+              // One chart per metric; one line per workflow/task.
+              makeChart(metric.label, flat.map(([name, vals], idx) => dataset(name, vals, idx)), metric.label);
+            } else {
+              // One chart per series (no workflow combining).
+              flat.forEach(([name, vals], idx) =>
+                makeChart(`${name} - ${metric.label}`, [dataset(name, vals, idx)], metric.label));
             }
           }
         }
       }
 
       document.getElementById("combine").addEventListener("change", render);
-      document.getElementById("agg-only").addEventListener("change", render);
+      document.getElementById("view").addEventListener("change", render);
       render();
     })();
   </script>
