@@ -19,7 +19,7 @@ def test_l30_ac(
     granule_id: str,
     fmask_version: FMASK_VERSION,
     ls_local_dirs: dict[str, Path],
-    tmp_path: Path,
+    work_dir: Path,
     resource_metrics: ResourceMetrics,
 ) -> None:
     if not granule_id:
@@ -30,7 +30,7 @@ def test_l30_ac(
     sink = InMemorySink()
     pipeline = construct_pipeline(
         granule_id=granule_id,
-        working_dir=tmp_path,
+        working_dir=work_dir,
         local_granule_dir=ls_local_dirs[granule_id],
         fmask_version=fmask_version,
         upload=False,
