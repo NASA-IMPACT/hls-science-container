@@ -9,14 +9,16 @@ import logging
 import os
 import re
 import shutil
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import ClassVar
 
 import boto3
 
 from hls_nextgen_orchestration.base import (
     AssetBundle,
+    Assets,
     MappedTask,
     TaskFailure,
 )
@@ -43,10 +45,6 @@ from .assets import (
     split_hdf_parts_asset,
     trimmed_hdf_asset,
 )
-
-if TYPE_CHECKING:
-    pass
-
 
 logger = logging.getLogger(__name__)
 
@@ -505,7 +503,7 @@ class PrepareEspaInput(MappedTask):
     Ports: unpackage_s2.py, convert_sentinel_to_espa
     """
 
-    requires_factory = lambda gid: (
+    requires_factory: ClassVar[Callable[[str], Assets] | None] = lambda gid: (
         CONFIG,
         safe_dir_asset(gid),
         fmask_bin_asset(gid),

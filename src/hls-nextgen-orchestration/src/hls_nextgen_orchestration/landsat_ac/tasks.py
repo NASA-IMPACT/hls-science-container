@@ -6,13 +6,14 @@ import os
 import shutil
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import boto3
 
 from hls_nextgen_orchestration.base import (
     Asset,
     AssetBundle,
+    Assets,
     DataSource,
     Task,
     TaskFailure,
@@ -324,7 +325,7 @@ class ConvertScanline(Task):
 
     # Requires "FMASK_BIN" to keep granule dir clean since Fmask
     # will have issues if this runs first.
-    requires = (GRANULE_DIR, FMASK_BIN)
+    requires: ClassVar[Assets] = (GRANULE_DIR, FMASK_BIN)
     provides = (SCANLINE_DONE,)
 
     def __post_init__(self) -> None:
