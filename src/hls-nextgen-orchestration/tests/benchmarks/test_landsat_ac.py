@@ -4,17 +4,20 @@ from pathlib import Path
 
 import pytest
 
+from hls_nextgen_orchestration.constants import FMASK_VERSION
 from hls_nextgen_orchestration.landsat_ac.workflow import construct_pipeline
 from hls_nextgen_orchestration.metrics import InMemorySink
 
-from .conftest import BenchmarkConfig, ResourceMetrics, granule_params
+from .conftest import BenchmarkConfig, ResourceMetrics, fmask_versions, granule_params
 
 
+@pytest.mark.parametrize("fmask_version", fmask_versions())
 @pytest.mark.parametrize(
     "granule_id", granule_params(BenchmarkConfig.from_env().ls_granule_ids)
 )
 def test_l30_ac(
     granule_id: str,
+    fmask_version: FMASK_VERSION,
     ls_local_dirs: dict[str, Path],
     tmp_path: Path,
     resource_metrics: ResourceMetrics,
@@ -29,7 +32,7 @@ def test_l30_ac(
         granule_id=granule_id,
         working_dir=tmp_path,
         local_granule_dir=ls_local_dirs[granule_id],
-        fmask_version="v5",
+        fmask_version=fmask_version,
         upload=False,
         metric_sink=sink,
     )
@@ -41,4 +44,4 @@ def test_l30_ac(
     ):
         pipeline.run()
 
-    resource_metrics.add(granule_id, sink.records)
+    resource_metrics.add(f"{granule_id} ({fmask_version})", sink.records)

@@ -3,6 +3,16 @@ name: Benchmark
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      fmask_versions:
+        description: "Comma-separated Fmask versions (default v4,v5; set v5 alone to halve runtime)"
+        type: string
+        default: "v4,v5"
+      num_threads:
+        description: "Thread count to pin (clamped to runner CPUs)"
+        type: string
+        default: "2"
 
 # Allow only one benchmark run at a time so results are stored sequentially.
 concurrency:
@@ -72,6 +82,9 @@ jobs:
           BENCHMARK_INPUT_PREFIX: ${{ vars.BENCHMARK_INPUT_PREFIX }}
           BENCHMARK_AUX_BUCKET: ${{ secrets.BENCHMARK_AUX_BUCKET }}
           BENCHMARK_AUX_PREFIX: ${{ vars.BENCHMARK_AUX_PREFIX }}
+          # default v4,v5 (charts both per run); dispatch can narrow to e.g. v5.
+          BENCHMARK_FMASK_VERSIONS: ${{ github.event.inputs.fmask_versions || 'v4,v5' }}
+          BENCHMARK_NUM_THREADS: ${{ github.event.inputs.num_threads || '2' }}
         run: scripts/benchmark
 
       # One chart group covering runtime + peak memory + CPU. The pytest tool
