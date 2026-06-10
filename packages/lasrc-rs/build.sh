@@ -9,9 +9,3 @@ export SOURCE_DATE_EPOCH=0
 # build backend declared in lasrc_py/pyproject.toml.
 cd lasrc_py
 ${PYTHON} -m pip install . --no-deps --no-build-isolation -vv
-
-# Rename the `lasrc` console script to `lasrc-rs` so this package can be
-# installed alongside the C espa-surface-reflectance package, which installs
-# its own bin/lasrc. Both implementations share one environment for the
-# runtime lasrc=C vs lasrc=Rust toggle.
-mv "${PREFIX}/bin/lasrc" "${PREFIX}/bin/lasrc-rs"

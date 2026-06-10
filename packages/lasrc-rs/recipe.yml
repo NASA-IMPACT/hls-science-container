@@ -1,9 +1,9 @@
 context:
-  version: "0.1.0"
+  version: "0.1.1"
   # Pinned to the current HEAD of the espa-surface-reflectance `refactor`
   # branch. The Rust LaSRC is not yet released/tagged; bump this rev as the
   # branch advances.
-  rev: "62d9ba2191c00f81a02962c3ce681e8cc092a921"
+  rev: "106b97c21d9c5405f95c449fbf041b86bd4915f9"
 
 package:
   name: lasrc-rs
@@ -39,8 +39,11 @@ tests:
   - package_contents:
       files:
         exists:
-          # Renamed from `lasrc` in build.sh to avoid colliding with the C
-          # espa-surface-reflectance package's bin/lasrc.
-          - bin/lasrc-rs
+          - bin/lasrc-landsat
+          - bin/lasrc-sentinel
   - script:
-      - lasrc-rs --help || [ $? -eq 255 ]
+      - lasrc-landsat --help
+      - lasrc-sentinel --help
+  - python:
+      imports:
+        - lasrc.pipeline
