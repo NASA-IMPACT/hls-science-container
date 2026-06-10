@@ -53,34 +53,15 @@ jobs:
             --s3-access-key-id "$S3_ACCESS_KEY_ID" \
             --s3-secret-access-key "$S3_SECRET_ACCESS_KEY"
 
-      - name: Build espa-product-formatter
-        run: |
-          rattler-build build \
-            --recipe packages/espa-product-formatter/recipe.yml \
-            --output-dir /tmp/conda-output \
-            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
-            --channel conda-forge \
-            --skip-existing=all
-
-      - name: Build espa-surface-reflectance
-        run: |
-          rattler-build build \
-            --recipe packages/espa-surface-reflectance/recipe.yml \
-            --output-dir /tmp/conda-output \
-            --channel /tmp/conda-output \
-            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
-            --channel conda-forge \
-            --skip-existing=all
-
-      - name: Build hls-libs
-        run: |
-          rattler-build build \
-            --recipe packages/hls-libs/recipe.yml \
-            --output-dir /tmp/conda-output \
-            --channel /tmp/conda-output \
-            --channel "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
-            --channel conda-forge \
-            --skip-existing=all
+      - name: Build conda packages
+        uses: ./.github/actions/build-conda-packages
+        with:
+          channel-bucket: ${{ secrets.CONDA_CHANNEL_BUCKET }}
+          recipes: |
+            packages/espa-product-formatter/recipe.yml
+            packages/espa-surface-reflectance/recipe.yml
+            packages/hls-libs/recipe.yml
+            packages/lasrc-rs/recipe.yml
 
       - name: Count new packages
         id: count
@@ -108,8 +89,19 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
         run: |
-          echo "Updating pixi.lock for: ${{ steps.count.outputs.packages }}"
-          pixi update ${{ steps.count.outputs.packages }}
+          # Only update packages that are already dependencies in pixi.toml. A
+          # package can be published here before it's wired into the manifest
+          # (e.g. lasrc-rs), and `pixi update <non-dependency>` errors out.
+          to_update=""
+          for pkg in ${{ steps.count.outputs.packages }}; do
+            grep -qE "^\s*${pkg} = " pixi.toml && to_update="$to_update $pkg"
+          done
+          if [ -z "$to_update" ]; then
+            echo "No published packages are dependencies yet; skipping lock update"
+            exit 0
+          fi
+          echo "Updating pixi.lock for:$to_update"
+          pixi update $to_update
           git diff --quiet pixi.lock && { echo "pixi.lock unchanged, nothing to commit"; exit 0; }
           branch="chore/update-pixi-lock-$(date +%Y%m%d-%H%M%S)"
           git config user.name "github-actions[bot]"

@@ -1,0 +1,5 @@
+[package]
+name = "lasrc-rs"
+
+[package.build]
+backend = { name = "pixi-build-rattler-build", version = "*" }
