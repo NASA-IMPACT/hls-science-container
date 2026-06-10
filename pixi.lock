@@ -321,7 +321,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
       - conda: s3://hls-conda-channels/linux-64/lasrc-rs-0.1.0-hb0f4dca_0.conda
-      - conda_source: fmask[983fa79a] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
+      - conda_source: fmask[941410ad] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
@@ -1063,7 +1063,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
       - conda: s3://hls-conda-channels/linux-64/lasrc-rs-0.1.0-hb0f4dca_0.conda
-      - conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
+      - conda_source: fmask[3aab96d2] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
@@ -1766,7 +1766,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
       - conda: s3://hls-conda-channels/linux-64/lasrc-rs-0.1.0-hb0f4dca_0.conda
-      - conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
+      - conda_source: fmask[3aab96d2] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
@@ -16478,7 +16478,7 @@ packages:
   - __glibc >=2.17
   size: 351382
   timestamp: 1781099807974
-- conda_source: fmask[75d185a9] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
+- conda_source: fmask[3aab96d2] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
   version: 5.0.1
   build: pyh4616a5c_0
   subdir: noarch
@@ -16594,7 +16594,7 @@ packages:
   - conda: https://conda.anaconda.org/conda-forge/osx-arm64/readline-8.3-h46df422_0.conda
   - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-h010d191_3.conda
   - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
-- conda_source: fmask[983fa79a] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
+- conda_source: fmask[941410ad] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
   version: 5.0.1
   build: pyh4616a5c_0
   subdir: noarch
@@ -18405,7 +18405,7 @@ packages:
   - cffi>=2.0.0 ; platform_python_implementation != 'PyPy'
   - typing-extensions>=4.13.2 ; python_full_version < '3.11'
   - bcrypt>=3.1.5 ; extra == 'ssh'
-  requires_python: '>=3.9,!=3.9.0,!=3.9.1'
+  requires_python: '!=3.9.0,>=3.9,!=3.9.1'
 - pypi: https://files.pythonhosted.org/packages/97/45/4b3a1239bbacd321068ea6e7ac28875b03ab8bc0aa0966452db17cd36714/charset_normalizer-3.4.4-cp313-cp313-macosx_10_13_universal2.whl
   name: charset-normalizer
   version: 3.4.4
