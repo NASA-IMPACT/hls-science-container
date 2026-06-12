@@ -12,6 +12,9 @@ espa-product-formatter = "=3.5.0"
 espa-surface-reflectance = "=v3.5.1.0"
 hls-libs = "=v3.5.1.2"
 
+[target.osx-arm64.dependencies]
+lasrc-rs = { path = "./packages/lasrc-rs" }
+
 [pypi-dependencies]
 hls-nextgen-orchestration = { path = "./src/hls-nextgen-orchestration", editable = false}
 # Remote repositories
