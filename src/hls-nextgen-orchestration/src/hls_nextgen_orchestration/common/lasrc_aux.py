@@ -112,8 +112,8 @@ def resolve_lasrc_aux_paths(
     return {
         "angle_hdf": _require(lut_dir / "ANGLE_NEW.hdf", "angle LUT (ANGLE_NEW.hdf)"),
         "intref_hdf": _glob_one(lut_dir, "RES_LUT_*.hdf", "intrinsic reflectance LUT"),
-        "transm_hdf": _glob_one(lut_dir, "TRANS_LUT_*.hdf", "transmission LUT"),
-        "sphera_hdf": _glob_one(lut_dir, "AERO_LUT_*.hdf", "spherical albedo LUT"),
+        "transm_hdf": _glob_one(lut_dir, "TRANS_LUT_*.ASCII", "transmission LUT"),
+        "sphera_hdf": _glob_one(lut_dir, "AERO_LUT_*.ASCII", "spherical albedo LUT"),
         "wv_oz_hdf": _resolve_lads_file(aux_dir, acquisition, aux_source),
         "dem_hdf": _require(aux_dir / "CMGDEM.hdf", "CMG DEM (CMGDEM.hdf)"),
         "ratio_hdf": _require(

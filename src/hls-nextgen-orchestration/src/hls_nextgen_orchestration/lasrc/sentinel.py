@@ -50,12 +50,7 @@ class PrepareEspaInputNoFmask(PrepareEspaInput):
 class RunLaSRCRust(MappedTask):
     """Runs the Rust LaSRC for Sentinel directly on the SAFE scene.
 
-    Calls the Rust ``lasrc.pipeline.process_scene`` Python API (imported lazily
-    so the linux-64-only package isn't required to build pipelines or run unit
-    tests). Unlike the C path it consumes the raw .SAFE directory and resolves
-    its ancillary inputs from ``LASRC_AUX_DIR``. Output is written in ESPA format
-    for intercomparison with the C LaSRC, and it provides the same
-    ``lasrc_aerosol_qa_asset`` so downstream ordering is identical.
+    Output is written in ESPA format for intercomparison with the C LaSRC.
     """
 
     instrument = True

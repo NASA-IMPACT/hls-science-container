@@ -48,12 +48,7 @@ class ScanlineNoFmask(ConvertScanline):
 class RunLaSRCRust(Task):
     """Run the Rust LaSRC directly on the raw Landsat scene.
 
-    Calls the Rust ``lasrc.pipeline.process_scene`` Python API (imported lazily
-    so the linux-64-only package isn't required to build pipelines or run unit
-    tests). Unlike the C path it consumes the downloaded granule directory and
-    resolves its ancillary inputs from ``LASRC_AUX_DIR``; no ESPA conversion is
-    required. Output is written in ESPA format for intercomparison with the C
-    LaSRC.
+    Output is written in ESPA format for intercomparison with the C LaSRC.
     """
 
     instrument = True
