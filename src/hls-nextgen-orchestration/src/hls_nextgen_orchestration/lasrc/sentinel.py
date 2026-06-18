@@ -58,25 +58,32 @@ class RunLaSRCRust(MappedTask):
     provides_factory = lambda gid: (lasrc_aerosol_qa_asset(gid),)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
-        from lasrc.pipeline import AuxFilePaths, process_scene
+        # Sentinel has its own entry point (lasrc.pipeline.process_scene reads a
+        # Landsat scene); it takes the aux paths as individual kwargs rather than
+        # an AuxFilePaths bundle.
+        from lasrc.pipeline_sentinel import process_sentinel_scene
 
         config: EnvConfig = bundle[CONFIG]
         safe_dir = bundle[safe_dir_asset(self.granule_id)]
 
         granule = Sentinel2Granule.from_str(self.granule_id)
-        aux_files = AuxFilePaths(
-            **resolve_lasrc_aux_paths(
-                is_sentinel=True, acquisition=granule.acquisition_time
-            )
+        aux = resolve_lasrc_aux_paths(
+            is_sentinel=True, acquisition=granule.acquisition_time
         )
 
         output_dir = config.working_dir / self.granule_id / "lasrc_rs_output"
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # mission "S2B" -> sensor "SENTINEL_2B"
-        process_scene(
-            input_path=safe_dir,
-            aux_files=aux_files,
+        process_sentinel_scene(
+            safe_dir=safe_dir,
+            angle_hdf=aux["angle_hdf"],
+            intref_hdf=aux["intref_hdf"],
+            transm_hdf=aux["transm_hdf"],
+            sphera_hdf=aux["sphera_hdf"],
+            viirs_aux_path=aux["wv_oz_hdf"],
+            dem_path=aux["dem_hdf"],
+            ratio_path=aux["ratio_hdf"],
             output_path=output_dir,
             sensor_name=f"SENTINEL_2{granule.mission[-1]}",
             output_format="espa",

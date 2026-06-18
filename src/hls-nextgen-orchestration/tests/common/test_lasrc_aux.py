@@ -17,10 +17,11 @@ def _make_aux_tree(root: Path) -> None:
         lut_dir = root / lut
         lut_dir.mkdir()
         version = "V2.0" if lut == "LDCMLUT" else "V3.0"
+        # RES/angle LUTs are HDF4; TRANS/AERO LUTs are ASCII (matches upstream).
         (lut_dir / "ANGLE_NEW.hdf").touch()
         (lut_dir / f"RES_LUT_{version}-X.hdf").touch()
-        (lut_dir / f"TRANS_LUT_{version}-X.hdf").touch()
-        (lut_dir / f"AERO_LUT_{version}-X.hdf").touch()
+        (lut_dir / f"TRANS_LUT_{version}-X.ASCII").touch()
+        (lut_dir / f"AERO_LUT_{version}-X.ASCII").touch()
 
     # Daily LADS file for 2026 DOY 073 (2026-03-14), VIIRS naming.
     lads = root / "LADS" / "2026"
