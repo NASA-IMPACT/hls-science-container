@@ -1,8 +1,10 @@
 name: Free disk space
 description: >
-  Remove large pre-installed toolchains that are unused in this repo.
-  Each directory is deleted in parallel then `wait` ensures all are done
-  before the step exits. For a more comprehensive version see:
+  Remove large pre-installed toolchains and the Docker images GitHub pre-pulls,
+  none of which this repo uses, to make room on the runner's single root
+  filesystem.
+  Directories are removed in parallel; `wait` ensures all are done
+  before the step exits. For a more comprehensive version see
   https://github.com/jlumbroso/free-disk-space
 
 runs:
@@ -13,12 +15,29 @@ runs:
       run: |
         echo "=== Disk space before cleanup ==="
         df -h /
+
+        # Unused language/runtime toolchains. ghcup (~5.5G) is the single
+        # biggest item and is separate from /opt/ghc.
+        sudo rm -rf /usr/local/.ghcup &
+        sudo rm -rf /opt/ghc &
         sudo rm -rf /usr/local/lib/android &
         sudo rm -rf /usr/share/dotnet &
-        sudo rm -rf /opt/ghc &
+        sudo rm -rf /opt/hostedtoolcache &
         sudo rm -rf /usr/local/share/boost &
         sudo rm -rf /usr/share/swift &
-        sudo rm -rf /opt/hostedtoolcache &
+        sudo rm -rf /usr/lib/jvm &
+        sudo rm -rf /usr/share/miniconda &
+        sudo rm -rf /usr/local/lib/node_modules &
+        sudo rm -rf /usr/local/share/powershell &
+        sudo rm -rf /usr/local/share/chromium &
+        sudo rm -rf /opt/microsoft /opt/google &
+        sudo rm -rf /usr/lib/google-cloud-sdk &
         wait
+
+        # Drop the ~3-4G of base images GitHub pre-pulls. Safe: this step runs
+        # before any of our own Docker work, so only unused images are removed,
+        # and it frees space on the same filesystem the build writes to.
+        sudo docker image prune --all --force || true
+
         echo "=== Disk space after cleanup ==="
         df -h /
