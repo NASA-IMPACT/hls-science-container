@@ -138,7 +138,10 @@ def _build_sentinel(
             .add(s2_mapped.RunLaSRC.map(granule_id)("LaSRC"))
         )
 
-    return builder.add(s2_lasrc.UploadLaSRCDebug.map(granule_id)("Upload"))
+    upload = s2_lasrc.UploadLaSRCDebug.map(granule_id)(
+        "Upload", prefix=f"lasrc-port/{lasrc_version}"
+    )
+    return builder.add(upload)
 
 
 def _build_landsat(
@@ -162,18 +165,17 @@ def _build_landsat(
             )
         )
         .add(download)
+        .add(l_tasks.CheckSolarZenith("CheckSolar"))
     )
 
     if lasrc_version == "rust":
         builder = builder.add(l_lasrc.RunLaSRCRust("LaSRC"))
     else:
-        # No Fmask and no metadata parsing: LaSRC only needs ESPA_XML (scanline
-        # -> ESPA conversion) and SOLAR_VALID (solar-zenith check).
         builder = (
-            builder.add(l_tasks.CheckSolarZenith("CheckSolar"))
-            .add(l_lasrc.ScanlineNoFmask("Scanline"))
+            builder.add(l_lasrc.ScanlineNoFmask("Scanline"))
             .add(l_tasks.ConvertToEspa("EspaConv"))
             .add(l_tasks.RunLaSRC("LaSRC"))
         )
 
-    return builder.add(l_lasrc.UploadLaSRCDebug("Upload"))
+    upload = l_lasrc.UploadLaSRCDebug("Upload", prefix=f"lasrc-port/{lasrc_version}")
+    return builder.add(upload)

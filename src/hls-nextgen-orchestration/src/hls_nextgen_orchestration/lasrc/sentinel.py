@@ -109,6 +109,8 @@ class UploadLaSRCDebug(MappedTask):
     LaSRC. No-ops (with a warning) when ``DEBUG_BUCKET`` is unset.
     """
 
+    prefix: str
+
     requires_factory = lambda gid: (CONFIG, lasrc_aerosol_qa_asset(gid))
     provides = (UPLOAD_COMPLETE,)
 
@@ -121,7 +123,7 @@ class UploadLaSRCDebug(MappedTask):
 
         s3: S3Client = boto3.client("s3")
         timestamp = dt.datetime.now().strftime("%Y_%m_%d_%H_%M")
-        base_key = f"{self.granule_id}_{timestamp}"
+        base_key = f"{self.prefix}/{self.granule_id}_{timestamp}"
         logger.info(
             f"Uploading LaSRC debug files to s3://{config.debug_bucket}/{base_key}"
         )

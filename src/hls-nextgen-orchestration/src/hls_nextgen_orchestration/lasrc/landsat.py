@@ -93,6 +93,8 @@ class UploadLaSRCDebug(Task):
     requires. No-ops (with a warning) when ``DEBUG_BUCKET`` is unset.
     """
 
+    prefix: str
+
     requires = (CONFIG, LASRC_DONE)
     provides = (UPLOAD_COMPLETE,)
 
@@ -105,7 +107,7 @@ class UploadLaSRCDebug(Task):
 
         s3: S3Client = boto3.client("s3")
         timestamp = dt.datetime.now().strftime("%Y_%m_%d_%H_%M")
-        base_key = f"{config.granule}_{timestamp}"
+        base_key = f"{self.prefix}/{config.granule}_{timestamp}"
         logger.info(
             f"Uploading LaSRC debug files to s3://{config.debug_bucket}/{base_key}"
         )
