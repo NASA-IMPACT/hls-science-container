@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from hls_nextgen_orchestration.base import Asset
+from hls_nextgen_orchestration.common import S3Path
 
 # --- Data Structures ---
 
@@ -59,6 +60,37 @@ class EnvConfig:
     def day_of_year(self) -> str:
         """Get the day of year from the date."""
         return self.date.strftime("%j")
+
+    def output_path(self, granule_id: str) -> S3Path:
+        """Main HLS product output location for a given granule.
+
+        Ports
+        -----
+        bucket_key="s3://${bucket}/L30/data/${year}${day_of_year}/${granule_id}"
+        """
+        key = f"L30/data/{self.date.strftime('%Y%j')}/{granule_id}"
+        return S3Path(self.output_bucket, key)
+
+    def vi_path(self, vi_output_name: str) -> S3Path:
+        """HLS Vegetation Index product output location for a given granule.
+
+        Ports
+        -----
+        vi_bucket_key="s3://${bucket}/L30_VI/data/${year}${day_of_year}/${vi_outputname}"
+        """
+        key = f"L30_VI/data/{self.date.strftime('%Y%j')}/{vi_output_name}"
+        return S3Path(self.output_bucket, key)
+
+    @property
+    def gibs_path(self) -> S3Path:
+        """GIBS browse output location.
+
+        Ports
+        -----
+        gibs_bucket_key="s3://${gibs_bucket}/L30/data/${year}${day_of_year}"
+        """
+        key = f"L30/data/{self.date.strftime('%Y%j')}"
+        return S3Path(self.gibs_bucket, key)
 
 
 # --- Assets ---
