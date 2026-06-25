@@ -72,7 +72,6 @@ class EnvSource(DataSource):
             granule=self.granule_id,
             input_bucket=os.environ["INPUT_BUCKET"],
             output_bucket=os.environ["OUTPUT_BUCKET"],
-            prefix=os.environ["PREFIX"],
             ac_code=os.environ["ACCODE"],
             cloud_masking_code=FMASK_VERSION_STRINGS[
                 "v5" if os.getenv("FMASK_VERSION") == "5" else "v4"
@@ -113,12 +112,14 @@ class DownloadGranule(Task):
     def run(self, inputs: AssetBundle) -> dict[Asset[Any], Any]:
         config: EnvConfig = inputs[CONFIG]
 
+        prefix = config.landsat_granule.usgs_c2_key_prefix
+
         logger.info(f"Downloading {config.granule} from {config.input_bucket}...")
         result = run_command(
             [
                 "download_landsat",
                 config.input_bucket,
-                config.prefix,
+                prefix,
                 str(config.granule_dir),
             ],
             check=True,

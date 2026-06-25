@@ -57,7 +57,6 @@ def mock_config(tmp_path: Path) -> Generator[EnvConfig, None, None]:
         granule=GRANULE,
         input_bucket=BUCKET_IN,
         output_bucket=BUCKET_OUT,
-        prefix="L8",
         ac_code="LaSRC",
         cloud_masking_code="Fmask v4.7",
         working_dir=tmp_path / "jo-id",
@@ -73,7 +72,6 @@ def test_env_source(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
     monkeypatch.setenv("INPUT_BUCKET", BUCKET_IN)
     monkeypatch.setenv("OUTPUT_BUCKET", BUCKET_OUT)
-    monkeypatch.setenv("PREFIX", "L8")
     monkeypatch.setenv("ACCODE", "LaSRC")
 
     source = EnvSource("test_source", granule_id=GRANULE, scratch_dir=tmp_path)

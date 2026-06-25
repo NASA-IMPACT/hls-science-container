@@ -41,7 +41,6 @@ def test_landsat_pipeline_fmask_toggle(
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
     monkeypatch.setenv("INPUT_BUCKET", IN_BUCKET)
     monkeypatch.setenv("OUTPUT_BUCKET", OUT_BUCKET)
-    monkeypatch.setenv("PREFIX", "L30")
     monkeypatch.setenv("ACCODE", "LaSRC")
     monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
 
@@ -63,7 +62,6 @@ def test_landsat_pipeline_end_to_end(
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
     monkeypatch.setenv("INPUT_BUCKET", IN_BUCKET)
     monkeypatch.setenv("OUTPUT_BUCKET", OUT_BUCKET)
-    monkeypatch.setenv("PREFIX", "L30")
     monkeypatch.setenv("ACCODE", "LaSRC")
     monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
 

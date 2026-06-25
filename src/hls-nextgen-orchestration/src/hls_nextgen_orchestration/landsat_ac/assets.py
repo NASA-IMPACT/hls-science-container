@@ -23,8 +23,6 @@ class EnvConfig:
         S3 bucket containing input data.
     output_bucket : str
         S3 bucket for output data.
-    prefix : str
-        S3 prefix for input data.
     ac_code : str
         Atmospheric correction code path/params.
     working_dir : Path
@@ -39,7 +37,6 @@ class EnvConfig:
     granule: str
     input_bucket: str
     output_bucket: str
-    prefix: str
     ac_code: str
     cloud_masking_code: str
     working_dir: Path

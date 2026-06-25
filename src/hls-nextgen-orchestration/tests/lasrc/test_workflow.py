@@ -61,7 +61,6 @@ def base_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("INPUT_BUCKET", "in-bucket")
     monkeypatch.setenv("OUTPUT_BUCKET", "out-bucket")
     monkeypatch.setenv("GIBS_OUTPUT_BUCKET", "gibs-bucket")
-    monkeypatch.setenv("PREFIX", "L30")
     monkeypatch.setenv("ACCODE", "LaSRC")
     monkeypatch.setenv("LASRC_AUX_DIR", str(tmp_path / "aux"))
     monkeypatch.setenv("SCRATCH_DIR", str(tmp_path / "scratch"))

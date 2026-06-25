@@ -6,6 +6,13 @@ from typing import cast, get_args
 
 from .constants import HLS_VERSION, PRODUCTS, HlsVersion
 
+# Platform -> USGS Collection 2 sensor path segment. Only the OLI/TIRS sensors
+# (Landsat 8/9) that HLS processes are supported.
+_LANDSAT_SENSOR_PATHS = {
+    "LC08": "oli-tirs",
+    "LC09": "oli-tirs",
+}
+
 
 @dataclass
 class LandsatGranule:
@@ -88,6 +95,35 @@ class LandsatGranule:
     def path_row(self) -> str:
         """WRS-2 path-row string"""
         return f"{self.path:03d}{self.row:03d}"
+
+    @property
+    def usgs_c2_key_prefix(self) -> str:
+        """S3 key prefix of this granule in the public ``usgs-landsat`` bucket.
+
+        USGS Landsat Collection 2 Level-1 layout, e.g.:
+
+            collection02/level-1/standard/oli-tirs/2026/184/033/LC09_..._T1/
+
+        The year/path/row/granule-id segments are all derived from the granule ID
+
+        Raises
+        ------
+        ValueError
+            If the platform is not a supported OLI/TIRS sensor (LC08/LC09).
+        """
+        try:
+            sensor = _LANDSAT_SENSOR_PATHS[self.platform]
+        except KeyError:
+            raise ValueError(
+                f"Cannot derive USGS key prefix for unsupported Landsat platform "
+                f"{self.platform!r}; expected one of {sorted(_LANDSAT_SENSOR_PATHS)}"
+            ) from None
+
+        return (
+            f"collection02/level-1/standard/{sensor}/"
+            f"{self.acquisition_date:%Y}/{self.path:03d}/{self.row:03d}/"
+            f"{self.to_str()}/"
+        )
 
 
 @dataclass
