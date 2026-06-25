@@ -51,16 +51,6 @@ class EnvConfig:
     working_dir: Path
     debug_bucket: str | None = None
 
-    @property
-    def year(self) -> str:
-        """Get the year from the date."""
-        return str(self.date.year)
-
-    @property
-    def day_of_year(self) -> str:
-        """Get the day of year from the date."""
-        return self.date.strftime("%j")
-
     def output_path(self, granule_id: str) -> S3Path:
         """Main HLS product output location for a given granule.
 
