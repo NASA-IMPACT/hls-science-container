@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from hls_nextgen_orchestration.base import Asset
-from hls_nextgen_orchestration.common import Paths
+from hls_nextgen_orchestration.common import Paths, S3Path
 from hls_nextgen_orchestration.constants import PRODUCTS
 from hls_nextgen_orchestration.granules import HlsGranule, Sentinel2Granule
 
@@ -36,8 +36,8 @@ class EnvConfig:
         # FIXME: shouldn't this be deterministic? hls-sentinel script is NOT
         return Sentinel2Granule.from_str(self.granule_ids[0])
 
-    def _product_output_key_prefix(self, product: PRODUCTS) -> str:
-        """HLS product output key prefix
+    def _product_output_key(self, product: PRODUCTS) -> str:
+        """S3 key (no bucket) for an HLS product output directory.
 
         Ports
         -----
@@ -60,31 +60,31 @@ class EnvConfig:
         return "/".join(parts)
 
     @property
-    def output_bucket_prefix(self) -> str:
-        """Main HLS output bucket key prefix"""
-        return self._product_output_key_prefix("HLS")
+    def output_path(self) -> S3Path:
+        """Main HLS product output location."""
+        return S3Path(self.output_bucket, self._product_output_key("HLS"))
 
     @property
-    def vi_bucket_prefix(self) -> str:
-        """HLS Vegetation Index product output bucket key prefix"""
-        return self._product_output_key_prefix("HLS-VI")
+    def vi_path(self) -> S3Path:
+        """HLS Vegetation Index product output location."""
+        return S3Path(self.output_bucket, self._product_output_key("HLS-VI"))
 
     @property
-    def gibs_bucket_prefix(self) -> str:
-        """GIBS output bucket key prefix
+    def gibs_path(self) -> S3Path:
+        """GIBS browse output location.
 
         Ports
         -----
-        gibs_dir="${workingdir}/gibs"
         gibs_bucket_key="s3://${gibs_bucket}/S30/data/${year}${day_of_year}"
         """
-        return "/".join(
+        key = "/".join(
             [
                 "S30",
                 "data",
                 self.sentinel_granule.acquisition_time.strftime("%Y%j"),
             ]
         )
+        return S3Path(self.gibs_bucket, key)
 
 
 # ----- Asset definitions and factories

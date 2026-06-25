@@ -467,7 +467,7 @@ class CreateManifest(Task):
                 "create_manifest",
                 str(config.working_dir),
                 str(manifest_path),
-                f"s3://{config.output_bucket}/{config.output_bucket_prefix}",
+                config.output_path.uri,
                 "HLSS30",
                 base_name,
                 config.job_id,
@@ -505,8 +505,6 @@ class ProcessGibs(Task):
             check=True,
         )
 
-        gibs_bucket_key_root = config.gibs_bucket_prefix
-
         manifests = Paths()
         for gibs_id_path in gibs_dir.iterdir():
             if gibs_id_path.is_dir():
@@ -517,14 +515,14 @@ class ProcessGibs(Task):
 
                 subtile_base = xmls[0].stem
                 manifest = gibs_id_path / f"{subtile_base}.json"
-                gibs_bucket_key = f"{gibs_bucket_key_root}/{gibs_id}"
+                gibs_subtile = config.gibs_path / gibs_id
 
                 run_command(
                     [
                         "create_manifest",
                         str(gibs_id_path),
                         str(manifest),
-                        gibs_bucket_key,
+                        gibs_subtile.uri,
                         "HLSS30",
                         subtile_base,
                         config.job_id,
@@ -604,7 +602,7 @@ class ProcessVi(Task):
                 "create_manifest",
                 str(vi_dir),
                 str(manifest),
-                config.vi_bucket_prefix,
+                config.vi_path.uri,
                 "HLSS30_VI",
                 vi_base_name,
                 config.job_id,
@@ -664,9 +662,8 @@ class UploadAll(Task):
         config: EnvConfig,
     ) -> None:
         """Uploads standard HLS S30 product files and manifest."""
-        logger.info(
-            f"Uploading main product to s3://{config.output_bucket}/{config.output_bucket_prefix}"
-        )
+        output_path = config.output_path
+        logger.info(f"Uploading main product to {output_path.uri}")
 
         # Include patterns: *.tif, *.xml, *.jpg, *_stac.json
         include = (
@@ -684,17 +681,14 @@ class UploadAll(Task):
 
             # Check Includes
             if f.name.endswith(include):
-                key = f"{config.output_bucket_prefix}/{f.name}"
-                s3.upload_file(str(f), config.output_bucket, key)
+                dest = output_path / f.name
+                s3.upload_file(str(f), dest.bucket, dest.key)
 
         # Upload Manifest
         manifest = bundle[SR_MANIFEST_FILE]
         if manifest.exists():
-            s3.upload_file(
-                str(manifest),
-                config.output_bucket,
-                f"{config.output_bucket_prefix}/{manifest.name}",
-            )
+            dest = output_path / manifest.name
+            s3.upload_file(str(manifest), dest.bucket, dest.key)
 
     def _upload_gibs(
         self,
@@ -703,22 +697,19 @@ class UploadAll(Task):
         config: EnvConfig,
     ) -> None:
         """Uploads GIBS tiles and manifests."""
-        logger.info(
-            f"Uploading GIBS to s3://{config.gibs_bucket}/{config.gibs_bucket_prefix}"
-        )
+        logger.info(f"Uploading GIBS to {config.gibs_path.uri}")
         gibs_dir = bundle[GIBS_DIR]
 
         for gibs_id_path in gibs_dir.iterdir():
             if gibs_id_path.is_dir():
                 gibs_id = gibs_id_path.name
-                target_prefix = f"{config.gibs_bucket_prefix}/{gibs_id}"
+                target = config.gibs_path / gibs_id
 
                 # Upload content
                 for f in gibs_id_path.glob("*"):
                     if f.suffix in [".tif", ".xml"]:
-                        s3.upload_file(
-                            str(f), config.gibs_bucket, f"{target_prefix}/{f.name}"
-                        )
+                        dest = target / f.name
+                        s3.upload_file(str(f), dest.bucket, dest.key)
 
                 # Upload Subtile Manifest
                 xmls = list(gibs_id_path.glob("*.xml"))
@@ -726,9 +717,8 @@ class UploadAll(Task):
                     subtile_base = xmls[0].stem
                     man = gibs_id_path / f"{subtile_base}.json"
                     if man.exists():
-                        s3.upload_file(
-                            str(man), config.gibs_bucket, f"{target_prefix}/{man.name}"
-                        )
+                        dest = target / man.name
+                        s3.upload_file(str(man), dest.bucket, dest.key)
 
     def _upload_vi(
         self,
@@ -737,9 +727,8 @@ class UploadAll(Task):
         config: EnvConfig,
     ) -> None:
         """Uploads Vegetation Index files and manifest."""
-        logger.info(
-            f"Uploading VI product to s3://{config.output_bucket}/{config.vi_bucket_prefix}"
-        )
+        vi_path = config.vi_path
+        logger.info(f"Uploading VI product to {vi_path.uri}")
         vi_dir = bundle[VI_DIR]
 
         include = (
@@ -750,17 +739,13 @@ class UploadAll(Task):
         )
         for f in vi_dir.iterdir():
             if f.name.endswith(include):
-                s3.upload_file(
-                    str(f), config.output_bucket, f"{config.vi_bucket_prefix}/{f.name}"
-                )
+                dest = vi_path / f.name
+                s3.upload_file(str(f), dest.bucket, dest.key)
 
         vi_manifest = bundle[VI_MANIFEST_FILE]
         if vi_manifest.exists():
-            s3.upload_file(
-                str(vi_manifest),
-                config.output_bucket,
-                f"{config.vi_bucket_prefix}/{vi_manifest.name}",
-            )
+            dest = vi_path / vi_manifest.name
+            s3.upload_file(str(vi_manifest), dest.bucket, dest.key)
 
     def _upload_debug(
         self, s3: S3Client, bundle: AssetBundle, config: EnvConfig

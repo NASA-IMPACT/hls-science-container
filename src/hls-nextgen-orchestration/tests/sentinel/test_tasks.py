@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 from hls_nextgen_orchestration.base import AssetBundle
+from hls_nextgen_orchestration.common.utils import run_command
 from hls_nextgen_orchestration.granules import Sentinel2Granule
 from hls_nextgen_orchestration.sentinel.assets import (
     CMR_XML,
@@ -17,6 +19,7 @@ from hls_nextgen_orchestration.sentinel.assets import (
     RENAMED_HDF,
     RESAMPLED_HDF,
     SR_MANIFEST_FILE,
+    THUMBNAIL_FILE,
     EnvConfig,
     angle_hdf_asset,
     trimmed_hdf_asset,
@@ -26,10 +29,27 @@ from hls_nextgen_orchestration.sentinel.tasks import (
     ConvertToCogs,
     CreateManifest,
     CreateMetadata,
+    ProcessGibs,
+    ProcessVi,
     RenameOutputs,
     Resample30m,
     sentinel_to_nbar_hdf_filename,
 )
+
+
+def _create_manifest_bucket_keys(spy: MagicMock) -> list[str]:
+    """Collect the bucket_key argument from every create_manifest invocation.
+
+    ``create_manifest`` is called as
+    ``[create_manifest, <dir>, <manifest>, <bucket_key>, ...]`` so the
+    bucket_key lives at index 3 of the command list.
+    """
+    keys = []
+    for call in spy.call_args_list:
+        cmd = call.args[0]
+        if cmd and cmd[0] == "create_manifest":
+            keys.append(cmd[3])
+    return keys
 
 
 def test_sentinel_to_nbar_hdf_filename() -> None:
@@ -158,3 +178,73 @@ def test_CreateManifest(sentinel_config: EnvConfig, mock_binaries: Path) -> None
 
     assert outputs[SR_MANIFEST_FILE].exists()
     assert outputs[SR_MANIFEST_FILE].name == f"{base_name}.json"
+
+
+# --- create_manifest bucket_key regression tests
+#
+# Regression: create_manifest for the VI and GIBS products was handed a bare
+# key (e.g. "S30/data/2020001/...") with no "s3://bucket/" scheme, because the
+# *_bucket_prefix properties returned keys and the call sites forgot to prepend
+# the bucket. The manifest argument must always be a full s3:// URI.
+def test_CreateManifest_passes_full_s3_uri(
+    sentinel_config: EnvConfig, mock_binaries: Path
+) -> None:
+    """Main product manifest must reference s3://<output_bucket>/..."""
+    base_name = "HLS.S30.T32TQM.2020001T102431.v2.0"
+    cmr = sentinel_config.working_dir / f"{base_name}.cmr.xml"
+
+    with patch(
+        "hls_nextgen_orchestration.sentinel.tasks.run_command", wraps=run_command
+    ) as spy:
+        CreateManifest(name="manifest").run(
+            {CONFIG: sentinel_config, OUTPUT_BASE_NAME: base_name, CMR_XML: cmr}
+        )
+
+    keys = _create_manifest_bucket_keys(spy)
+    assert keys, "create_manifest was never called"
+    for key in keys:
+        assert key.startswith(f"s3://{sentinel_config.output_bucket}/"), key
+
+
+def test_ProcessGibs_manifest_passes_full_s3_uri(
+    sentinel_config: EnvConfig, mock_binaries: Path
+) -> None:
+    """GIBS sub-tile manifests must reference s3://<gibs_bucket>/... (not a bare key)."""
+    base_name = "HLS.S30.T32TQM.2020001T102431.v2.0"
+
+    with patch(
+        "hls_nextgen_orchestration.sentinel.tasks.run_command", wraps=run_command
+    ) as spy:
+        ProcessGibs(name="gibs").run(
+            {
+                CONFIG: sentinel_config,
+                OUTPUT_BASE_NAME: base_name,
+                SR_MANIFEST_FILE: sentinel_config.working_dir / f"{base_name}.json",
+            }
+        )
+
+    keys = _create_manifest_bucket_keys(spy)
+    assert keys, "create_manifest was never called for any GIBS sub-tile"
+    for key in keys:
+        assert key.startswith(f"s3://{sentinel_config.gibs_bucket}/"), key
+
+
+def test_ProcessVi_manifest_passes_full_s3_uri(
+    sentinel_config: EnvConfig, mock_binaries: Path
+) -> None:
+    """VI manifest must reference s3://<output_bucket>/... (not a bare key)."""
+    with patch(
+        "hls_nextgen_orchestration.sentinel.tasks.run_command", wraps=run_command
+    ) as spy:
+        ProcessVi(name="vi").run(
+            {
+                CONFIG: sentinel_config,
+                SR_MANIFEST_FILE: sentinel_config.working_dir / "manifest.json",
+                THUMBNAIL_FILE: sentinel_config.working_dir / "thumb.jpg",
+            }
+        )
+
+    keys = _create_manifest_bucket_keys(spy)
+    assert keys, "create_manifest was never called for the VI product"
+    for key in keys:
+        assert key.startswith(f"s3://{sentinel_config.output_bucket}/"), key
