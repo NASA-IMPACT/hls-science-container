@@ -5,9 +5,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from hls_nextgen_orchestration.constants import FMASK_VERSION
 from hls_nextgen_orchestration.landsat_ac.assets import UPLOAD_COMPLETE
-from hls_nextgen_orchestration.landsat_ac.tasks import RunFmask, RunFmaskV5
+from hls_nextgen_orchestration.landsat_ac.tasks import RunFmaskV5
 from hls_nextgen_orchestration.landsat_ac.workflow import construct_pipeline
 
 if TYPE_CHECKING:
@@ -26,31 +25,22 @@ def s3_setup(s3_client: S3Client) -> S3Client:
     return s3_client
 
 
-@pytest.mark.parametrize(
-    ("fmask_version", "expected_task_cls"),
-    [("v4", RunFmask), ("v5", RunFmaskV5)],
-)
-def test_landsat_pipeline_fmask_toggle(
+def test_landsat_pipeline_fmask(
     mock_binaries: Path,
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
-    fmask_version: FMASK_VERSION,
-    expected_task_cls: type,
 ) -> None:
-    """Verify that the correct Fmask task class is used based on fmask_version."""
+    """Verify the Landsat pipeline uses the Fmask v5 task."""
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
     monkeypatch.setenv("INPUT_BUCKET", IN_BUCKET)
     monkeypatch.setenv("OUTPUT_BUCKET", OUT_BUCKET)
     monkeypatch.setenv("ACCODE", "LaSRC")
     monkeypatch.setenv("SCRATCH_DIR", str(tmp_path))
 
-    pipeline = construct_pipeline(granule_id=GRANULE, fmask_version=fmask_version)
-    fmask_tasks = [
-        t for t in pipeline.execution_order if isinstance(t, (RunFmask, RunFmaskV5))
-    ]
+    pipeline = construct_pipeline(granule_id=GRANULE)
+    fmask_tasks = [t for t in pipeline.execution_order if isinstance(t, RunFmaskV5)]
 
     assert len(fmask_tasks) == 1
-    assert isinstance(fmask_tasks[0], expected_task_cls)
 
 
 def test_landsat_pipeline_end_to_end(

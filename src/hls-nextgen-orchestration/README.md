@@ -16,7 +16,7 @@ into atmospherically corrected, tiled HLS S30 products. Key stages:
 
 1. **Download / locate** — download granule ZIP from S3 or use a pre-staged local file
 2. **Per-granule preprocessing** — solar zenith check, detector footprint, quality mask, angle derivation
-3. **Cloud masking** — Fmask v4 (default) or v5 (`FMASK_VERSION=5`)
+3. **Cloud masking** — Fmask v5
 4. **Atmospheric correction** — LaSRC via ESPA format conversion
 5. **Merge** — combine per-granule HDF parts, add Fmask SDS, trim
 6. **Post-processing** — resample to 30 m, NBAR, bandpass correction, COG conversion
@@ -29,7 +29,7 @@ corrected HDF product. Key stages:
 
 1. **Download / locate** — download granule from S3 or use a local file
 2. **Preprocessing** — metadata parsing, solar zenith check, scanline conversion, ESPA format conversion
-3. **Cloud masking** — Fmask v4 (default) or v5 (`FMASK_VERSION=5`)
+3. **Cloud masking** — Fmask v5
 4. **Atmospheric correction** — LaSRC
 5. **Output** — HDF product with Fmask SDS and angle bands, S3 upload
 
@@ -88,7 +88,7 @@ robust error management, making it ideal for the demanding requirements of HLS p
 ### Task Metrics
 
 Individual tasks can opt into per-execution metrics collection by setting `instrument = True` on their class.
-Currently instrumented tasks are `RunFmask`, `RunFmaskV5`, and `RunLaSRC` in all three workflows, plus
+Currently instrumented tasks are `RunFmaskV5` and `RunLaSRC` in all three workflows, plus
 `ProcessPathRows` and `RunNbar` in the tiling workflow.
 
 Metrics are collected and emitted in [CloudWatch Embedded Metrics Format (EMF)](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format.html)

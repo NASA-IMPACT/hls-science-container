@@ -77,14 +77,14 @@ def _split_ids(var: str) -> list[str]:
 
 
 def fmask_versions() -> list[FMASK_VERSION]:
-    """Fmask versions from BENCHMARK_FMASK_VERSIONS (default v4,v5)."""
+    """Fmask versions from BENCHMARK_FMASK_VERSIONS (default v5)."""
     valid = set(get_args(FMASK_VERSION))
     versions = [
         cast(FMASK_VERSION, v)
-        for v in os.environ.get("BENCHMARK_FMASK_VERSIONS", "v4,v5").split(",")
+        for v in os.environ.get("BENCHMARK_FMASK_VERSIONS", "v5").split(",")
         if v in valid
     ]
-    return versions or ["v4", "v5"]
+    return versions or ["v5"]
 
 
 def granule_params(granule_ids: list[str]) -> list[ParameterSet]:

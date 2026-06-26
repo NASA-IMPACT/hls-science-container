@@ -70,13 +70,12 @@ configured in the repository's **Settings → Secrets and variables → Actions*
 ### Thread pinning and Fmask version comparison
 
 `BENCHMARK_NUM_THREADS` (default `2`, clamped to the runner's CPUs) pins `OMP_NUM_THREADS` so LaSRC and Fmask thread
-consistently across runs. `BENCHMARK_FMASK_VERSIONS` (default `v4,v5`) parametrizes the tests and tags the version into
-the series key (`… [<granule> (v5)]`) so v4 and v5 chart as separate lines; running both ~doubles wall time, so narrow
-to `v5` to halve it. Both are also `workflow_dispatch` inputs.
+consistently across runs. `BENCHMARK_FMASK_VERSIONS` (default `v5`) parametrizes the tests and tags the version into
+the series key (`… [<granule> (v5)]`). Both are also `workflow_dispatch` inputs.
 
 | Env var (workflow_dispatch input) | Description                          | Default |
 | --------------------------------- | ------------------------------------ | ------- |
-| `BENCHMARK_FMASK_VERSIONS`        | Fmask versions to benchmark          | `v4,v5` |
+| `BENCHMARK_FMASK_VERSIONS`        | Fmask versions to benchmark          | `v5`    |
 | `BENCHMARK_NUM_THREADS`           | Threads to pin (clamped to CPUs)     | `2`     |
 
 #### Expected S3 layout

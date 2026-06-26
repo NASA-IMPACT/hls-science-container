@@ -20,7 +20,6 @@ from .mapped_tasks import (
     LocalSentinelGranule,
     PrepareEspaInput,
     ProcessHdfParts,
-    RunFmask,
     RunFmaskV5,
     RunLaSRC,
     TrimHdf,
@@ -48,7 +47,7 @@ def construct_pipeline(
     granule_ids: list[str] | None = None,
     working_dir: Path | None = None,
     local_granule_zips: list[Path] | None = None,
-    fmask_version: FMASK_VERSION = "v4",
+    fmask_version: FMASK_VERSION = "v5",
     upload: bool = True,
     metric_sink: MetricSink | None = None,
 ) -> Pipeline:
@@ -67,7 +66,7 @@ def construct_pipeline(
         If provided, assume there is a pre-downloaded Sentinel-2 granule(s)
         to process in this directory.
     fmask_version
-        Fmask version to use: "v4" (default) or "v5".
+        Fmask version to use. Only "v5" is supported.
     upload
         If True (default), upload to output bucket.
     """
@@ -112,11 +111,7 @@ def construct_pipeline(
             .add(FindFootprint.map(granule_id)(name="FindFootprint"))
             .add(ApplyQualityMask.map(granule_id)(name="ApplyMask"))
             .add(DeriveAngles.map(granule_id)(name="DeriveAngles"))
-            .add(
-                RunFmaskV5.map(granule_id)("Fmask")
-                if fmask_version == "v5"
-                else RunFmask.map(granule_id)("Fmask")
-            )
+            .add(RunFmaskV5.map(granule_id)("Fmask"))
             .add(PrepareEspaInput.map(granule_id)("PrepareEspa"))
             .add(RunLaSRC.map(granule_id)("LaSRC"))
             .add(ProcessHdfParts.map(granule_id)("ProcessHdfParts"))
