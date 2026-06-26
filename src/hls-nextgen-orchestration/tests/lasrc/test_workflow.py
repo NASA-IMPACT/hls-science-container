@@ -86,20 +86,21 @@ def test_sentinel_rust_pipeline_shape(download_bins: Path, base_env: None) -> No
     assert not any(t.startswith("RunLaSRC-") for t in classes)
 
 
-def test_rust_landsat_is_minimal(download_bins: Path, base_env: None) -> None:
+def test_rust_landsat_is_minimal(c_path_bins: Path, base_env: None) -> None:
     """The Landsat rust path is exactly Download -> LaSRC -> Upload (+ EnvSource)."""
     pipeline = construct_pipeline(L_GRANULE, lasrc_version="rust")
     classes = [type(t).__name__ for t in pipeline.execution_order]
     assert classes == [
         "EnvSource",
         "DownloadGranule",
+        "CheckSolarZenith",
         "RunLaSRCRust",
         "UploadLaSRCDebug",
     ]
 
 
 def test_local_granule_uses_local_tasks(
-    download_bins: Path, base_env: None, tmp_path: Path
+    c_path_bins: Path, base_env: None, tmp_path: Path
 ) -> None:
     granule_dir = tmp_path / "local_granule"
     granule_dir.mkdir()
