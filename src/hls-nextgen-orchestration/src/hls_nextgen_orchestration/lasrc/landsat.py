@@ -25,6 +25,7 @@ from hls_nextgen_orchestration.landsat_ac.assets import (
     EnvConfig,
 )
 from hls_nextgen_orchestration.landsat_ac.tasks import ConvertScanline
+from hls_nextgen_orchestration.lasrc.products import is_sr_product
 
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
@@ -68,15 +69,12 @@ class RunLaSRCRust(Task):
             )
         )
 
-        output_dir = granule_dir / "lasrc_rs_output"
-        output_dir.mkdir(parents=True, exist_ok=True)
-
         logger.info("Run LaSRC (rust)")
         # platform "LC09" -> sensor "LANDSAT_9"
         process_scene(
             input_path=granule_dir,
             aux_files=aux_files,
-            output_path=output_dir,
+            output_path=granule_dir,
             sensor_name=f"LANDSAT_{granule.platform[-1]}",
             output_format="espa",
         )
@@ -86,11 +84,15 @@ class RunLaSRCRust(Task):
 
 @dataclass(frozen=True)
 class UploadLaSRCDebug(Task):
-    """Recursively upload the granule dir to the debug bucket (just-LaSRC pipeline).
+    """Upload the LaSRC surface-reflectance products to the debug bucket.
 
-    Lightweight upload for the standalone LaSRC pipeline, which stops after
-    LaSRC and has none of the downstream products the full ``UploadResults``
-    requires. No-ops (with a warning) when ``DEBUG_BUCKET`` is unset.
+    Lightweight upload for the standalone LaSRC pipeline, which stops after LaSRC
+    and has none of the downstream products the full ``UploadResults`` requires.
+
+    Uploads only the ``*_sr_band*`` / ``*_sr_aerosol*`` products, skipping inputs
+    and ESPA intermediates.
+
+    No-ops (with a warning) when ``DEBUG_BUCKET`` is unset.
     """
 
     prefix: str
@@ -110,7 +112,7 @@ class UploadLaSRCDebug(Task):
         logger.info(f"Uploading LaSRC debug files to {base}")
 
         for f in config.granule_dir.rglob("*"):
-            if f.is_file():
+            if f.is_file() and is_sr_product(f.name):
                 dest = base / str(f.relative_to(config.granule_dir))
                 s3.upload_file(str(f), dest.bucket, dest.key)
 
