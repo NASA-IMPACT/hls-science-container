@@ -8,12 +8,11 @@ import tempfile
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, cast, get_args
+from typing import TYPE_CHECKING
 
 import boto3
 import pytest
 
-from hls_nextgen_orchestration.constants import FMASK_VERSION
 from hls_nextgen_orchestration.metrics import MetricRecord
 
 if TYPE_CHECKING:
@@ -74,17 +73,6 @@ class BenchmarkConfig:
 
 def _split_ids(var: str) -> list[str]:
     return [g for g in os.environ.get(var, "").split(",") if g]
-
-
-def fmask_versions() -> list[FMASK_VERSION]:
-    """Fmask versions from BENCHMARK_FMASK_VERSIONS (default v5)."""
-    valid = set(get_args(FMASK_VERSION))
-    versions = [
-        cast(FMASK_VERSION, v)
-        for v in os.environ.get("BENCHMARK_FMASK_VERSIONS", "v5").split(",")
-        if v in valid
-    ]
-    return versions or ["v5"]
 
 
 def granule_params(granule_ids: list[str]) -> list[ParameterSet]:
