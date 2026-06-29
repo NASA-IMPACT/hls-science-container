@@ -201,7 +201,7 @@ def lasrc(
             lasrc_version=lasrc_version,
             local_granule=local_granule,
         ),
-        "lasrc",
+        "lasrc-workflow",
     )
 
 
