@@ -7,6 +7,7 @@ Commands:
     plot scatter      Paired scatter per granule comparing two values of a dimension
     plot timeseries   Stacked total metric over time by task_name
 """
+from __future__ import annotations
 
 import datetime
 import time

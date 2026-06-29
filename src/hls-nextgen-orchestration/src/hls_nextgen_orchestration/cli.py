@@ -45,15 +45,16 @@ def _lasrc_option[F: Callable[..., Any]](func: F) -> F:
     """Shared ``--lasrc-version`` option (env: LASRC_VERSION, also accepts 'rs')."""
 
     def _normalize(
-        ctx: click.Context, param: click.Parameter, value: str | None
+        ctx: click.Context, param: click.Parameter, value: str
     ) -> LASRC_VERSION:
         # LASRC_VERSION rust/rs -> rust, anything else -> c
-        return "rust" if value in ("rust", "rs") else "c"
+        return "rust" if value.lower() in ("rust", "rs") else "c"
 
     return click.option(
         "--lasrc-version",
         envvar="LASRC_VERSION",
         default="c",
+        required=True,
         callback=_normalize,
         help="LaSRC version: c or rust (env: LASRC_VERSION, also accepts 'rs').",
     )(func)
