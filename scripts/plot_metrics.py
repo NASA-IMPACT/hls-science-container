@@ -4,12 +4,13 @@ HLS metrics CLI — fetch and plot CloudWatch EMF metrics from Batch jobs.
 
 Commands:
     fetch             Query Logs Insights and save to Parquet
-    plot scatter      fmask_version 4 vs 5 paired scatter per granule
+    plot scatter      Paired scatter per granule comparing two values of a dimension
     plot timeseries   Stacked total metric over time by task_name
 """
 
 import datetime
 import time
+from typing import TYPE_CHECKING
 
 import boto3
 import click
@@ -17,6 +18,12 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
+if TYPE_CHECKING:
+    from mypy_boto3_logs import CloudWatchLogsClient
+
+# A single CloudWatch Logs Insights result row: field name -> stringified value.
+Record = dict[str, str]
 
 METRICS = ["runtime_seconds", "peak_memory_mb", "avg_cpu_percent"]
 METRIC_LABELS = {
@@ -26,12 +33,13 @@ METRIC_LABELS = {
 }
 
 
-def _build_query(dimension: str) -> str:
+def _build_query(dimension: str | None = None) -> str:
+    dim_field = f", {dimension}" if dimension else ""
+    dim_filter = f"| filter ispresent({dimension})\n" if dimension else ""
     return f"""
-        fields @timestamp, task_name, input_granule_id, {dimension}, workflow,
+        fields @timestamp, task_name, input_granule_id{dim_field}, workflow,
                runtime_seconds, peak_memory_mb, avg_cpu_percent
-        | filter ispresent({dimension})
-        | filter ispresent(task_name)
+        {dim_filter}| filter ispresent(task_name)
         | limit 10000
     """
 
@@ -42,13 +50,13 @@ def _build_query(dimension: str) -> str:
 
 
 def _run_query(
-    client,
+    client: CloudWatchLogsClient,
     log_group: str,
     start: datetime.datetime,
     end: datetime.datetime,
     poll_interval: float,
     query: str,
-) -> list[dict]:
+) -> list[Record]:
     response = client.start_query(
         logGroupName=log_group,
         startTime=int(start.timestamp()),
@@ -66,9 +74,9 @@ def _run_query(
             raise RuntimeError(f"Logs Insights query {status}: {result}")
         time.sleep(poll_interval)
 
-    records = []
+    records: list[Record] = []
     for row in result["results"]:
-        record = {}
+        record: Record = {}
         for r in row:
             if r["field"] == "@timestamp":
                 record["timestamp"] = r["value"]
@@ -80,19 +88,19 @@ def _run_query(
 
 
 def _query_all_chunks(
-    client,
+    client: CloudWatchLogsClient,
     log_group: str,
     start_time: datetime.datetime,
     chunk_hours: int,
     poll_interval: float,
     query: str,
-) -> list[dict]:
+) -> list[Record]:
     end_time = datetime.datetime.now(datetime.UTC)
     hours_back = (end_time - start_time).total_seconds() / 3600
     chunk = datetime.timedelta(hours=chunk_hours)
     total_chunks = -(-int(hours_back) // chunk_hours)
 
-    all_records: list[dict] = []
+    all_records: list[Record] = []
     chunk_start = start_time
     chunk_num = 0
 
@@ -114,7 +122,9 @@ def _query_all_chunks(
     return all_records
 
 
-def _build_dataframe(records: list[dict], task_groups: set[str]) -> pd.DataFrame:
+def _build_dataframe(
+    records: list[Record], task_groups: set[str] | None = None
+) -> pd.DataFrame:
     df = pd.DataFrame(records)
     if df.empty:
         return df
@@ -126,7 +136,9 @@ def _build_dataframe(records: list[dict], task_groups: set[str]) -> pd.DataFrame
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
-    return df[df["task_name"].isin(task_groups)]
+    if task_groups:
+        return df[df["task_name"].isin(task_groups)]
+    return df
 
 
 # ---------------------------------------------------------------------------
@@ -310,7 +322,7 @@ def _plot_timeseries(df: pd.DataFrame, metric: str, freq: str) -> plt.Figure:
 
 
 @click.group()
-def cli():
+def cli() -> None:
     """HLS metrics: fetch and plot Batch job metrics from CloudWatch."""
 
 
@@ -333,17 +345,23 @@ def cli():
 @click.option("--region", default=None, help="AWS region")
 @click.option(
     "--tasks",
-    default="Fmask,LaSRC",
-    show_default=True,
-    help="Comma-separated task_name values to keep",
+    default=None,
+    help="Comma-separated task_name values to keep (default: keep all tasks)",
 )
 @click.option(
     "--dimension",
-    default="fmask_version",
-    show_default=True,
-    help="Experiment dimension to filter and include",
+    default=None,
+    help="Optional experiment dimension to filter on and include (e.g. lasrc_version)",
 )
-def fetch(output, log_group, since, chunk_hours, region, tasks, dimension):
+def fetch(
+    output: str,
+    log_group: str,
+    since: str | None,
+    chunk_hours: int,
+    region: str | None,
+    tasks: str | None,
+    dimension: str | None,
+) -> None:
     """Query Logs Insights and save to OUTPUT (default: metrics.parquet)."""
     if since is None:
         start_time = datetime.datetime.now(datetime.UTC) - datetime.timedelta(hours=48)
@@ -358,10 +376,9 @@ def fetch(output, log_group, since, chunk_hours, region, tasks, dimension):
         if start_time.tzinfo is None:
             start_time = start_time.replace(tzinfo=datetime.UTC)
 
-    task_groups = set(tasks.split(","))
+    task_groups = set(tasks.split(",")) if tasks else None
 
-    kwargs = {"region_name": region} if region else {}
-    client = boto3.client("logs", **kwargs)
+    client = boto3.client("logs", region_name=region)
 
     click.echo(
         f"Querying {log_group!r} — from {start_time:%Y-%m-%d %H:%M UTC} in {chunk_hours}h chunks ..."
@@ -377,20 +394,25 @@ def fetch(output, log_group, since, chunk_hours, region, tasks, dimension):
     click.echo(f"  {len(records)} records total")
 
     df = _build_dataframe(records, task_groups)
-    click.echo(f"  {len(df)} records after filtering to {task_groups}")
+    click.echo(f"  {len(df)} records after filtering to {task_groups or 'all tasks'}")
 
     if df.empty:
         raise click.ClickException("No data to save.")
 
-    for (task, dim_val), count in df.groupby(["task_name", dimension]).size().items():
-        click.echo(f"  {task:10s}  {dimension}={dim_val}  {count}")
+    if dimension and dimension in df.columns:
+        breakdown = df.groupby(["task_name", dimension]).size()
+        for (task, dim_val), count in breakdown.items():
+            click.echo(f"  {task:10s}  {dimension}={dim_val}  {count}")
+    else:
+        for task, count in df.groupby("task_name").size().items():
+            click.echo(f"  {task:10s}  {count}")
 
     df.to_parquet(output, index=False)
     click.echo(f"Saved → {output}")
 
 
 @cli.group()
-def plot():
+def plot() -> None:
     """Visualization subcommands (load from a Parquet file produced by fetch)."""
 
 
@@ -398,16 +420,11 @@ def plot():
 @click.argument("inputs", nargs=-1, default="metrics.parquet")
 @click.option(
     "--dimension",
-    default="fmask_version",
-    show_default=True,
-    help="Column to compare across versions",
+    required=True,
+    help="Column to compare across values",
 )
-@click.option(
-    "--x", "x_val", default="4", show_default=True, help="Dimension value for x-axis"
-)
-@click.option(
-    "--y", "y_val", default="5", show_default=True, help="Dimension value for y-axis"
-)
+@click.option("--x", "x_val", required=True, help="Dimension value for x-axis")
+@click.option("--y", "y_val", required=True, help="Dimension value for y-axis")
 @click.option(
     "--tasks",
     multiple=True,
@@ -415,9 +432,16 @@ def plot():
     help="Task(s) to plot (repeat for multiple, e.g. --tasks Fmask --tasks LaSRC). Defaults to all tasks in the data.",
 )
 @click.option("--output", default=None, help="Save figure to file instead of showing")
-def scatter(inputs: list[str], dimension, x_val, y_val, tasks, output):
+def scatter(
+    inputs: tuple[str, ...],
+    dimension: str,
+    x_val: str,
+    y_val: str,
+    tasks: tuple[str, ...],
+    output: str | None,
+) -> None:
     """Paired scatter: dimension x vs y, one point per granule."""
-    dfs = []
+    dfs: list[pd.DataFrame] = []
     for input_ in inputs:
         dfs.append(pd.read_parquet(input_))
     df = pd.concat(dfs)
@@ -450,7 +474,7 @@ def scatter(inputs: list[str], dimension, x_val, y_val, tasks, output):
     help="Resample frequency (pandas offset alias, e.g. 1h, 30min, 1D)",
 )
 @click.option("--output", default=None, help="Save figure to file instead of showing")
-def timeseries(input, metric, freq, output):
+def timeseries(input: str, metric: str, freq: str, output: str | None) -> None:
     """Stacked total metric over time, broken down by task_name."""
     df = pd.read_parquet(input)
 
