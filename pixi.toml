@@ -11,7 +11,7 @@ conda-pypi-map = {}
 espa-product-formatter = "=3.5.0"
 espa-surface-reflectance = "=v3.5.1.0"
 hls-libs = "=v3.5.1.2"
-lasrc-rs = "=8da44d3"
+lasrc-rs = "=609bd55"
 
 [target.osx-arm64.dependencies]
 lasrc-rs = { path = "./packages/lasrc-rs" }
