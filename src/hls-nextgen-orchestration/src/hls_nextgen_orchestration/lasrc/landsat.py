@@ -7,7 +7,6 @@ validated and wired into the main pipeline.
 
 from __future__ import annotations
 
-import datetime as dt
 import logging
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,6 +15,7 @@ from typing import TYPE_CHECKING
 import boto3
 
 from hls_nextgen_orchestration.base import Asset, AssetBundle, Task
+from hls_nextgen_orchestration.common import S3Path
 from hls_nextgen_orchestration.common.lasrc_aux import resolve_lasrc_aux_paths
 from hls_nextgen_orchestration.landsat_ac.assets import (
     CONFIG,
@@ -106,16 +106,12 @@ class UploadLaSRCDebug(Task):
             return {UPLOAD_COMPLETE: True}
 
         s3: S3Client = boto3.client("s3")
-        timestamp = dt.datetime.now().strftime("%Y_%m_%d_%H_%M")
-        base_key = f"{self.prefix}/{config.granule}_{timestamp}"
-        logger.info(
-            f"Uploading LaSRC debug files to s3://{config.debug_bucket}/{base_key}"
-        )
+        base = S3Path(config.debug_bucket, f"{self.prefix}/{config.granule}")
+        logger.info(f"Uploading LaSRC debug files to {base}")
 
         for f in config.granule_dir.rglob("*"):
             if f.is_file():
-                rel_path = f.relative_to(config.granule_dir)
-                key = f"{base_key}/{rel_path}"
-                s3.upload_file(str(f), config.debug_bucket, key)
+                dest = base / str(f.relative_to(config.granule_dir))
+                s3.upload_file(str(f), dest.bucket, dest.key)
 
         return {UPLOAD_COMPLETE: True}
