@@ -67,16 +67,14 @@ configured in the repository's **Settings → Secrets and variables → Actions*
 | `BENCHMARK_S2_GRANULE_IDS` | Comma-separated Sentinel-2 granule IDs to benchmark | see below   |
 | `BENCHMARK_LS_GRANULE_IDS` | Comma-separated Landsat granule IDs to benchmark    | see below   |
 
-### Thread pinning and Fmask version comparison
+### Thread pinning
 
 `BENCHMARK_NUM_THREADS` (default `2`, clamped to the runner's CPUs) pins `OMP_NUM_THREADS` so LaSRC and Fmask thread
-consistently across runs. `BENCHMARK_FMASK_VERSIONS` (default `v4,v5`) parametrizes the tests and tags the version into
-the series key (`… [<granule> (v5)]`) so v4 and v5 chart as separate lines; running both ~doubles wall time, so narrow
-to `v5` to halve it. Both are also `workflow_dispatch` inputs.
+consistently across runs. It is also a `workflow_dispatch` input. The benchmark series key tags the Fmask version as
+`[<granule> (v5)]`.
 
 | Env var (workflow_dispatch input) | Description                          | Default |
 | --------------------------------- | ------------------------------------ | ------- |
-| `BENCHMARK_FMASK_VERSIONS`        | Fmask versions to benchmark          | `v4,v5` |
 | `BENCHMARK_NUM_THREADS`           | Threads to pin (clamped to CPUs)     | `2`     |
 
 #### Expected S3 layout

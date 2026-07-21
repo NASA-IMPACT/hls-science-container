@@ -63,7 +63,7 @@ def test_twin_granules_get_suffix() -> None:
         ],
         working_dir=Path("/tmp"),
         ac_code="LaSRC v3.5.1.8",
-        cloud_masking_code="Fmask v4.7",
+        cloud_masking_code="Fmask v5.0.1",
     )
 
     assert config.output_path.key.endswith("/twin")

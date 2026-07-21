@@ -24,20 +24,24 @@ logger = logging.getLogger(__name__)
 
 
 def _fmask_option[F: Callable[..., Any]](func: F) -> F:
-    """Shared ``--fmask-version`` option (env: FMASK_VERSION, also accepts '5')."""
+    """Shared ``--fmask-version`` option (env: FMASK_VERSION).
+
+    Only Fmask v5 is supported; the option is retained as a backward-compatible
+    no-op so existing job definitions that set ``FMASK_VERSION`` do not error.
+    """
 
     def _normalize(
         ctx: click.Context, param: click.Parameter, value: str | None
     ) -> FMASK_VERSION:
-        # FMASK_VERSION 5/v5 -> v5, anything else -> v4
-        return "v5" if value in ("5", "v5") else "v4"
+        # Only v5 is supported; any value resolves to v5.
+        return "v5"
 
     return click.option(
         "--fmask-version",
         envvar="FMASK_VERSION",
-        default="v4",
+        default="v5",
         callback=_normalize,
-        help="Fmask version: v4 or v5 (env: FMASK_VERSION, also accepts '5').",
+        help="Fmask version (only v5 is supported; env: FMASK_VERSION).",
     )(func)
 
 
