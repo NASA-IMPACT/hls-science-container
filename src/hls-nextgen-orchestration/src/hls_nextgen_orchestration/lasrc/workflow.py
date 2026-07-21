@@ -89,7 +89,7 @@ def construct_pipeline(
     return builder.build(
         metrics=MetricsCollector(
             pipeline_dims={
-                "workflow": "lasrc",
+                "workflow": "lasrc-workflow",
                 "lasrc_version": lasrc_version,
                 "input_granule_id": granule_id,
             },

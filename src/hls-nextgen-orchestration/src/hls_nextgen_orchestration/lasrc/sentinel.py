@@ -7,7 +7,6 @@ validated and wired into the main pipeline.
 
 from __future__ import annotations
 
-import datetime as dt
 import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -15,8 +14,10 @@ from typing import TYPE_CHECKING
 import boto3
 
 from hls_nextgen_orchestration.base import AssetBundle, MappedTask, TaskFailure
+from hls_nextgen_orchestration.common import S3Path
 from hls_nextgen_orchestration.common.lasrc_aux import resolve_lasrc_aux_paths
 from hls_nextgen_orchestration.granules import Sentinel2Granule
+from hls_nextgen_orchestration.lasrc.products import is_sr_product
 from hls_nextgen_orchestration.sentinel.assets import (
     CONFIG,
     UPLOAD_COMPLETE,
@@ -71,7 +72,9 @@ class RunLaSRCRust(MappedTask):
             is_sentinel=True, acquisition=granule.acquisition_time
         )
 
-        output_dir = config.working_dir / self.granule_id / "lasrc_rs_output"
+        # Write straight into the granule working dir (un-nested); the writer
+        # names the outputs <granule_id>_sr_*.img.
+        output_dir = config.working_dir / self.granule_id
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # mission "S2B" -> sensor "SENTINEL_2B"
@@ -101,12 +104,16 @@ class RunLaSRCRust(MappedTask):
 
 @dataclass(frozen=True, kw_only=True)
 class UploadLaSRCDebug(MappedTask):
-    """Recursively upload the working dir to the debug bucket (just-LaSRC pipeline).
+    """Upload the LaSRC surface-reflectance products to the debug bucket.
 
-    Lightweight upload for the standalone LaSRC pipeline, which stops after
-    LaSRC and has none of the downstream products the full ``UploadAll``
-    requires. Depends on the LaSRC aerosol QA output purely to order after
-    LaSRC. No-ops (with a warning) when ``DEBUG_BUCKET`` is unset.
+    Lightweight upload for the standalone LaSRC pipeline, which stops after LaSRC and
+    has none of the downstream products the full ``UploadAll`` requires.
+
+    Uploads only the ``*_sr_band*`` / ``*_sr_aerosol*`` products, skipping inputs and
+    ESPA intermediates. Depends on the LaSRC aerosol QA output purely to order after
+    LaSRC.
+
+    No-ops (with a warning) when ``DEBUG_BUCKET`` is unset.
     """
 
     prefix: str
@@ -122,16 +129,12 @@ class UploadLaSRCDebug(MappedTask):
             return {UPLOAD_COMPLETE: True}
 
         s3: S3Client = boto3.client("s3")
-        timestamp = dt.datetime.now().strftime("%Y_%m_%d_%H_%M")
-        base_key = f"{self.prefix}/{self.granule_id}_{timestamp}"
-        logger.info(
-            f"Uploading LaSRC debug files to s3://{config.debug_bucket}/{base_key}"
-        )
+        base = S3Path(config.debug_bucket, f"{self.prefix}/{self.granule_id}")
+        logger.info(f"Uploading LaSRC debug files to {base}")
 
         for f in config.working_dir.rglob("*"):
-            if f.is_file():
-                rel_path = f.relative_to(config.working_dir)
-                key = f"{base_key}/{rel_path}"
-                s3.upload_file(str(f), config.debug_bucket, key)
+            if f.is_file() and is_sr_product(f.name):
+                dest = base / str(f.relative_to(config.working_dir))
+                s3.upload_file(str(f), dest.bucket, dest.key)
 
         return {UPLOAD_COMPLETE: True}
