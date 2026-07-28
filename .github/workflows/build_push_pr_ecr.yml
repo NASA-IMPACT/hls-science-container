@@ -27,8 +27,11 @@ jobs:
         with:
           filters: |
             packages:
-              - 'packages/**'
+              # Only added/modified: removing a package needs no build, and the
+              # "new packages were built" check would fail with nothing to build.
+              - added|modified: 'packages/**'
             other:
+              - 'packages/**'
               - 'src/**'
               - 'Dockerfile'
               - 'pixi.toml'
@@ -96,6 +99,8 @@ jobs:
     if: |
       always() &&
       needs.changes.result == 'success' &&
+      needs.build-conda.result != 'failure' &&
+      needs.build-conda.result != 'cancelled' &&
       needs.changes.outputs.other == 'true'
     runs-on: ubuntu-latest
 
