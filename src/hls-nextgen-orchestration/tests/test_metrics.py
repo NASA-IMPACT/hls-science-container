@@ -233,7 +233,31 @@ def test_emit_includes_git_sha_when_set(
     )
     record = json.loads(events["events"][0]["message"])
     assert record["git_sha"] == "abc1234"
-    assert "git_sha" in record["_aws"]["CloudWatchMetrics"][0]["Dimensions"][0]
+    assert "git_sha" not in record["_aws"]["CloudWatchMetrics"][0]["Dimensions"][0]
+
+
+def test_emit_keeps_unbounded_keys_out_of_dimensions(
+    metrics_env: CloudWatchLogsClient,
+    monkeypatch: pytest.MonkeyPatch,
+    log_group: str,
+    log_stream: str,
+) -> None:
+    """Unbounded keys must stay properties"""
+    monkeypatch.setenv("GIT_SHA", "abc1234")
+    node = simple_task(requires=(), provides=(A,), instrument=True)("T1")
+
+    with MetricsCollector(client=metrics_env).collect(node):
+        pass
+
+    events = metrics_env.get_log_events(
+        logGroupName=log_group, logStreamName=log_stream
+    )
+    record = json.loads(events["events"][0]["message"])
+    dimensions = record["_aws"]["CloudWatchMetrics"][0]["Dimensions"][0]
+
+    assert set(dimensions) == {"task_class", "task_name"}
+    for key in ("job_id", "git_sha"):
+        assert key in record, f"{key} must remain queryable in Logs Insights"
 
 
 def test_emit_omits_git_sha_when_unset(

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import shutil
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -26,6 +27,7 @@ class Pipeline:
 
     execution_order: tuple[NodeBase, ...]
     metrics: MetricsCollector
+    cleanup_working_dir: bool = True
 
     def run(self) -> TaskContext:
         """
@@ -34,22 +36,42 @@ class Pipeline:
         logger.info("--- Starting Pipeline Execution ---")
         context = TaskContext()
 
-        for i, node in enumerate(self.execution_order, 1):
-            logger.info(f"Step {i}/{len(self.execution_order)}: {node.name}")
-            try:
-                with self.metrics.collect(node):
-                    node.execute(context)
-            except TaskFailure as e:
-                logger.warning(f"Pipeline stopped at step '{node.name}': {e}")
-                context.exit_code = e.exit_code
-                return context
-            except Exception:
-                logger.exception(f"Pipeline failed unexpectedly at step '{node.name}'")
-                context.exit_code = 1
-                raise
+        try:
+            for i, node in enumerate(self.execution_order, 1):
+                logger.info(f"Step {i}/{len(self.execution_order)}: {node.name}")
+                try:
+                    with self.metrics.collect(node):
+                        node.execute(context)
+                except TaskFailure as e:
+                    logger.warning(f"Pipeline stopped at step '{node.name}': {e}")
+                    context.exit_code = e.exit_code
+                    return context
+                except Exception:
+                    logger.exception(
+                        f"Pipeline failed unexpectedly at step '{node.name}'"
+                    )
+                    context.exit_code = 1
+                    raise
 
-        logger.info("--- Execution Complete ---")
-        return context
+            logger.info("--- Execution Complete ---")
+            return context
+        finally:
+            self._cleanup_working_dirs(context)
+
+    def _cleanup_working_dirs(self, context: TaskContext) -> None:
+        """
+        Remove the local processing directories this pipeline created.
+
+        Runs however the pipeline ended, because the scratch mount outlives the
+        job on a reused compute instance and nothing else reclaims the space.
+        """
+        if not self.cleanup_working_dir:
+            return
+
+        for working_dir in context.working_dirs():
+            logger.info(f"Removing {working_dir=}")
+            # ignore_errors so cleanup never masks the pipeline's own outcome.
+            shutil.rmtree(working_dir, ignore_errors=True)
 
     def __str__(self) -> str:
         """
@@ -161,12 +183,18 @@ class PipelineBuilder:
 
         return sorted_nodes
 
-    def build(self, metrics: MetricsCollector | None = None) -> Pipeline:
+    def build(
+        self,
+        metrics: MetricsCollector | None = None,
+        *,
+        cleanup_working_dir: bool = True,
+    ) -> Pipeline:
         """Build the pipeline into a DAG"""
         logger.info("Building Pipeline...")
         return Pipeline(
             execution_order=tuple(self._topological_sort()),
             metrics=metrics or MetricsCollector(),
+            cleanup_working_dir=cleanup_working_dir,
         )
 
     def visualize(self) -> str:

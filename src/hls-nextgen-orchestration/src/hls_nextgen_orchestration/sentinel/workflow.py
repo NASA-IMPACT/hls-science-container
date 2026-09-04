@@ -49,6 +49,7 @@ def construct_pipeline(
     local_granule_zips: list[Path] | None = None,
     fmask_version: FMASK_VERSION = "v5",
     upload: bool = True,
+    cleanup_working_dir: bool = True,
     metric_sink: MetricSink | None = None,
 ) -> Pipeline:
     """Constructs the Sentinel-2 (S30) Preprocessing Pipeline.
@@ -69,6 +70,9 @@ def construct_pipeline(
         Fmask version to use. Only "v5" is supported.
     upload
         If True (default), upload to output bucket.
+    cleanup_working_dir
+        If True (default), remove the working directory when the pipeline
+        finishes, however it finishes.
     """
     # Parse input granule list
     if granule_ids:
@@ -141,7 +145,8 @@ def construct_pipeline(
     return builder.build(
         metrics=MetricsCollector(
             pipeline_dims={"workflow": "sentinel-ac"}, sink=metric_sink
-        )
+        ),
+        cleanup_working_dir=cleanup_working_dir,
     )
 
 

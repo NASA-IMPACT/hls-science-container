@@ -59,3 +59,13 @@ def test_landsat_pipeline_end_to_end(
     context = pipeline.run()
 
     assert context.get(UPLOAD_COMPLETE) is True
+
+
+def test_cleanup_defaults_on(mock_binaries: Path) -> None:
+    assert construct_pipeline(granule_id=GRANULE).cleanup_working_dir is True
+
+
+def test_cleanup_can_be_disabled(mock_binaries: Path) -> None:
+    pipeline = construct_pipeline(granule_id=GRANULE, cleanup_working_dir=False)
+
+    assert pipeline.cleanup_working_dir is False

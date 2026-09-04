@@ -11,8 +11,8 @@ This framework currently supports the following workflows for HLS product genera
 
 ### Sentinel-2 (S30)
 
-Defined in `sentinel/workflow.py`. Processes one or more Sentinel-2 L1C granules (twin-granule pairs are supported)
-into atmospherically corrected, tiled HLS S30 products. Key stages:
+Defined in `sentinel/workflow.py`. Processes one or more Sentinel-2 L1C granules (twin-granule pairs are supported) into
+atmospherically corrected, tiled HLS S30 products. Key stages:
 
 1. **Download / locate** — download granule ZIP from S3 or use a pre-staged local file
 2. **Per-granule preprocessing** — solar zenith check, detector footprint, quality mask, angle derivation
@@ -24,8 +24,8 @@ into atmospherically corrected, tiled HLS S30 products. Key stages:
 
 ### Landsat Atmospheric Correction (L30-AC)
 
-Defined in `landsat_ac/workflow.py`. Processes a Landsat Level-1 path/row scene into an atmospherically
-corrected HDF product. Key stages:
+Defined in `landsat_ac/workflow.py`. Processes a Landsat Level-1 path/row scene into an atmospherically corrected HDF
+product. Key stages:
 
 1. **Download / locate** — download granule from S3 or use a local file
 2. **Preprocessing** — metadata parsing, solar zenith check, scanline conversion, ESPA format conversion
@@ -35,13 +35,14 @@ corrected HDF product. Key stages:
 
 ### Landsat Tiling (L30-Tile)
 
-Defined in `landsat_tile/workflow.py`. Reprojects and tiles Landsat path/row AC outputs into the HLS MGRS
-grid. Key stages:
+Defined in `landsat_tile/workflow.py`. Reprojects and tiles Landsat path/row AC outputs into the HLS MGRS grid. Key
+stages:
 
 1. **Download / locate** — fetch atmospherically corrected path/row products from S3 or a local directory
 2. **Tiling** — `landsat-tile` and `landsat-angle-tile` utilities produce per-MGRS-tile HDF files
 3. **NBAR** — nadir BRDF-adjusted reflectance correction
-4. **Post-processing** — COG conversion, metadata (CMR XML, STAC JSON), thumbnails, GIBS browse tiles, VI products, S3 upload
+4. **Post-processing** — COG conversion, metadata (CMR XML, STAC JSON), thumbnails, GIBS browse tiles, VI products, S3
+   upload
 
 ## Framework Architecture
 
@@ -91,32 +92,44 @@ Individual tasks can opt into per-execution metrics collection by setting `instr
 Currently instrumented tasks are `RunFmaskV5` and `RunLaSRC` in all three workflows, plus
 `ProcessPathRows` and `RunNbar` in the tiling workflow.
 
-Metrics are collected and emitted in [CloudWatch Embedded Metrics Format (EMF)](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format.html)
+Metrics are collected and emitted in
+[CloudWatch Embedded Metrics Format (EMF)](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Embedded_Metric_Format.html)
 so that CloudWatch Logs Insights can query raw log lines while CloudWatch Metrics extracts numeric values automatically.
 
 Three metrics are captured per task execution:
 
-| Metric | Unit | Description |
-|--------|------|-------------|
-| `runtime_seconds` | Seconds | Wall-clock time for the full task |
-| `peak_memory_mb` | Megabytes | Peak RSS across the Python process and all child processes |
-| `max_cpu_percent` | Percent | Maximum combined CPU usage across the process tree |
+| Metric            | Unit      | Description                                                |
+| ----------------- | --------- | ---------------------------------------------------------- |
+| `runtime_seconds` | Seconds   | Wall-clock time for the full task                          |
+| `peak_memory_mb`  | Megabytes | Peak RSS across the Python process and all child processes |
+| `max_cpu_percent` | Percent   | Maximum combined CPU usage across the process tree         |
 
-**Enabling metrics** — set the `METRIC_LOG_GROUP_NAME` environment variable to an existing CloudWatch Logs
-log group. The log stream is taken from `AWS_BATCH_JOB_ID` (defaulting to `local_job`). The log group
-must already exist. The log stream is created automatically by the framework on startup.
+**Enabling metrics** — set the `METRIC_LOG_GROUP_NAME` environment variable to an existing CloudWatch Logs log group.
+The log stream is taken from `AWS_BATCH_JOB_ID` (defaulting to `local_job`). The log group must already exist. The log
+stream is created automatically by the framework on startup.
 
-**Experiment dimensions** — any environment variable prefixed with `HLS_EXPERIMENT_` is added as a CloudWatch
-dimension, enabling side-by-side comparisons in dashboards. For example:
+**Experiment dimensions** — any environment variable prefixed with `HLS_EXPERIMENT_` is added as a CloudWatch dimension,
+enabling side-by-side comparisons in dashboards. For example:
 
 ```
 HLS_EXPERIMENT_FMASK_VERSION=v5
 ```
 
-produces a dimension `fmask_version=v5` on every emitted metric.
+produces a dimension `fmask_version=v5` on every emitted metric. Keep these low-cardinality: CloudWatch identifies a
+metric by its namespace, name, and the full set of dimension values, so every distinct combination is a separately
+billed custom metric.
 
-**Injecting a custom collector** — `PipelineBuilder.build()` accepts an optional `MetricsCollector` instance,
-which is useful in tests or when you need to pre-configure the boto3 client:
+**Dimensions vs. properties** — only `task_class`, `task_name`, and the experiment/pipeline dimensions are published as
+CloudWatch dimensions. Unbounded identifiers (`job_id`, `git_sha`, `input_granule_id`) are emitted as EMF properties:
+still queryable in Logs Insights, but they generate no metrics.
+
+```
+fields @timestamp, task_name, runtime_seconds, peak_memory_mb
+| filter input_granule_id = "HLS.S30.T11SLU.2020001T183751.v2.0"
+```
+
+**Injecting a custom collector** — `PipelineBuilder.build()` accepts an optional `MetricsCollector` instance, which is
+useful in tests or when you need to pre-configure the boto3 client:
 
 ```python
 from hls_nextgen_orchestration.metrics import MetricsCollector

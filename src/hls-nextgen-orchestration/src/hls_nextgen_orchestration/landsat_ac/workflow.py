@@ -31,6 +31,7 @@ def construct_pipeline(
     local_granule_dir: Path | None = None,
     fmask_version: FMASK_VERSION = "v5",
     upload: bool = True,
+    cleanup_working_dir: bool = True,
     metric_sink: MetricSink | None = None,
 ) -> Pipeline:
     """Create the Landsat atmospheric correction (AC) pipeline
@@ -50,6 +51,9 @@ def construct_pipeline(
         Fmask version to use. Only "v5" is supported.
     upload
         If True (default), upload to output bucket.
+    cleanup_working_dir
+        If True (default), remove the working directory when the pipeline
+        finishes, however it finishes.
 
     Returns
     -------
@@ -94,7 +98,8 @@ def construct_pipeline(
         metrics=MetricsCollector(
             pipeline_dims={"workflow": "landsat-ac", "input_granule_id": granule_id},
             sink=metric_sink,
-        )
+        ),
+        cleanup_working_dir=cleanup_working_dir,
     )
 
 

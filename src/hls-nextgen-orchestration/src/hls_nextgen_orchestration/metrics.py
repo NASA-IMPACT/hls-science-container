@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 import boto3
 import psutil
 
-from hls_nextgen_orchestration.base import NodeBase, TaskFailure
+from hls_nextgen_orchestration.base import MappedTask, NodeBase, TaskFailure
 
 if TYPE_CHECKING:
     from mypy_boto3_logs import CloudWatchLogsClient
@@ -42,10 +42,12 @@ class _Sample:
 class MetricRecord:
     """A single measured task/pipeline execution, ready for any publisher.
 
-    ``dimensions`` carries the full set of resolved key/value pairs (task
-    class/name, job id, git sha, granule, experiment + pipeline dims) so a sink
-    can publish them however it likes; the numeric fields are pulled out for
-    convenience.
+    Context is split in two because CloudWatch identifies a metric by its
+    namespace, name, and the *full set* of dimension values: every distinct
+    combination creates a separately billed metric. ``dimensions`` therefore
+    holds only bounded-cardinality keys (task class/name, experiment +
+    pipeline dims). ``properties`` holds unbounded ones (job id, git sha,
+    granule) which stay queryable in Logs Insights without generating metrics.
     """
 
     task_class: str
@@ -55,6 +57,7 @@ class MetricRecord:
     avg_cpu_percent: float
     exit_code: int
     dimensions: dict[str, str]
+    properties: dict[str, str] = field(default_factory=dict)
 
 
 class MetricSink(Protocol):
@@ -111,6 +114,7 @@ class CloudWatchSink:
                 ],
             },
             **dims,
+            **record.properties,
             "runtime_seconds": record.runtime_seconds,
             "peak_memory_mb": record.peak_memory_mb,
             "avg_cpu_percent": record.avg_cpu_percent,
@@ -308,20 +312,27 @@ class MetricsCollector:
     def _build_record(
         self, node: NodeBase | _PipelineNode, runtime: float, sample: _Sample
     ) -> MetricRecord:
-        task_class = getattr(node, "_class", type(node).__name__)
+        cls = type(node)
+        # MappedTask.map() names its dynamic subclass f"{base}-{granule_id}",
+        # so report the base class to keep the dimension bounded.
+        if isinstance(node, MappedTask) and "granule_id" in cls.__dict__:
+            task_class = cls.__bases__[0].__name__
+        else:
+            task_class = getattr(node, "_class", cls.__name__)
         task_name = node.name
 
-        fixed: dict[str, str] = {
+        dims: dict[str, str] = {
             "task_class": task_class,
             "task_name": task_name,
-            "job_id": self._job_id,
+            **self.pipeline_dims,
+            **self.experiment_dims,
         }
-        if self._git_sha:
-            fixed["git_sha"] = self._git_sha
-        if granule_id := getattr(type(node), "granule_id", None):
-            fixed["input_granule_id"] = granule_id
 
-        dims = {**fixed, **self.pipeline_dims, **self.experiment_dims}
+        props: dict[str, str] = {"job_id": self._job_id}
+        if self._git_sha:
+            props["git_sha"] = self._git_sha
+        if granule_id := getattr(cls, "granule_id", None):
+            props["input_granule_id"] = granule_id
 
         return MetricRecord(
             task_class=task_class,
@@ -331,4 +342,5 @@ class MetricsCollector:
             avg_cpu_percent=round(sample.avg_cpu_percent, 1),
             exit_code=sample.exit_code,
             dimensions=dims,
+            properties=props,
         )

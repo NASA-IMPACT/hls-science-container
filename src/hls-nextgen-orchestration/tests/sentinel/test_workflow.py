@@ -125,7 +125,8 @@ def test_sentinel_pipeline_end_to_end(
     """End-to-end test for single and twin granules"""
     monkeypatch.setenv("GRANULE_LIST", ",".join(granule_ids))
 
-    pipeline = construct_pipeline()
+    # Keep the working directory so its outputs can be inspected below.
+    pipeline = construct_pipeline(cleanup_working_dir=False)
 
     # --- Run
     context = pipeline.run()
@@ -151,3 +152,13 @@ def test_sentinel_pipeline_end_to_end(
     # expected data are defined in the HDF_TO_COG fake script
     assert next(key for key in uploaded_keys if key.endswith("B05.tif"))
     assert next(key for key in uploaded_keys if key.endswith("VZA.tif"))
+
+
+def test_cleanup_defaults_on(
+    mock_binaries: Path,
+    container_setup: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GRANULE_LIST", GRANULE_ID_1)
+
+    assert construct_pipeline().cleanup_working_dir is True
