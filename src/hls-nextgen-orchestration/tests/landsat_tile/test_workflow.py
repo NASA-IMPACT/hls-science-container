@@ -126,3 +126,9 @@ def test_pipeline_end_to_end(
         Bucket=tile_context.gibs_bucket, Prefix=gibs_prefix
     )
     assert "Contents" in gibs_objs
+
+
+def test_cleanup_defaults_on(
+    mock_binaries: Path, tile_context: TileTestContext
+) -> None:
+    assert construct_pipeline().cleanup_working_dir is True

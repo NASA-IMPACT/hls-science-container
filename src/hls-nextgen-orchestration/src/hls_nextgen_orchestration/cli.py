@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import logging
 import os
+import signal
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -18,6 +20,8 @@ import click
 from hls_nextgen_orchestration.constants import FMASK_VERSION
 
 if TYPE_CHECKING:
+    from types import FrameType
+
     from hls_nextgen_orchestration.pipeline import Pipeline
 
 logger = logging.getLogger(__name__)
@@ -41,6 +45,32 @@ def _fmask_option[F: Callable[..., Any]](func: F) -> F:
     )(func)
 
 
+def _cleanup_option[F: Callable[..., Any]](func: F) -> F:
+    """Shared ``--cleanup-working-dir`` flag (env: CLEANUP_WORKING_DIR)."""
+    return click.option(
+        "--cleanup-working-dir/--no-cleanup-working-dir",
+        envvar="CLEANUP_WORKING_DIR",
+        default=True,
+        show_default=True,
+        help=(
+            "Remove the working directory when the pipeline finishes, however it "
+            "finishes (env: CLEANUP_WORKING_DIR)."
+        ),
+    )(func)
+
+
+def _exit_on_sigterm(signum: int, frame: FrameType | None) -> None:
+    """
+    Exit on SIGTERM instead of dying where we stand.
+
+    AWS Batch sends SIGTERM before it kills a job. The default action ends the
+    process without unwinding, which would skip the working directory cleanup
+    in `Pipeline.run`, leaving the scratch mount to fill up.
+    """
+    logger.warning(f"Received signal {signum}, shutting down")
+    sys.exit(128 + signum)
+
+
 def _run(pipeline: Pipeline, pipeline_name: str) -> None:
     """Run a pipeline under aggregate metrics and exit with its exit code."""
     try:
@@ -59,6 +89,7 @@ def _run(pipeline: Pipeline, pipeline_name: str) -> None:
 def cli() -> None:
     """HLS NextGen orchestration pipelines."""
     logging.basicConfig(level=logging.INFO)
+    signal.signal(signal.SIGTERM, _exit_on_sigterm)
 
 
 @cli.command("sentinel")
@@ -75,10 +106,12 @@ def cli() -> None:
     help="Comma-separated local granule zip paths (env: LOCAL_GRANULE_ZIPS).",
 )
 @_fmask_option
+@_cleanup_option
 def sentinel(
     granule_list: str | None,
     local_granule_zips: str | None,
     fmask_version: FMASK_VERSION,
+    cleanup_working_dir: bool,
 ) -> None:
     """Run the Sentinel-2 (S30) preprocessing pipeline."""
     from hls_nextgen_orchestration.sentinel.workflow import construct_pipeline
@@ -96,6 +129,7 @@ def sentinel(
             granule_ids=granule_ids,
             local_granule_zips=zips,
             fmask_version=fmask_version,
+            cleanup_working_dir=cleanup_working_dir,
         ),
         "sentinel-ac",
     )
@@ -116,10 +150,12 @@ def sentinel(
     help="Pre-downloaded Landsat granule directory (env: LOCAL_GRANULE_DIR).",
 )
 @_fmask_option
+@_cleanup_option
 def landsat_ac(
     granule: str,
     local_granule_dir: Path | None,
     fmask_version: FMASK_VERSION,
+    cleanup_working_dir: bool,
 ) -> None:
     """Run the Landsat atmospheric correction (L30-AC) pipeline."""
     from hls_nextgen_orchestration.landsat_ac.workflow import construct_pipeline
@@ -129,6 +165,7 @@ def landsat_ac(
             granule_id=granule,
             local_granule_dir=local_granule_dir,
             fmask_version=fmask_version,
+            cleanup_working_dir=cleanup_working_dir,
         ),
         "landsat-ac",
     )
@@ -142,11 +179,18 @@ def landsat_ac(
     type=click.Path(path_type=Path),
     help="Pre-downloaded path/row inputs directory (env: LOCAL_PATHROWS_DIR).",
 )
-def landsat_tile(local_pathrows_dir: Path | None) -> None:
+@_cleanup_option
+def landsat_tile(local_pathrows_dir: Path | None, cleanup_working_dir: bool) -> None:
     """Run the Landsat tiling (L30) pipeline."""
     from hls_nextgen_orchestration.landsat_tile.workflow import construct_pipeline
 
-    _run(construct_pipeline(local_pathrows_dir=local_pathrows_dir), "landsat-tile")
+    _run(
+        construct_pipeline(
+            local_pathrows_dir=local_pathrows_dir,
+            cleanup_working_dir=cleanup_working_dir,
+        ),
+        "landsat-tile",
+    )
 
 
 if __name__ == "__main__":

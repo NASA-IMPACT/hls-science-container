@@ -5,7 +5,8 @@ import os
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, ClassVar, TypeVar
+from pathlib import Path
+from typing import Any, ClassVar, Protocol, TypeVar, runtime_checkable
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,13 @@ class Asset[T]:
 
 
 type AssetBundle = dict[Asset[Any], Any]
+
+
+@runtime_checkable
+class HasWorkingDir(Protocol):
+    """A value that owns a local processing directory, such as an ``EnvConfig``."""
+
+    working_dir: Path
 
 
 @dataclass
@@ -83,6 +91,19 @@ class TaskContext:
         val = self._store[asset]
         assert isinstance(val, asset.type_class)
         return val
+
+    def working_dirs(self) -> set[Path]:
+        """
+        Local processing directories declared by the stored assets.
+
+        Configs are replaced as the pipeline runs, so several revisions of the
+        same config may be stored; the returned set is deduplicated.
+        """
+        return {
+            value.working_dir
+            for value in self._store.values()
+            if isinstance(value, HasWorkingDir)
+        }
 
 
 Assets = tuple[Asset[Any], ...]
