@@ -23,30 +23,6 @@ CHECK_SZA = cli_noop("valid")
 
 CHECK_SENTINEL_CLOUDS = cli_noop("valid")
 
-RUN_FMASK_SH_CLEAR = make_python_script("""
-from pathlib import Path
-Path("granuleid_Fmask4.tif").touch()
-print("Fmask 4.7 finished (0.42 minutes)")
-print("for S2C_SCENE with 96.3% clear pixels")
-""")
-
-RUN_FMASK_SH_CLOUDY = make_python_script("""
-from pathlib import Path
-Path("granuleid_Fmask4.tif").touch()
-print("Fmask 4.7 finished (0.42 minutes)")
-print("for S2C_SCENE with 1.2% clear pixels")
-""")
-
-PARSE_FMASK = make_python_script("""
-import re
-import sys
-
-text = " ".join(sys.argv[1:])
-match = re.search(r"([0-9.]+)%", text)
-value = float(match.group(1)) if match else 50.0
-print("invalid" if value < 2 else "valid")
-""")
-
 SENTINEL_DERIVE_ANGLE = cli_touch_last_arg()
 
 FMASK_V5 = make_python_script("""
@@ -232,8 +208,6 @@ SENTINEL_SCRIPTS = {
     "apply_s2_quality_mask": APPLY_S2_QUALITY_MASK,
     "sentinel-derive-angle": SENTINEL_DERIVE_ANGLE,
     "check_sentinel_clouds": CHECK_SENTINEL_CLOUDS,
-    "run_Fmask.sh": RUN_FMASK_SH_CLEAR,
-    "parse_fmask": PARSE_FMASK,
     "fmask": FMASK_V5,
     "unpackage_s2.py": UNPACKAGE_S2,
     "convert_sentinel_to_espa": CONVERT_SENTINEL_TO_ESPA,
@@ -284,7 +258,7 @@ def sentinel_config(tmp_path: Path) -> EnvConfig:
         granule_ids=["S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"],
         working_dir=working_dir,
         ac_code="LaSRC v3.5.1.8",
-        cloud_masking_code="Fmask v4.7",
+        cloud_masking_code="Fmask v5.0.1",
         replace_existing=False,
     )
 

@@ -9,14 +9,16 @@ import logging
 import os
 import re
 import shutil
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import ClassVar
 
 import boto3
 
 from hls_nextgen_orchestration.base import (
     AssetBundle,
+    Assets,
     MappedTask,
     TaskFailure,
 )
@@ -43,10 +45,6 @@ from .assets import (
     split_hdf_parts_asset,
     trimmed_hdf_asset,
 )
-
-if TYPE_CHECKING:
-    pass
-
 
 logger = logging.getLogger(__name__)
 
@@ -315,102 +313,10 @@ class DeriveAngles(MappedTask):
 
 
 @dataclass(frozen=True, kw_only=True)
-class RunFmask(MappedTask):
-    """Runs Fmask on the Sentinel granule.
-
-    Ports: run_Fmask.sh and gdal_translate
-    """
-
-    instrument = True
-    requires_factory = lambda gid: (
-        CONFIG,
-        granule_dir_asset(gid),
-        quality_mask_applied_asset(gid),
-        mtd_msil1c_asset(gid),
-    )
-    provides_factory = lambda gid: (fmask_bin_asset(gid),)
-
-    def __post_init__(self) -> None:
-        validate_command("check_sentinel_clouds")
-        validate_command("run_Fmask.sh")
-        validate_command("parse_fmask")
-        validate_command("gdal_translate")
-
-    def run(self, bundle: AssetBundle) -> AssetBundle:
-        config: EnvConfig = bundle[CONFIG]
-        safe_inner_dir = bundle[granule_dir_asset(self.granule_id)]
-        mtd_msil1c = bundle[mtd_msil1c_asset(self.granule_id)]
-
-        logger.info(f"Running Fmask in {safe_inner_dir}")
-        fmask_log = safe_inner_dir / "fmask_out.txt"
-        with open(fmask_log, "w") as outfile:
-            run_command(
-                ["run_Fmask.sh"], cwd=safe_inner_dir, stdout=outfile, check=True
-            )
-
-        invalid = self.check_invalid_cloud_cover(mtd_msil1c, fmask_log)
-        if invalid:
-            raise TaskFailure("Fmask reports no clear pixels. Exiting now", exit_code=4)
-
-        # Find the generated TIF - it should be inside the "granule dir" like,
-        # {WORKING_DIR}/{GRANULE_ID}.SAFE/GRANULE/{GRANULE_ID}/FMASK_DATA/{GRANULE_ID}_Fmask4.tif
-        # This is complicated, so it's easier to recursively glob for it.
-        fmask_tif = next(safe_inner_dir.rglob("*_Fmask4.tif"))
-        fmask_bin = config.working_dir / self.granule_id / "fmask.bin"
-
-        logger.info(f"Converting {fmask_tif} to {fmask_bin}")
-        run_command(
-            ["gdal_translate", "-of", "ENVI", str(fmask_tif), str(fmask_bin)],
-            check=True,
-        )
-
-        return {fmask_bin_asset(self.granule_id): fmask_bin}
-
-    def check_invalid_cloud_cover(self, mtd_msil1c: Path, fmask_log: Path) -> bool:
-        """Check if the cloud cover is invalid
-
-        This check requires that both:
-        1. Fmask shows less than 2% clear
-        2. Sentinel-2 L1C metadata shows greater than 95% cloud cover.
-
-        Returns
-        -------
-        bool
-            True if invalid
-        """
-        # Check Sentinel-2 L1C metadata
-        logger.info("Checking Sentinel-2 metadata cloud cover...")
-        result = run_command(
-            ["check_sentinel_clouds", str(mtd_msil1c)],
-            check=True,
-            text=True,
-            capture_output=True,
-        )
-        l1c_report = result.stdout.strip()
-        l1c_invalid: bool = l1c_report == "invalid"
-
-        # Read 2nd to last line of Fmask output
-        with fmask_log.open() as src:
-            fmask_report = src.readlines()[-2]
-
-        result = run_command(
-            ["parse_fmask", fmask_report],
-            check=True,
-            text=True,
-            capture_output=True,
-        )
-        fmask_result = result.stdout.strip()
-        fmask_invalid = fmask_result == "invalid"
-
-        return l1c_invalid and fmask_invalid
-
-
-@dataclass(frozen=True, kw_only=True)
 class RunFmaskV5(MappedTask):
     """Run Fmask v5 on a Sentinel-2 SAFE directory.
 
-    Uses the top-level .SAFE directory as input (via --imagepath), which is
-    different from RunFmask (v4) that operates inside the inner GRANULE/ dir.
+    Uses the top-level .SAFE directory as input (via --imagepath).
     """
 
     instrument = True
@@ -505,7 +411,7 @@ class PrepareEspaInput(MappedTask):
     Ports: unpackage_s2.py, convert_sentinel_to_espa
     """
 
-    requires_factory = lambda gid: (
+    requires_factory: ClassVar[Callable[[str], Assets] | None] = lambda gid: (
         CONFIG,
         safe_dir_asset(gid),
         fmask_bin_asset(gid),

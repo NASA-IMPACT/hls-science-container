@@ -39,7 +39,6 @@ from hls_nextgen_orchestration.sentinel.mapped_tasks import (
     FindFootprint,
     GetGranuleDir,
     ProcessHdfParts,
-    RunFmask,
     RunFmaskV5,
     TrimHdf,
 )
@@ -170,29 +169,6 @@ def test_DeriveAngles(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     )
 
     assert outputs[angle_hdf_asset(granule_id)].exists()
-
-
-def test_RunFmask(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
-    """Tests Fmask execution and conversion."""
-    granule_id = "GRANULE_ID"
-    granule_dir = sentinel_config.working_dir / granule_id
-    safe_dir = granule_dir / f"{granule_id}.SAFE"
-    inner = safe_dir / "GRANULE" / granule_id
-    inner.mkdir(parents=True)
-
-    mtd_msil1c = safe_dir / "MTD_MSIL1C.xml"
-    mtd_msil1c.touch()
-
-    task = RunFmask.map(granule_id)(name="fmask")
-    outputs = task.run(
-        {
-            granule_dir_asset(granule_id): inner,
-            mtd_msil1c_asset(granule_id): mtd_msil1c,
-            CONFIG: sentinel_config,
-        }
-    )
-
-    assert outputs[fmask_bin_asset(granule_id)].exists()
 
 
 def test_RunFmaskV5(sentinel_config: EnvConfig, mock_binaries: Path) -> None:

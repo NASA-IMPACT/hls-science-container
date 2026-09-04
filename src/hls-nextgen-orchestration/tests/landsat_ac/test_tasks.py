@@ -37,7 +37,6 @@ from hls_nextgen_orchestration.landsat_ac.tasks import (
     EnvSource,
     ParseMetadata,
     RenameAngleBands,
-    RunFmask,
     RunFmaskV5,
     RunLaSRC,
     UploadResults,
@@ -57,9 +56,8 @@ def mock_config(tmp_path: Path) -> Generator[EnvConfig, None, None]:
         granule=GRANULE,
         input_bucket=BUCKET_IN,
         output_bucket=BUCKET_OUT,
-        prefix="L8",
         ac_code="LaSRC",
-        cloud_masking_code="Fmask v4.7",
+        cloud_masking_code="Fmask v5.0.1",
         working_dir=tmp_path / "jo-id",
         granule_dir=tmp_path / "jo-id" / "granule",
     )
@@ -73,7 +71,6 @@ def test_env_source(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("AWS_BATCH_JOB_ID", JOB_ID)
     monkeypatch.setenv("INPUT_BUCKET", BUCKET_IN)
     monkeypatch.setenv("OUTPUT_BUCKET", BUCKET_OUT)
-    monkeypatch.setenv("PREFIX", "L8")
     monkeypatch.setenv("ACCODE", "LaSRC")
 
     source = EnvSource("test_source", granule_id=GRANULE, scratch_dir=tmp_path)
@@ -106,13 +103,6 @@ def test_check_solar_zenith(mock_binaries: Path, mock_config: EnvConfig) -> None
     task = CheckSolarZenith("test_solar")
     outputs = task.run({MTL_FILE: mock_config.granule_dir / f"{GRANULE}_MTL.txt"})
     assert outputs[SOLAR_VALID] is True
-
-
-def test_run_fmask(mock_binaries: Path, mock_config: EnvConfig) -> None:
-    task = RunFmask("test_fmask")
-    outputs = task.run({CONFIG: mock_config, GRANULE_DIR: mock_config.granule_dir})
-    assert outputs[FMASK_BIN].exists()
-    assert outputs[FMASK_BIN].name == "fmask.bin"
 
 
 def test_run_fmask_v5(mock_binaries: Path, mock_config: EnvConfig) -> None:

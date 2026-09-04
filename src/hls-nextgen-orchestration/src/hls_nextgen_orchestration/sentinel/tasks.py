@@ -113,9 +113,7 @@ class EnvSource(DataSource):
             output_bucket=os.environ["OUTPUT_BUCKET"],
             gibs_bucket=os.environ["GIBS_OUTPUT_BUCKET"],
             ac_code=os.environ["ACCODE"],
-            cloud_masking_code=FMASK_VERSION_STRINGS[
-                "v5" if os.getenv("FMASK_VERSION") == "5" else "v4"
-            ],
+            cloud_masking_code=FMASK_VERSION_STRINGS["v5"],
             working_dir=working_dir,
             debug_bucket=os.getenv("DEBUG_BUCKET"),
             replace_existing=os.getenv("REPLACE_EXISTING", "false").lower() == "true",

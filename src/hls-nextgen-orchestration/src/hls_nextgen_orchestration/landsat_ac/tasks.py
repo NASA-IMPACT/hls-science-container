@@ -6,13 +6,14 @@ import os
 import shutil
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import boto3
 
 from hls_nextgen_orchestration.base import (
     Asset,
     AssetBundle,
+    Assets,
     DataSource,
     Task,
     TaskFailure,
@@ -71,11 +72,8 @@ class EnvSource(DataSource):
             granule=self.granule_id,
             input_bucket=os.environ["INPUT_BUCKET"],
             output_bucket=os.environ["OUTPUT_BUCKET"],
-            prefix=os.environ["PREFIX"],
             ac_code=os.environ["ACCODE"],
-            cloud_masking_code=FMASK_VERSION_STRINGS[
-                "v5" if os.getenv("FMASK_VERSION") == "5" else "v4"
-            ],
+            cloud_masking_code=FMASK_VERSION_STRINGS["v5"],
             working_dir=working_dir,
             granule_dir=granule_dir,
             debug_bucket=os.environ.get("DEBUG_BUCKET"),
@@ -112,12 +110,14 @@ class DownloadGranule(Task):
     def run(self, inputs: AssetBundle) -> dict[Asset[Any], Any]:
         config: EnvConfig = inputs[CONFIG]
 
+        prefix = config.landsat_granule.usgs_c2_key_prefix
+
         logger.info(f"Downloading {config.granule} from {config.input_bucket}...")
         result = run_command(
             [
                 "download_landsat",
                 config.input_bucket,
-                config.prefix,
+                prefix,
                 str(config.granule_dir),
             ],
             check=True,
@@ -241,42 +241,6 @@ class CheckSolarZenith(Task):
 
 
 @dataclass(frozen=True)
-class RunFmask(Task):
-    """Run Fmask v4.7"""
-
-    instrument = True
-    requires = (CONFIG, GRANULE_DIR)
-    provides = (FMASK_BIN,)
-
-    def __post_init__(self) -> None:
-        validate_command("run_Fmask.sh")
-        validate_command("gdal_translate")
-
-    def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
-        # FIXME: this _could_ be reused for Sentinel-2 if we have an toggle
-        # to check `fmask_out.txt` so we can check the output
-        config: EnvConfig = inputs[CONFIG]
-        granule_dir: Path = inputs[GRANULE_DIR]
-        fmask_bin_path = granule_dir / "fmask.bin"
-
-        logger.info("Running Fmask...")
-        os.chdir(granule_dir)
-        with open("fmask_out.txt", "a") as outfile:
-            run_command(["run_Fmask.sh"], stdout=outfile, check=True)
-        fmask_tif = f"{config.granule}_Fmask4.tif"
-
-        logger.info("Converting Fmask to ENVI binary...")
-        run_command(
-            ["gdal_translate", "-of", "ENVI", fmask_tif, fmask_bin_path.name],
-            check=True,
-        )
-
-        if not fmask_bin_path.exists():
-            raise RuntimeError(f"Output file missing: {fmask_bin_path}")
-        return {FMASK_BIN: fmask_bin_path}
-
-
-@dataclass(frozen=True)
 class RunFmaskV5(Task):
     """Run Fmask v5 on a Landsat L1 granule directory."""
 
@@ -324,7 +288,7 @@ class ConvertScanline(Task):
 
     # Requires "FMASK_BIN" to keep granule dir clean since Fmask
     # will have issues if this runs first.
-    requires = (GRANULE_DIR, FMASK_BIN)
+    requires: ClassVar[Assets] = (GRANULE_DIR, FMASK_BIN)
     provides = (SCANLINE_DONE,)
 
     def __post_init__(self) -> None:

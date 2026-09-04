@@ -16,13 +16,6 @@ RUN apt update && \
         && \
     rm -rf /var/lib/apt/lists/*
 
-# ----- Install Fmask4
-RUN wget -q -O /tmp/Fmask.install https://fmask4installer.s3.us-west-2.amazonaws.com/Fmask_4_7_issue40_Linux_mcr.install && \
-    chmod +x /tmp/Fmask.install && \
-    mkdir -p /opt && \
-    /tmp/Fmask.install -destinationFolder /opt/fmask -agreeToLicense yes -mode silent && \
-    rm /tmp/Fmask.install
-
 # ----- Install Fmask v5 models and ancillary data
 # Unpack data/ + model/ directly (stripping the ZIP's top-level dir, matching
 # fmask.cli.data:install) so this layer caches independently of the pixi env.
@@ -65,21 +58,12 @@ FROM build AS dev
 ENV PYSTAC_STAC_VERSION_OVERRIDE=1.0.0
 # Allow GDAL to open MEM dataset with a datapointer (required for hls-hdf_to_cog)
 ENV GDAL_MEM_ENABLE_OPEN=YES
-# Define where Fmask lives (for `run_Fmask.sh`)
-ENV FMASK_PREFIX=/opt/fmask
 # Set variable defining LaSRC version used in HLS product metadata
 ENV ACCODE="LaSRC v3.5.1.0"
-
-# install libxt for MCR / Fmask
-RUN apt update && \
-    apt install -y --no-install-recommends \
-        libxt6 && \
-    rm -rf /var/lib/apt/lists/*
 
 RUN --mount=type=cache,target=/root/.cache/rattler/cache \
     pixi install --frozen -e dev
 
-COPY packages/fmask4/run_Fmask.sh /app/.pixi/envs/default/bin
 COPY src/scripts/*.sh /app/.pixi/envs/default/bin
 COPY --from=build --chmod=0755 /app/entrypoint.sh /app/entrypoint.sh
 
@@ -93,20 +77,12 @@ FROM --platform=${PLATFORM} debian:bookworm-slim AS prod
 ARG GIT_SHA
 ENV GIT_SHA=${GIT_SHA}
 
-# install libxt for MCR / Fmask
-RUN apt update && \
-    apt install -y --no-install-recommends \
-        libxt6 && \
-    rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 # Enforce v1.0.0 for STAC specification within PySTAC
 ENV PYSTAC_STAC_VERSION_OVERRIDE=1.0.0
 # Allow GDAL to open MEM dataset with a datapointer (required for hls-hdf_to_cog)
 ENV GDAL_MEM_ENABLE_OPEN=YES
-# Define where Fmask lives (for `run_Fmask.sh`)
-ENV FMASK_PREFIX=/opt/fmask
 ENV FMASK_DATA=/opt/fmask-data
 # Set variable defining LaSRC version used in HLS product metadata
 ENV ACCODE="LaSRC v3.5.1.0"
@@ -114,8 +90,6 @@ ENV ACCODE="LaSRC v3.5.1.0"
 COPY --from=build /app/.pixi/envs/default /app/.pixi/envs/default
 COPY --from=build /opt/fmask-data /opt/fmask-data
 COPY --from=build --chmod=0755 /app/entrypoint.sh /app/entrypoint.sh
-COPY --from=build /opt/fmask ${FMASK_PREFIX}
-COPY packages/fmask4/run_Fmask.sh /app/.pixi/envs/default/bin
 COPY src/scripts/*.sh /app/.pixi/envs/default/bin
 
 # Run Pixi entrypoint and execute Bash shell

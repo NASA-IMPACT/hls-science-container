@@ -72,6 +72,20 @@ class TestLandsatGranule:
         granule = LandsatGranule.from_str(original_id)
         assert granule.to_str() == original_id
 
+    def test_usgs_c2_key_prefix(self) -> None:
+        """USGS Collection 2 key prefix is derived from the granule ID."""
+        granule = LandsatGranule.from_str("LC09_L1TP_184033_20260620_20260620_02_T1")
+        assert granule.usgs_c2_key_prefix == (
+            "collection02/level-1/standard/oli-tirs/2026/184/033/"
+            "LC09_L1TP_184033_20260620_20260620_02_T1/"
+        )
+
+    def test_usgs_c2_key_prefix_unsupported_platform_raises(self) -> None:
+        """Non-OLI/TIRS platforms cannot be mapped to a sensor segment."""
+        granule = LandsatGranule.from_str("LE07_L1TP_012031_20150101_20150201_02_T1")
+        with pytest.raises(ValueError, match="unsupported Landsat platform"):
+            _ = granule.usgs_c2_key_prefix
+
     def test_invalid_format_raises_error(self) -> None:
         """
         Test that malformed IDs raise ValueError.

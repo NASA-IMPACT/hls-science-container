@@ -18,7 +18,6 @@ from .tasks import (
     LocalGranule,
     ParseMetadata,
     RenameAngleBands,
-    RunFmask,
     RunFmaskV5,
     RunLaSRC,
     UploadResults,
@@ -30,7 +29,7 @@ def construct_pipeline(
     working_dir: Path | None = None,
     granule_dir: Path | None = None,
     local_granule_dir: Path | None = None,
-    fmask_version: FMASK_VERSION = "v4",
+    fmask_version: FMASK_VERSION = "v5",
     upload: bool = True,
     cleanup_working_dir: bool = True,
     metric_sink: MetricSink | None = None,
@@ -49,7 +48,7 @@ def construct_pipeline(
         If provided, assume there is a pre-downloaded Landsat granule
         to process in this directory.
     fmask_version
-        Fmask version to use: "v4" (default) or "v5".
+        Fmask version to use. Only "v5" is supported.
     upload
         If True (default), upload to output bucket.
     cleanup_working_dir
@@ -67,11 +66,7 @@ def construct_pipeline(
     else:
         granule_task = DownloadGranule("DownloadGranule")
 
-    fmask_task: RunFmask | RunFmaskV5
-    if fmask_version == "v5":
-        fmask_task = RunFmaskV5("Fmask")
-    else:
-        fmask_task = RunFmask("Fmask")
+    fmask_task = RunFmaskV5("Fmask")
 
     builder = (
         PipelineBuilder()

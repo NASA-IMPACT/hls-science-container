@@ -27,8 +27,6 @@ print(granule)
 
 CHECK_SOLAR_ZENITH_LANDSAT = cli_noop("valid")
 
-RUN_FMASK = cli_noop()
-
 FMASK_V5 = make_python_script("""
 import argparse
 from pathlib import Path
@@ -65,7 +63,6 @@ LANDSAT_ADD_FMASK_SDS = cli_touch_last_arg()
 SCRIPTS = {
     "download_landsat": DOWNLOAD_LANDSAT,
     "check_solar_zenith_landsat": CHECK_SOLAR_ZENITH_LANDSAT,
-    "run_Fmask.sh": RUN_FMASK,
     "fmask": FMASK_V5,
     "gdal_translate": GDAL_TRANSLATE,
     "convert_lpgs_to_espa": CONVERT_LPGS_TO_ESPA,
