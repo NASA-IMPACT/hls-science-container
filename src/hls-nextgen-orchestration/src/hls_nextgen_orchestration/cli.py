@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import logging
 import os
+import signal
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -18,6 +20,8 @@ import click
 from hls_nextgen_orchestration.constants import FMASK_VERSION
 
 if TYPE_CHECKING:
+    from types import FrameType
+
     from hls_nextgen_orchestration.pipeline import Pipeline
 
 logger = logging.getLogger(__name__)
@@ -55,6 +59,18 @@ def _cleanup_option[F: Callable[..., Any]](func: F) -> F:
     )(func)
 
 
+def _exit_on_sigterm(signum: int, frame: FrameType | None) -> None:
+    """
+    Exit on SIGTERM instead of dying where we stand.
+
+    AWS Batch sends SIGTERM before it kills a job. The default action ends the
+    process without unwinding, which would skip the working directory cleanup
+    in `Pipeline.run`, leaving the scratch mount to fill up.
+    """
+    logger.warning(f"Received signal {signum}, shutting down")
+    sys.exit(128 + signum)
+
+
 def _run(pipeline: Pipeline, pipeline_name: str) -> None:
     """Run a pipeline under aggregate metrics and exit with its exit code."""
     try:
@@ -73,6 +89,7 @@ def _run(pipeline: Pipeline, pipeline_name: str) -> None:
 def cli() -> None:
     """HLS NextGen orchestration pipelines."""
     logging.basicConfig(level=logging.INFO)
+    signal.signal(signal.SIGTERM, _exit_on_sigterm)
 
 
 @cli.command("sentinel")
