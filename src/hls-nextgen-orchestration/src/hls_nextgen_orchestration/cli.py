@@ -41,6 +41,20 @@ def _fmask_option[F: Callable[..., Any]](func: F) -> F:
     )(func)
 
 
+def _cleanup_option[F: Callable[..., Any]](func: F) -> F:
+    """Shared ``--cleanup-working-dir`` flag (env: CLEANUP_WORKING_DIR)."""
+    return click.option(
+        "--cleanup-working-dir/--no-cleanup-working-dir",
+        envvar="CLEANUP_WORKING_DIR",
+        default=True,
+        show_default=True,
+        help=(
+            "Remove the working directory when the pipeline finishes, however it "
+            "finishes (env: CLEANUP_WORKING_DIR)."
+        ),
+    )(func)
+
+
 def _run(pipeline: Pipeline, pipeline_name: str) -> None:
     """Run a pipeline under aggregate metrics and exit with its exit code."""
     try:
@@ -75,10 +89,12 @@ def cli() -> None:
     help="Comma-separated local granule zip paths (env: LOCAL_GRANULE_ZIPS).",
 )
 @_fmask_option
+@_cleanup_option
 def sentinel(
     granule_list: str | None,
     local_granule_zips: str | None,
     fmask_version: FMASK_VERSION,
+    cleanup_working_dir: bool,
 ) -> None:
     """Run the Sentinel-2 (S30) preprocessing pipeline."""
     from hls_nextgen_orchestration.sentinel.workflow import construct_pipeline
@@ -96,6 +112,7 @@ def sentinel(
             granule_ids=granule_ids,
             local_granule_zips=zips,
             fmask_version=fmask_version,
+            cleanup_working_dir=cleanup_working_dir,
         ),
         "sentinel-ac",
     )
@@ -116,10 +133,12 @@ def sentinel(
     help="Pre-downloaded Landsat granule directory (env: LOCAL_GRANULE_DIR).",
 )
 @_fmask_option
+@_cleanup_option
 def landsat_ac(
     granule: str,
     local_granule_dir: Path | None,
     fmask_version: FMASK_VERSION,
+    cleanup_working_dir: bool,
 ) -> None:
     """Run the Landsat atmospheric correction (L30-AC) pipeline."""
     from hls_nextgen_orchestration.landsat_ac.workflow import construct_pipeline
@@ -129,6 +148,7 @@ def landsat_ac(
             granule_id=granule,
             local_granule_dir=local_granule_dir,
             fmask_version=fmask_version,
+            cleanup_working_dir=cleanup_working_dir,
         ),
         "landsat-ac",
     )
@@ -142,11 +162,18 @@ def landsat_ac(
     type=click.Path(path_type=Path),
     help="Pre-downloaded path/row inputs directory (env: LOCAL_PATHROWS_DIR).",
 )
-def landsat_tile(local_pathrows_dir: Path | None) -> None:
+@_cleanup_option
+def landsat_tile(local_pathrows_dir: Path | None, cleanup_working_dir: bool) -> None:
     """Run the Landsat tiling (L30) pipeline."""
     from hls_nextgen_orchestration.landsat_tile.workflow import construct_pipeline
 
-    _run(construct_pipeline(local_pathrows_dir=local_pathrows_dir), "landsat-tile")
+    _run(
+        construct_pipeline(
+            local_pathrows_dir=local_pathrows_dir,
+            cleanup_working_dir=cleanup_working_dir,
+        ),
+        "landsat-tile",
+    )
 
 
 if __name__ == "__main__":

@@ -24,6 +24,7 @@ from .tasks import (
 def construct_pipeline(
     working_dir: Path | None = None,
     local_pathrows_dir: Path | None = None,
+    cleanup_working_dir: bool = True,
 ) -> Pipeline:
     """Create the Landsat tiling pipeline
 
@@ -34,7 +35,9 @@ def construct_pipeline(
     local_pathrows_dir
         If provided, assume there is a pre-downloaded and atmospherically
         corrected Landsat path/row granules in this directory.
-
+    cleanup_working_dir
+        If True (default), remove the working directory when the pipeline
+        finishes, however it finishes.
 
     Returns
     -------
@@ -62,7 +65,10 @@ def construct_pipeline(
         .add(ProcessGibs("ProcessGibs"))
         .add(ProcessVi("ProcessVi"))
         .add(UploadAll("UploadAll"))
-        .build(metrics=MetricsCollector(pipeline_dims={"workflow": "landsat-tile"}))
+        .build(
+            metrics=MetricsCollector(pipeline_dims={"workflow": "landsat-tile"}),
+            cleanup_working_dir=cleanup_working_dir,
+        )
     )
 
 
