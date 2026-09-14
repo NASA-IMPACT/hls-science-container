@@ -332,7 +332,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-product-formatter-3.5.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
-      - conda: s3://hls-conda-channels/linux-64/lasrc-rs-a5972f3-hb0f4dca_0.conda
+      - conda: s3://hls-conda-channels/linux-64/lasrc-rs-0.1.2-hb0f4dca_0.conda
       - conda_source: fmask[39600d52] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
@@ -1099,7 +1099,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-product-formatter-3.5.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
-      - conda: s3://hls-conda-channels/linux-64/lasrc-rs-a5972f3-hb0f4dca_0.conda
+      - conda: s3://hls-conda-channels/linux-64/lasrc-rs-0.1.2-hb0f4dca_0.conda
       - conda_source: fmask[39600d52] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
@@ -1826,7 +1826,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-product-formatter-3.5.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
-      - conda: s3://hls-conda-channels/linux-64/lasrc-rs-a5972f3-hb0f4dca_0.conda
+      - conda: s3://hls-conda-channels/linux-64/lasrc-rs-0.1.2-hb0f4dca_0.conda
       - conda_source: fmask[39600d52] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
       - pypi: ./src/hls-nextgen-orchestration
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
@@ -13525,10 +13525,10 @@ packages:
   - libxml2
   size: 449268
   timestamp: 1780008456214
-- conda: s3://hls-conda-channels/linux-64/lasrc-rs-a5972f3-hb0f4dca_0.conda
+- conda: s3://hls-conda-channels/linux-64/lasrc-rs-0.1.2-hb0f4dca_0.conda
   subdir: linux-64
-  sha256: 5cfd0b6332053b76933d0de8081cfbad6486c7387e28dbe30d436b4c0ceead74
-  md5: 181555345922afd32e5367932c8cdea0
+  sha256: 9024b45a5047b3aa538dc87187ce3072d850c9920f299c69939b4f318ce09919
+  md5: c664307dbb0fddf762908faf5e3dc5e0
   depends:
   - python 3.13.*
   - numpy >=1.24
@@ -13540,8 +13540,8 @@ packages:
   - python_abi 3.13.* *_cp313
   constrains:
   - __glibc >=2.17
-  size: 453181
-  timestamp: 1784058413281
+  size: 457018
+  timestamp: 1789413356663
 - conda_source: fmask[39600d52] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
   version: 5.0.1
   build: pyh4616a5c_0
