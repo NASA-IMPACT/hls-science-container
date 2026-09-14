@@ -31,7 +31,6 @@ jobs:
               # "new packages were built" check would fail with nothing to build.
               - added|modified: 'packages/**'
             other:
-              - 'packages/**'
               - 'src/**'
               - 'Dockerfile'
               - 'pixi.toml'
