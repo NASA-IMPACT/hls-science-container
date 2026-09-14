@@ -81,7 +81,7 @@ jobs:
             /tmp/conda-output/linux-64/*.conda
           rattler-index s3 "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}"
 
-      - name: Update pixi.lock and open PR
+      - name: Bump pixi.toml pins and open PR
         if: steps.count.outputs.new_packages != '0'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -89,29 +89,46 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
         run: |
-          # Only update packages that are already dependencies in pixi.toml. A
-          # package can be published here before it's wired into the manifest
-          # (e.g. lasrc-rs), and `pixi update <non-dependency>` errors out.
-          to_update=""
-          for pkg in ${{ steps.count.outputs.packages }}; do
-            grep -qE "^\s*${pkg} = " pixi.toml && to_update="$to_update $pkg"
+          set -euo pipefail
+          # Dependencies from the S3 channel are exact-pinned in pixi.toml
+          # (`name = "=version"`), so `pixi update` alone never picks up a new
+          # version. Rewrite the pin to the just-published version instead.
+          # Packages not exact-pinned (e.g. published before being wired into
+          # the manifest, or path dependencies) are left alone.
+          bumped=""
+          for f in /tmp/conda-output/linux-64/*.conda; do
+            # <name>-<version>-<build>.conda; names may contain dashes
+            base=$(basename "$f" .conda)
+            rest=${base%-*}
+            version=${rest##*-}
+            name=${rest%-*}
+            if grep -qE "^${name} = \"=[^\"]*\"" pixi.toml; then
+              sed -i -E "s/^(${name} = \")=[^\"]*\"/\1=${version}\"/" pixi.toml
+              bumped="$bumped ${name}=${version}"
+            else
+              echo "${name} is not exact-pinned in pixi.toml; skipping"
+            fi
           done
-          if [ -z "$to_update" ]; then
-            echo "No published packages are dependencies yet; skipping lock update"
+          if git diff --quiet pixi.toml; then
+            echo "No pins changed; skipping PR"
             exit 0
           fi
-          echo "Updating pixi.lock for:$to_update"
-          pixi update $to_update
-          git diff --quiet pixi.lock && { echo "pixi.lock unchanged, nothing to commit"; exit 0; }
-          branch="chore/update-pixi-lock-$(date +%Y%m%d-%H%M%S)"
+          echo "Bumped pins:$bumped"
+          pixi lock
+          branch="chore/bump-conda-pins-$(date +%Y%m%d-%H%M%S)"
+          title="chore: bump conda package pins after publish"
+          body=$(printf 'Automated pin bump following `publish_conda_packages` workflow run.\n\n')
+          for b in $bumped; do
+            body=$(printf '%s\n- `%s`' "$body" "$b")
+          done
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
-          git add pixi.lock
-          git commit -m "chore: update pixi.lock after conda package publish"
+          git add pixi.toml pixi.lock
+          git commit -m "$title" -m "Bumped:$bumped"
           git push origin "$branch"
           gh pr create \
-            --title "chore: update pixi.lock after conda package publish" \
-            --body "Automated lock file update following \`publish_conda_packages\` workflow run." \
+            --title "$title" \
+            --body "$body" \
             --base main \
             --head "$branch"
