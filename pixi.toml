@@ -4,7 +4,7 @@ version = "0.1.0"
 platforms = ["linux-64", "osx-arm64"]
 channels = ["conda-forge", "s3://hls-conda-channels"]
 preview = ["pixi-build"]
-conda-pypi-map = {}
+conda-pypi-map = { conda-forge = { mapping-mode = "replace" } }
 
 [target.linux-64.dependencies]
 # C packages can only be compiled on Linux x86_64
