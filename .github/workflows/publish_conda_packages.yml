@@ -117,9 +117,9 @@ jobs:
           pixi lock
           branch="chore/bump-conda-pins-$(date +%Y%m%d-%H%M%S)"
           title="chore: bump conda package pins after publish"
-          body=$(printf 'Automated pin bump following `publish_conda_packages` workflow run.\n\n')
+          body="Automated pin bump following \`publish_conda_packages\` workflow run."$'\n'
           for b in $bumped; do
-            body=$(printf '%s\n- `%s`' "$body" "$b")
+            body="$body"$'\n'"- \`$b\`"
           done
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
