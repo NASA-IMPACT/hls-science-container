@@ -114,6 +114,10 @@ jobs:
             exit 0
           fi
           echo "Bumped pins:$bumped"
+          # rattler-build shares pixi's repodata cache and fetched the channel
+          # before the upload; the S3 index is served with max-age=300, so the
+          # cached copy is still "fresh" and would hide the new version.
+          pixi clean cache --repodata --yes
           pixi lock
           branch="chore/bump-conda-pins-$(date +%Y%m%d-%H%M%S)"
           title="chore: bump conda package pins after publish"
