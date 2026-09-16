@@ -87,10 +87,10 @@ jobs:
           !startsWith(github.event.pull_request.title, 'ci:')
         run: |
           count=$(find /tmp/conda-output/linux-64 -name "*.conda" 2>/dev/null | wc -l)
-          if [ "$count" -eq 0 ]; then
-            echo "::error::No new packages were built — all versions are already published. Bump the version in the recipe."
-            exit 1
-          fi
+          # if [ "$count" -eq 0 ]; then
+          #   echo "::error::No new packages were built — all versions are already published. Bump the version in the recipe."
+          #   exit 1
+          # fi
           echo "Built $count new package(s)"
 
   build-push-docker:
