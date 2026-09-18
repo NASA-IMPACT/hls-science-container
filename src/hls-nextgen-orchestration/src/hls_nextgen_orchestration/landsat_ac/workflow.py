@@ -96,7 +96,8 @@ def construct_pipeline(
 
     return builder.build(
         metrics=MetricsCollector(
-            pipeline_dims={"workflow": "landsat-ac", "input_granule_id": granule_id},
+            pipeline_dims={"workflow": "landsat-ac"},
+            pipeline_props={"input_granule_id": granule_id},
             sink=metric_sink,
         ),
         cleanup_working_dir=cleanup_working_dir,

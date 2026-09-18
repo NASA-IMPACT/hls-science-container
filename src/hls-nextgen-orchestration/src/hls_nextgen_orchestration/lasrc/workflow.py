@@ -91,8 +91,8 @@ def construct_pipeline(
             pipeline_dims={
                 "workflow": "lasrc-workflow",
                 "lasrc_version": lasrc_version,
-                "input_granule_id": granule_id,
             },
+            pipeline_props={"input_granule_id": granule_id},
             sink=metric_sink,
         )
     )

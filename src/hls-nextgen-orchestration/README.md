@@ -121,7 +121,8 @@ billed custom metric.
 
 **Dimensions vs. properties** — only `task_class`, `task_name`, and the experiment/pipeline dimensions are published as
 CloudWatch dimensions. Unbounded identifiers (`job_id`, `git_sha`, `input_granule_id`) are emitted as EMF properties:
-still queryable in Logs Insights, but they generate no metrics.
+still queryable in Logs Insights, but they generate no metrics. Workflows attach per-run values via
+`MetricsCollector(pipeline_props=...)`; never put them in `pipeline_dims`.
 
 ```
 fields @timestamp, task_name, runtime_seconds, peak_memory_mb

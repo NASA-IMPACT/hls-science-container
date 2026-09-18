@@ -252,6 +252,10 @@ class MetricsCollector:
     Experiment dimensions are sourced from any envvar prefixed with
     ``HLS_EXPERIMENT_`` (e.g. ``HLS_EXPERIMENT_FMASK_VERSION=v5`` adds
     dimension ``fmask_version=v5``).
+
+    ``pipeline_dims`` become CloudWatch dimensions and must be low-cardinality.
+    Per-run values such as the input granule id belong in ``pipeline_props``,
+    which are logged alongside the metrics but not used as dimensions.
     """
 
     log_group: str | None = field(
@@ -265,6 +269,7 @@ class MetricsCollector:
         },
     )
     pipeline_dims: dict[str, str] = field(default_factory=dict)
+    pipeline_props: dict[str, str] = field(default_factory=dict)
     client: CloudWatchLogsClient | None = None
     sink: MetricSink | None = None
     enabled: bool = field(init=False)
@@ -328,7 +333,7 @@ class MetricsCollector:
             **self.experiment_dims,
         }
 
-        props: dict[str, str] = {"job_id": self._job_id}
+        props: dict[str, str] = {**self.pipeline_props, "job_id": self._job_id}
         if self._git_sha:
             props["git_sha"] = self._git_sha
         if granule_id := getattr(cls, "granule_id", None):
