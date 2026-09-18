@@ -90,31 +90,75 @@ def test_resolve_modis_lads_file_for_date(aux_dir: Path) -> None:
     assert paths["wv_oz_hdf"] == aux_dir / "LADS" / "2026" / "MOD04_2026073_global.hdf"
 
 
-def test_multiple_viirs_lads_files_picks_latest_processed(
-    aux_dir: Path, caplog: pytest.LogCaptureFixture
-) -> None:
+def _resolve_viirs_2025_201(aux_dir: Path, names: list[str]) -> Path:
     lads = aux_dir / "LADS" / "2025"
     lads.mkdir()
-    older = "VNP04ANC.A2025201.002.2025206043958.h5"
-    newer = "VJ104ANC.A2025201.002.2025206091843.h5"
-    (lads / older).touch()
-    (lads / newer).touch()
-
-    with caplog.at_level("WARNING"):
-        paths = resolve_lasrc_aux_paths(
-            is_sentinel=False, acquisition=dt.datetime(2025, 7, 20), aux_dir=aux_dir
-        )
-
-    assert paths["wv_oz_hdf"] == lads / newer
-    assert newer in caplog.text
-    assert older in caplog.text
+    for name in names:
+        (lads / name).touch()
+    paths = resolve_lasrc_aux_paths(
+        is_sentinel=False, acquisition=dt.datetime(2025, 7, 20), aux_dir=aux_dir
+    )
+    return paths["wv_oz_hdf"]
 
 
-def test_multiple_viirs_lads_files_unparseable_raises(aux_dir: Path) -> None:
-    # The fixture's VJ104ANC.A2026073.001.h5 has no processing timestamp.
-    (aux_dir / "LADS" / "2026" / "VNP04ANC.A2026073.002.2026078043958.h5").touch()
+@pytest.mark.parametrize(
+    ("names", "expected"),
+    [
+        # JPSS-1 preferred over NPP even when NPP was processed later
+        (
+            [
+                "VJ104ANC.A2025201.002.2025206043958.h5",
+                "VNP04ANC.A2025201.002.2025206091843.h5",
+            ],
+            "VJ104ANC.A2025201.002.2025206043958.h5",
+        ),
+        # JPSS-2 preferred over JPSS-1 and NPP
+        (
+            [
+                "VJ104ANC.A2025201.002.2025206091843.h5",
+                "VJ204ANC.A2025201.002.2025206043958.h5",
+                "VNP04ANC.A2025201.002.2025206091843.h5",
+            ],
+            "VJ204ANC.A2025201.002.2025206043958.h5",
+        ),
+        # Same platform: latest processing time wins
+        (
+            [
+                "VJ104ANC.A2025201.002.2025206091843.h5",
+                "VJ104ANC.A2025201.002.2025210000000.h5",
+                "VNP04ANC.A2025201.002.2025211000000.h5",
+            ],
+            "VJ104ANC.A2025201.002.2025210000000.h5",
+        ),
+    ],
+)
+def test_multiple_viirs_lads_files_picks_by_priority(
+    aux_dir: Path,
+    caplog: pytest.LogCaptureFixture,
+    names: list[str],
+    expected: str,
+) -> None:
+    with caplog.at_level("INFO"):
+        chosen = _resolve_viirs_2025_201(aux_dir, names)
+    assert chosen.name == expected
+    assert f"Using {expected}" in caplog.text
+
+
+def test_multiple_viirs_lads_files_same_platform_unparseable_raises(
+    aux_dir: Path,
+) -> None:
+    names = ["VJ104ANC.A2025201.002.h5", "VJ104ANC.A2025201.002.2025206091843.h5"]
     with pytest.raises(ValueError, match="Ambiguous LaSRC aux"):
-        resolve_lasrc_aux_paths(is_sentinel=False, acquisition=ACQ, aux_dir=aux_dir)
+        _resolve_viirs_2025_201(aux_dir, names)
+
+
+def test_multiple_viirs_lads_files_unknown_product_raises(aux_dir: Path) -> None:
+    names = [
+        "VJ104ANC.A2025201.002.2025206091843.h5",
+        "VXX04ANC.A2025201.002.2025206091843.h5",
+    ]
+    with pytest.raises(ValueError, match="Ambiguous LaSRC aux"):
+        _resolve_viirs_2025_201(aux_dir, names)
 
 
 def test_missing_lads_file_raises(aux_dir: Path) -> None:

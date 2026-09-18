@@ -33,6 +33,8 @@ logger = logging.getLogger(__name__)
 
 _LADS_AUX_SOURCES = ("VIIRS", "MODIS")
 _VIIRS_PROCESSED_AT_FORMAT = "%Y%j%H%M%S"
+# JPSS-2, JPSS-1 (NOAA-20), then Suomi NPP
+_VIIRS_PRODUCT_PRIORITY = ("VJ204ANC", "VJ104ANC", "VNP04ANC")
 
 
 def _require(path: Path, description: str) -> Path:
@@ -92,28 +94,48 @@ def _viirs_processed_at(path: Path) -> dt.datetime | None:
         return None
 
 
-def _latest_processed_viirs(
+def _pick_viirs_file(
     directory: Path, pattern: str, description: str, matches: list[Path]
 ) -> Path:
-    """Pick the most recently processed VIIRS LADS file among ``matches``.
+    """Pick one VIIRS LADS file among several matching the same day.
 
-    Raises the usual ambiguity error if any candidate lacks a parseable
-    processing time, since there is then no safe way to order them.
+    Follows the upstream ``updatelads.py`` priority of JPSS-2, then JPSS-1,
+    then NPP. That script does not delete an NPP file when a JPSS file for
+    the same day arrives later, so both can coexist in ``LADS/<year>/``.
+    Several files from the highest-priority platform are resolved by
+    picking the one with the latest processing time.
+
+    Raises the usual ambiguity error for unrecognized products, or for
+    same-platform files whose processing time cannot be parsed.
     """
-    processed = {m: _viirs_processed_at(m) for m in matches}
-    if any(ts is None for ts in processed.values()):
+    by_product: dict[str, list[Path]] = {}
+    for match in matches:
+        by_product.setdefault(match.name.split(".")[0], []).append(match)
+    if not set(by_product) <= set(_VIIRS_PRODUCT_PRIORITY):
         raise _ambiguous_error(directory, pattern, description, matches)
 
-    chosen = max(matches, key=lambda m: (processed[m], m.name))
-    logger.warning(
-        "Multiple LaSRC aux %s files match '%s' in %s: %s. "
-        "Using most recently processed file %s (processed at %s).",
+    product = next(p for p in _VIIRS_PRODUCT_PRIORITY if p in by_product)
+    candidates = by_product[product]
+    if len(candidates) == 1:
+        chosen = candidates[0]
+        reason = f"highest priority product {product}"
+    else:
+        processed = {c: _viirs_processed_at(c) for c in candidates}
+        if None in processed.values():
+            raise _ambiguous_error(directory, pattern, description, candidates)
+        chosen = max(candidates, key=lambda c: (processed[c], c.name))
+        reason = (
+            f"most recently processed {product} file (processed at {processed[chosen]})"
+        )
+
+    logger.info(
+        "Multiple LaSRC aux %s files match '%s' in %s: %s. Using %s, the %s.",
         description,
         pattern,
         directory,
         [m.name for m in matches],
         chosen.name,
-        processed[chosen],
+        reason,
     )
     return chosen
 
@@ -188,9 +210,7 @@ def _resolve_lads_file(
     VIIRS files are named like ``V*04ANC.A<year><doy>.*.h5``; MODIS files like
     ``M*<year><doy>*``. Both live under ``LADS/<year>/``.
 
-    If several VIIRS files match (e.g. both SNPP ``VNP04ANC`` and NOAA-20
-    ``VJ104ANC``, or reprocessed versions), the most recently processed one
-    is used.
+    If several VIIRS files match, see :func:`_pick_viirs_file`.
     """
     year = acquisition.strftime("%Y")
     doy = acquisition.strftime("%j")
@@ -209,4 +229,4 @@ def _resolve_lads_file(
     matches = _glob_any(lads_year_dir, pattern, description)
     if len(matches) == 1:
         return matches[0]
-    return _latest_processed_viirs(lads_year_dir, pattern, description, matches)
+    return _pick_viirs_file(lads_year_dir, pattern, description, matches)
