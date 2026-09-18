@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import datetime as dt
+import glob
 from pathlib import Path
 
 import pytest
 
+from hls_nextgen_orchestration.common import lasrc_aux
 from hls_nextgen_orchestration.common.lasrc_aux import resolve_lasrc_aux_paths
 
 
@@ -88,6 +90,42 @@ def test_resolve_modis_lads_file_for_date(aux_dir: Path) -> None:
         is_sentinel=False, acquisition=ACQ, aux_dir=aux_dir, aux_source="MODIS"
     )
     assert paths["wv_oz_hdf"] == aux_dir / "LADS" / "2026" / "MOD04_2026073_global.hdf"
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_multiple_viirs_lads_files_uses_glob_order(
+    aux_dir: Path,
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+    reverse: bool,
+) -> None:
+    lads = aux_dir / "LADS" / "2025"
+    lads.mkdir()
+    names = [
+        "VJ104ANC.A2025201.002.2025206091843.h5",
+        "VNP04ANC.A2025201.002.2025206043958.h5",
+    ]
+    for name in names:
+        (lads / name).touch()
+
+    # Simulate filesystem listing order, which glob.glob does not sort.
+    listed = [str(lads / n) for n in (reversed(names) if reverse else names)]
+    real_glob = glob.glob
+
+    def fake_glob(pattern: str) -> list[str]:
+        if pattern.startswith(str(lads)):
+            return list(listed)
+        return real_glob(pattern)
+
+    monkeypatch.setattr(lasrc_aux.glob, "glob", fake_glob)  # type: ignore[attr-defined]
+
+    with caplog.at_level("WARNING"):
+        paths = resolve_lasrc_aux_paths(
+            is_sentinel=False, acquisition=dt.datetime(2025, 7, 20), aux_dir=aux_dir
+        )
+
+    assert paths["wv_oz_hdf"] == Path(listed[0])
+    assert f"Using {Path(listed[0]).name}" in caplog.text
 
 
 def test_missing_lads_file_raises(aux_dir: Path) -> None:
