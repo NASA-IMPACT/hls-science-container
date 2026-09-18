@@ -25,6 +25,7 @@ Landsat resolves against ``LDCMLUT/`` and Sentinel-2 against ``MSILUT/``.
 from __future__ import annotations
 
 import datetime as dt
+import glob
 import logging
 import os
 from pathlib import Path
@@ -32,9 +33,6 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 _LADS_AUX_SOURCES = ("VIIRS", "MODIS")
-_VIIRS_PROCESSED_AT_FORMAT = "%Y%j%H%M%S"
-# JPSS-2, JPSS-1 (NOAA-20), then Suomi NPP
-_VIIRS_PRODUCT_PRIORITY = ("VJ204ANC", "VJ104ANC", "VNP04ANC")
 
 
 def _require(path: Path, description: str) -> Path:
@@ -48,8 +46,11 @@ def _require(path: Path, description: str) -> Path:
 
 
 def _glob_any(directory: Path, pattern: str, description: str) -> list[Path]:
-    """Return all files in ``directory`` matching ``pattern``, raising if none."""
-    matches = sorted(directory.glob(pattern))
+    """Return all files in ``directory`` matching ``pattern``, raising if none.
+
+    Matches are in filesystem listing order (``glob.glob``), not sorted.
+    """
+    matches = [Path(m) for m in glob.glob(str(directory / pattern))]
     if not matches:
         raise FileNotFoundError(
             f"Could not find LaSRC aux {description} matching '{pattern}' "
@@ -58,86 +59,18 @@ def _glob_any(directory: Path, pattern: str, description: str) -> list[Path]:
     return matches
 
 
-def _ambiguous_error(
-    directory: Path, pattern: str, description: str, matches: list[Path]
-) -> ValueError:
-    return ValueError(
-        f"Ambiguous LaSRC aux {description}: multiple files match "
-        f"'{pattern}' in {directory}: {[m.name for m in matches]}"
-    )
-
-
 def _glob_one(directory: Path, pattern: str, description: str) -> Path:
     """Return the single file in ``directory`` matching ``pattern``.
 
     Raises if zero or more than one match (ambiguous aux data).
     """
-    matches = _glob_any(directory, pattern, description)
+    matches = sorted(_glob_any(directory, pattern, description))
     if len(matches) > 1:
-        raise _ambiguous_error(directory, pattern, description, matches)
-    return matches[0]
-
-
-def _viirs_processed_at(path: Path) -> dt.datetime | None:
-    """Parse the processing time from a VIIRS LADS file name.
-
-    Names look like ``<PRODUCT>.A<YYYYDDD>.<VERSION>.<YYYYDDDHHMMSS>.h5``
-    (e.g. ``VNP04ANC.A2025201.002.2025206043958.h5``). Returns None if the
-    name does not follow that layout.
-    """
-    parts = path.name.split(".")
-    if len(parts) != 5:
-        return None
-    try:
-        return dt.datetime.strptime(parts[3], _VIIRS_PROCESSED_AT_FORMAT)
-    except ValueError:
-        return None
-
-
-def _pick_viirs_file(
-    directory: Path, pattern: str, description: str, matches: list[Path]
-) -> Path:
-    """Pick one VIIRS LADS file among several matching the same day.
-
-    Follows the upstream ``updatelads.py`` priority of JPSS-2, then JPSS-1,
-    then NPP. That script does not delete an NPP file when a JPSS file for
-    the same day arrives later, so both can coexist in ``LADS/<year>/``.
-    Several files from the highest-priority platform are resolved by
-    picking the one with the latest processing time.
-
-    Raises the usual ambiguity error for unrecognized products, or for
-    same-platform files whose processing time cannot be parsed.
-    """
-    by_product: dict[str, list[Path]] = {}
-    for match in matches:
-        by_product.setdefault(match.name.split(".")[0], []).append(match)
-    if not set(by_product) <= set(_VIIRS_PRODUCT_PRIORITY):
-        raise _ambiguous_error(directory, pattern, description, matches)
-
-    product = next(p for p in _VIIRS_PRODUCT_PRIORITY if p in by_product)
-    candidates = by_product[product]
-    if len(candidates) == 1:
-        chosen = candidates[0]
-        reason = f"highest priority product {product}"
-    else:
-        processed = {c: _viirs_processed_at(c) for c in candidates}
-        if None in processed.values():
-            raise _ambiguous_error(directory, pattern, description, candidates)
-        chosen = max(candidates, key=lambda c: (processed[c], c.name))
-        reason = (
-            f"most recently processed {product} file (processed at {processed[chosen]})"
+        raise ValueError(
+            f"Ambiguous LaSRC aux {description}: multiple files match "
+            f"'{pattern}' in {directory}: {[m.name for m in matches]}"
         )
-
-    logger.info(
-        "Multiple LaSRC aux %s files match '%s' in %s: %s. Using %s, the %s.",
-        description,
-        pattern,
-        directory,
-        [m.name for m in matches],
-        chosen.name,
-        reason,
-    )
-    return chosen
+    return matches[0]
 
 
 def resolve_lasrc_aux_paths(
@@ -210,23 +143,42 @@ def _resolve_lads_file(
     VIIRS files are named like ``V*04ANC.A<year><doy>.*.h5``; MODIS files like
     ``M*<year><doy>*``. Both live under ``LADS/<year>/``.
 
-    If several VIIRS files match, see :func:`_pick_viirs_file`.
+    If several VIIRS files match, the first one listed by the filesystem is
+    used, matching the upstream C wrappers (see :func:`_first_viirs_file`).
     """
     year = acquisition.strftime("%Y")
     doy = acquisition.strftime("%j")
     lads_year_dir = _require(aux_dir / "LADS" / year, f"LADS directory for {year}")
+    description = f"{aux_source} daily water-vapor/ozone (DOY {doy})"
 
     if aux_source == "VIIRS":
-        # e.g. VJ104ANC.A2026073.001.h5 / VNP04ANC.A2026073...
-        pattern = f"V*04ANC.A{year}{doy}.*"
-    else:  # MODIS, e.g. MOD04... / MYD04...
-        pattern = f"M*{year}{doy}*"
+        # e.g. VJ104ANC.A2026073.002.2026078091843.h5 / VNP04ANC.A2026073...
+        pattern = f"V*04ANC.A{year}{doy}.*.h5"
+        return _first_viirs_file(lads_year_dir, pattern, description)
 
-    description = f"{aux_source} daily water-vapor/ozone (DOY {doy})"
-    if aux_source != "VIIRS":
-        return _glob_one(lads_year_dir, pattern, description)
+    # MODIS, e.g. MOD04... / MYD04...
+    return _glob_one(lads_year_dir, f"M*{year}{doy}*", description)
 
-    matches = _glob_any(lads_year_dir, pattern, description)
-    if len(matches) == 1:
-        return matches[0]
-    return _pick_viirs_file(lads_year_dir, pattern, description, matches)
+
+def _first_viirs_file(directory: Path, pattern: str, description: str) -> Path:
+    """Return the first VIIRS LADS file matching ``pattern``, like upstream.
+
+    This is not great! We should ideally use the latest processed version of
+    the preferred product when we find more than one source.
+
+    For now we keep to the same logic as "do_lasrc_{sentinel,landsat}.py" so
+    we can verify the Rust port.
+    """
+    matches = _glob_any(directory, pattern, description)
+    chosen = matches[0]
+    if len(matches) > 1:
+        logger.warning(
+            "Multiple LaSRC aux %s files match '%s' in %s: %s. Using %s, the "
+            "first in filesystem order, to match the upstream C LaSRC scripts.",
+            description,
+            pattern,
+            directory,
+            [m.name for m in matches],
+            chosen.name,
+        )
+    return chosen
