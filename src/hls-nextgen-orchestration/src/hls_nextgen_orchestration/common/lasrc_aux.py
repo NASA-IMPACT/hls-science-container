@@ -25,10 +25,14 @@ Landsat resolves against ``LDCMLUT/`` and Sentinel-2 against ``MSILUT/``.
 from __future__ import annotations
 
 import datetime as dt
+import logging
 import os
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
 _LADS_AUX_SOURCES = ("VIIRS", "MODIS")
+_VIIRS_PROCESSED_AT_FORMAT = "%Y%j%H%M%S"
 
 
 def _require(path: Path, description: str) -> Path:
@@ -41,23 +45,77 @@ def _require(path: Path, description: str) -> Path:
     return path
 
 
-def _glob_one(directory: Path, pattern: str, description: str) -> Path:
-    """Return the single file in ``directory`` matching ``pattern``.
-
-    Raises if zero or more than one match (ambiguous aux data).
-    """
+def _glob_any(directory: Path, pattern: str, description: str) -> list[Path]:
+    """Return all files in ``directory`` matching ``pattern``, raising if none."""
     matches = sorted(directory.glob(pattern))
     if not matches:
         raise FileNotFoundError(
             f"Could not find LaSRC aux {description} matching '{pattern}' "
             f"in {directory}. Check LASRC_AUX_DIR and its layout."
         )
+    return matches
+
+
+def _ambiguous_error(
+    directory: Path, pattern: str, description: str, matches: list[Path]
+) -> ValueError:
+    return ValueError(
+        f"Ambiguous LaSRC aux {description}: multiple files match "
+        f"'{pattern}' in {directory}: {[m.name for m in matches]}"
+    )
+
+
+def _glob_one(directory: Path, pattern: str, description: str) -> Path:
+    """Return the single file in ``directory`` matching ``pattern``.
+
+    Raises if zero or more than one match (ambiguous aux data).
+    """
+    matches = _glob_any(directory, pattern, description)
     if len(matches) > 1:
-        raise ValueError(
-            f"Ambiguous LaSRC aux {description}: multiple files match "
-            f"'{pattern}' in {directory}: {[m.name for m in matches]}"
-        )
+        raise _ambiguous_error(directory, pattern, description, matches)
     return matches[0]
+
+
+def _viirs_processed_at(path: Path) -> dt.datetime | None:
+    """Parse the processing time from a VIIRS LADS file name.
+
+    Names look like ``<PRODUCT>.A<YYYYDDD>.<VERSION>.<YYYYDDDHHMMSS>.h5``
+    (e.g. ``VNP04ANC.A2025201.002.2025206043958.h5``). Returns None if the
+    name does not follow that layout.
+    """
+    parts = path.name.split(".")
+    if len(parts) != 5:
+        return None
+    try:
+        return dt.datetime.strptime(parts[3], _VIIRS_PROCESSED_AT_FORMAT)
+    except ValueError:
+        return None
+
+
+def _latest_processed_viirs(
+    directory: Path, pattern: str, description: str, matches: list[Path]
+) -> Path:
+    """Pick the most recently processed VIIRS LADS file among ``matches``.
+
+    Raises the usual ambiguity error if any candidate lacks a parseable
+    processing time, since there is then no safe way to order them.
+    """
+    processed = {m: _viirs_processed_at(m) for m in matches}
+    if any(ts is None for ts in processed.values()):
+        raise _ambiguous_error(directory, pattern, description, matches)
+
+    chosen = max(matches, key=lambda m: (processed[m], m.name))
+    logger.warning(
+        "Multiple LaSRC aux %s files match '%s' in %s: %s. "
+        "Using most recently processed file %s (processed at %s).",
+        description,
+        pattern,
+        directory,
+        [m.name for m in matches],
+        chosen.name,
+        processed[chosen],
+    )
+    return chosen
 
 
 def resolve_lasrc_aux_paths(
@@ -129,6 +187,10 @@ def _resolve_lads_file(
 
     VIIRS files are named like ``V*04ANC.A<year><doy>.*.h5``; MODIS files like
     ``M*<year><doy>*``. Both live under ``LADS/<year>/``.
+
+    If several VIIRS files match (e.g. both SNPP ``VNP04ANC`` and NOAA-20
+    ``VJ104ANC``, or reprocessed versions), the most recently processed one
+    is used.
     """
     year = acquisition.strftime("%Y")
     doy = acquisition.strftime("%j")
@@ -140,6 +202,11 @@ def _resolve_lads_file(
     else:  # MODIS, e.g. MOD04... / MYD04...
         pattern = f"M*{year}{doy}*"
 
-    return _glob_one(
-        lads_year_dir, pattern, f"{aux_source} daily water-vapor/ozone (DOY {doy})"
-    )
+    description = f"{aux_source} daily water-vapor/ozone (DOY {doy})"
+    if aux_source != "VIIRS":
+        return _glob_one(lads_year_dir, pattern, description)
+
+    matches = _glob_any(lads_year_dir, pattern, description)
+    if len(matches) == 1:
+        return matches[0]
+    return _latest_processed_viirs(lads_year_dir, pattern, description, matches)
