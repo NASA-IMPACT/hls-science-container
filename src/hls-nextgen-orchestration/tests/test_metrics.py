@@ -260,6 +260,31 @@ def test_emit_keeps_unbounded_keys_out_of_dimensions(
         assert key in record, f"{key} must remain queryable in Logs Insights"
 
 
+def test_emit_keeps_pipeline_props_out_of_dimensions(
+    metrics_env: CloudWatchLogsClient,
+    log_group: str,
+    log_stream: str,
+) -> None:
+    node = simple_task(requires=(), provides=(A,), instrument=True)("T1")
+    collector = MetricsCollector(
+        client=metrics_env,
+        pipeline_dims={"workflow": "wf"},
+        pipeline_props={"input_granule_id": "G1"},
+    )
+
+    with collector.collect(node):
+        pass
+
+    events = metrics_env.get_log_events(
+        logGroupName=log_group, logStreamName=log_stream
+    )
+    record = json.loads(events["events"][0]["message"])
+    dimensions = record["_aws"]["CloudWatchMetrics"][0]["Dimensions"][0]
+
+    assert set(dimensions) == {"task_class", "task_name", "workflow"}
+    assert record["input_granule_id"] == "G1"
+
+
 def test_emit_omits_git_sha_when_unset(
     metrics_env: CloudWatchLogsClient,
     monkeypatch: pytest.MonkeyPatch,
