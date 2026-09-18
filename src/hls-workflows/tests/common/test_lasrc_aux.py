@@ -117,7 +117,7 @@ def test_multiple_viirs_lads_files_uses_glob_order(
             return list(listed)
         return real_glob(pattern)
 
-    monkeypatch.setattr(lasrc_aux.glob, "glob", fake_glob)
+    monkeypatch.setattr(lasrc_aux.glob, "glob", fake_glob)  # type: ignore[attr-defined]
 
     with caplog.at_level("WARNING"):
         paths = resolve_lasrc_aux_paths(
