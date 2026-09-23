@@ -10,7 +10,7 @@ import os
 import re
 import shutil
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import ClassVar
 
@@ -57,11 +57,22 @@ class DownloadSentinelGranule(MappedTask):
     Ports: aws s3 cp ... && unzip ...
     """
 
+    #: Key prefix within the input bucket holding the granule ZIPs. Empty means
+    #: the ZIPs sit at the root of the bucket, which is the operational layout.
+    input_prefix: str = field(default_factory=lambda: os.getenv("INPUT_PREFIX", ""))
+
     requires = (CONFIG,)
     provides_factory = lambda granule_id: (safe_dir_asset(granule_id),)
 
     def __post_init__(self) -> None:
         validate_command("unzip")
+
+    @property
+    def granule_key(self) -> str:
+        """S3 key (no bucket) of this granule's ZIP."""
+        prefix = self.input_prefix.strip("/")
+        name = f"{self.granule_id}.zip"
+        return f"{prefix}/{name}" if prefix else name
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         config: EnvConfig = bundle[CONFIG]
@@ -70,9 +81,9 @@ class DownloadSentinelGranule(MappedTask):
         zip_path = granule_dir / f"{self.granule_id}.zip"
         zip_path.parent.mkdir(exist_ok=True, parents=True)
 
-        logger.info(f"Downloading s3://{config.input_bucket}/{self.granule_id}.zip")
+        logger.info(f"Downloading s3://{config.input_bucket}/{self.granule_key}")
         s3 = boto3.client("s3")
-        s3.download_file(config.input_bucket, f"{self.granule_id}.zip", str(zip_path))
+        s3.download_file(config.input_bucket, self.granule_key, str(zip_path))
 
         logger.info(f"Unzipping {zip_path}")
         run_command(["unzip", "-q", str(zip_path), "-d", str(granule_dir)], check=True)

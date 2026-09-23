@@ -70,6 +70,36 @@ def test_DownloadSentinelGranule(
     assert outputs[safe_dir].exists()
 
 
+@pytest.mark.parametrize("prefix", ["inputs/lasrc-rs/S30", "/inputs/lasrc-rs/S30/"])
+def test_DownloadSentinelGranule_input_prefix(
+    s3_client: S3Client,
+    sentinel_config: EnvConfig,
+    tmp_path: Path,
+    populate_sentinel_safe: Callable[[Path, Sentinel2Granule], Path],
+    prefix: str,
+) -> None:
+    """Tests downloading a granule stored under a key prefix."""
+    granule_id = "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
+    granule = Sentinel2Granule.from_str(granule_id)
+    safe_zip = populate_sentinel_safe(tmp_path, granule)
+
+    s3_client.create_bucket(Bucket=sentinel_config.input_bucket)
+    s3_client.upload_file(
+        Filename=str(safe_zip),
+        Bucket=sentinel_config.input_bucket,
+        Key=f"inputs/lasrc-rs/S30/{granule_id}.zip",
+    )
+
+    task = DownloadSentinelGranule.map(granule_id)(name="download", input_prefix=prefix)
+    assert task.granule_key == f"inputs/lasrc-rs/S30/{granule_id}.zip"
+
+    outputs = task.run({CONFIG: sentinel_config})
+
+    safe_dir = safe_dir_asset(granule_id)
+    assert safe_dir in outputs
+    assert outputs[safe_dir].exists()
+
+
 def test_GetGranuleDir(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
     """Tests finding the internal GRANULE directory."""
     # Setup structure
