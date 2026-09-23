@@ -110,8 +110,9 @@ class UploadLaSRCDebug(MappedTask):
     has none of the downstream products the full ``UploadAll`` requires.
 
     Uploads only the ``*_sr_band*`` / ``*_sr_aerosol*`` products, skipping inputs and
-    ESPA intermediates. Depends on the LaSRC aerosol QA output purely to order after
-    LaSRC.
+    ESPA intermediates. The products are flattened into a single
+    ``<prefix>/<granule_id>/`` directory rather than mirroring the local tree.
+    Depends on the LaSRC aerosol QA output purely to order after LaSRC.
 
     No-ops (with a warning) when ``DEBUG_BUCKET`` is unset.
     """
@@ -132,9 +133,9 @@ class UploadLaSRCDebug(MappedTask):
         base = S3Path(config.debug_bucket, f"{self.prefix}/{self.granule_id}")
         logger.info(f"Uploading LaSRC debug files to {base}")
 
-        for f in config.working_dir.rglob("*"):
+        for f in (config.working_dir / self.granule_id).rglob("*"):
             if f.is_file() and is_sr_product(f.name):
-                dest = base / str(f.relative_to(config.working_dir))
+                dest = base / f.name
                 s3.upload_file(str(f), dest.bucket, dest.key)
 
         return {UPLOAD_COMPLETE: True}
