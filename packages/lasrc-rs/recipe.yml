@@ -1,9 +1,9 @@
 context:
-  version: "0.1.3"
+  version: "0.1.3.6845c47"
   # Pinned to the current HEAD of the espa-surface-reflectance `refactor`
   # branch. The Rust LaSRC is not yet released/tagged; bump this rev as the
   # branch advances.
-  rev: "2454185fb2147e21aa86b757220cf4b2411134d6"
+  rev: "6845c471a9ab631a62ecf96741528754aa861510"
 
 package:
   name: lasrc-rs

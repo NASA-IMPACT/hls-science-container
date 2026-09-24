@@ -92,6 +92,24 @@ def test_download_granule(
     assert outputs[MTL_FILE].exists()
 
 
+def test_download_granule_key_prefix_defaults_to_usgs_layout(
+    mock_config: EnvConfig, mock_binaries: Path
+) -> None:
+    task = DownloadGranule("test_dl")
+    assert (
+        task.granule_key_prefix(mock_config)
+        == mock_config.landsat_granule.usgs_c2_key_prefix
+    )
+
+
+@pytest.mark.parametrize("prefix", ["inputs/lasrc-rs/L30", "/inputs/lasrc-rs/L30/"])
+def test_download_granule_input_prefix(
+    mock_config: EnvConfig, mock_binaries: Path, prefix: str
+) -> None:
+    task = DownloadGranule("test_dl", input_prefix=prefix)
+    assert task.granule_key_prefix(mock_config) == f"inputs/lasrc-rs/L30/{GRANULE}/"
+
+
 def test_parse_metadata(mock_config: EnvConfig) -> None:
     task = ParseMetadata("test_meta")
     outputs = task.run({CONFIG: mock_config})

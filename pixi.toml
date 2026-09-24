@@ -11,7 +11,7 @@ conda-pypi-map = { conda-forge = { mapping-mode = "replace" } }
 espa-product-formatter = "=3.5.0"
 espa-surface-reflectance = "=v3.5.1.0"
 hls-libs = "=v3.5.1.2"
-lasrc-rs = "=0.1.3"
+lasrc-rs = "=0.1.3.6845c47"
 
 [target.osx-arm64.dependencies]
 lasrc-rs = { path = "./packages/lasrc-rs" }
@@ -25,7 +25,7 @@ hls-hdf_to_cog = { git = "https://github.com/NASA-IMPACT/hls-hdf_to_cog", tag = 
 hls-manifest = { git = "https://github.com/NASA-IMPACT/hls-manifest", tag = "v2.1" }
 metadata-creator = { git = "https://github.com/NASA-IMPACT/hls-metadata", tag = "v2.9" }
 hls-thumbnails = { git = "https://github.com/NASA-IMPACT/hls-thumbnails", tag=  "v1.3" }
-hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", tag = "v1.11.3" }
+hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", tag = "v1.11.4" }
 hls-vi = { url = "https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl" }
 
 [dependencies]
