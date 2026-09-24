@@ -24,6 +24,7 @@ from hls_nextgen_orchestration.sentinel.assets import (
     EnvConfig,
     angle_hdf_asset,
     lasrc_aerosol_qa_asset,
+    quality_mask_applied_asset,
     safe_dir_asset,
 )
 from hls_nextgen_orchestration.sentinel.mapped_tasks import PrepareEspaInput
@@ -49,13 +50,18 @@ class PrepareEspaInputNoFmask(PrepareEspaInput):
 
 @dataclass(frozen=True, kw_only=True)
 class RunLaSRCRust(MappedTask):
-    """Runs the Rust LaSRC for Sentinel directly on the SAFE scene.
+    """Runs the Rust LaSRC for Sentinel on the quality-masked SAFE scene.
 
+    Requires the quality mask so the Rust and C paths read the same radiances.
     Output is written in ESPA format for intercomparison with the C LaSRC.
     """
 
     instrument = True
-    requires_factory = lambda gid: (CONFIG, safe_dir_asset(gid))
+    requires_factory = lambda gid: (
+        CONFIG,
+        safe_dir_asset(gid),
+        quality_mask_applied_asset(gid),
+    )
     provides_factory = lambda gid: (lasrc_aerosol_qa_asset(gid),)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
