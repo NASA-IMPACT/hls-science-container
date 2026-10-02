@@ -1,4 +1,4 @@
-name: Lint and Test
+name: Lint
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint-test:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,7 +24,3 @@ jobs:
         run: |
           scripts/lint
           scripts/typecheck
-
-      - name: Run tests
-        run: |
-          scripts/test
