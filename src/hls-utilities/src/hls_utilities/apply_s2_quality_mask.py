@@ -1,9 +1,11 @@
+import logging
 from pathlib import Path
 from typing import TypeVar
 
-import click
 import rasterio
 from lxml import etree
+
+logger = logging.getLogger(__name__)
 
 # MSI band number definitions
 # LaSRC is run with "PROC_ALL_BANDS" which includes B09 (water vapor) and B10 (cirrus)
@@ -153,7 +155,7 @@ def apply_quality_mask(image: Path, mask: Path):
 
     # only update imagery if mask shows it has any bad pixels
     if lost_degraded_mask.any():
-        click.echo(f"Masking lost or degraded pixel values in {image}")
+        logger.info(f"Masking lost or degraded pixel values in {image}")
         with rasterio.open(image, "r+", **JPEG2000_NO_COMPRESSION_OPTIONS) as img_src:
             img = img_src.read(1)
             # L1C images don't define the nodata value on file so we can't update the
@@ -163,28 +165,14 @@ def apply_quality_mask(image: Path, mask: Path):
             img_src.write(img, 1)
 
 
-@click.command()
-@click.argument(
-    "granule_dir",
-    type=click.Path(file_okay=False, dir_okay=True, exists=True),
-)
-@click.pass_context
-def main(ctx, granule_dir: str):
-    """Update Sentinel-2 imagery by masking lost or degraded pixels"""
-    granule_dir = Path(granule_dir)
-
+def apply_s2_quality_mask(granule_dir: Path) -> None:
+    """Update Sentinel-2 imagery in-place by masking lost or degraded pixels"""
     affected_bands = find_affected_bands(granule_dir)
     if not affected_bands:
-        click.echo(f"No bands are affected by data loss in {granule_dir}")
-        ctx.exit()
+        logger.info(f"No bands are affected by data loss in {granule_dir}")
+        return
 
-    click.echo(f"Applying Sentinel-2 QAQC mask to granule_dir={granule_dir}")
+    logger.info(f"Applying Sentinel-2 QAQC mask to granule_dir={granule_dir}")
     image_mask_pairs = find_image_mask_pairs(granule_dir, affected_bands)
     for image, mask in image_mask_pairs:
         apply_quality_mask(image, mask)
-
-    click.echo("Complete")
-
-
-if __name__ == "__main__":
-    main()

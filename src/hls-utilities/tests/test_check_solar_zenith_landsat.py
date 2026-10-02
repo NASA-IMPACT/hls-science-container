@@ -1,30 +1,29 @@
-import os
+import logging
+import re
+from pathlib import Path
 
-from click.testing import CliRunner
+import pytest
 
-from hls_utilities.check_solar_zenith_landsat import main
+from hls_utilities.check_solar_zenith_landsat import solar_zenith_is_valid
 
-current_dir = os.path.dirname(__file__)
-test_dir = os.path.join(current_dir, "data")
-
-
-def test_check_solar_zenith_angle_c1():
-    inputmtl = os.path.join(
-        test_dir, "LC08_L1TP_027039_20190901_20190901_01_RT_MTL.txt"
-    )
-    runner = CliRunner(echo_stdin=True)
-    result = runner.invoke(main, [inputmtl], catch_exceptions=False)
-    assert result.exit_code == 0
-    print(result.stdout)
-    assert result.stdout == "valid\n"
+TEST_DATA = Path(__file__).parent / "data"
+MTL_C1 = TEST_DATA / "LC08_L1TP_027039_20190901_20190901_01_RT_MTL.txt"
+MTL_C2 = TEST_DATA / "LC08_L1TP_231089_20200807_20200808_02_RT_MTL.txt"
 
 
-def test_check_solar_zenith_angle_c2():
-    inputmtl = os.path.join(
-        test_dir, "LC08_L1TP_231089_20200807_20200808_02_RT_MTL.txt"
-    )
-    runner = CliRunner(echo_stdin=True)
-    result = runner.invoke(main, [inputmtl], catch_exceptions=False)
-    assert result.exit_code == 0
-    print(result.stdout)
-    assert result.stdout == "valid\n"
+@pytest.mark.parametrize("mtl", [MTL_C1, MTL_C2], ids=["c1", "c2"])
+def test_solar_zenith_is_valid(mtl: Path):
+    assert solar_zenith_is_valid(mtl)
+
+
+@pytest.mark.parametrize("mtl", [MTL_C1, MTL_C2], ids=["c1", "c2"])
+def test_solar_zenith_is_invalid(mtl: Path, tmp_path: Path):
+    text = re.sub(r"SUN_ELEVATION = [\d.]+", "SUN_ELEVATION = 13.9", mtl.read_text())
+    invalid_mtl = tmp_path / mtl.name
+    invalid_mtl.write_text(text)
+    assert not solar_zenith_is_valid(invalid_mtl)
+
+
+def test_mtl_parsing_does_not_disable_logging():
+    solar_zenith_is_valid(MTL_C2)
+    assert logging.root.manager.disable == logging.NOTSET

@@ -7,7 +7,9 @@ from pathlib import Path
 
 import pytest
 
+from hls_utilities import check_sentinel_clouds, check_solar_zenith_sentinel
 from hls_workflows.granules import Sentinel2Granule
+from hls_workflows.sentinel import mapped_tasks
 from hls_workflows.sentinel.assets import EnvConfig
 from tests.mock_cli import (
     cli_noop,
@@ -18,10 +20,6 @@ from tests.mock_cli import (
 )
 
 # --- Mock CLI Scripts for Sentinel-2 ---
-
-CHECK_SZA = cli_noop("valid")
-
-CHECK_SENTINEL_CLOUDS = cli_noop("valid")
 
 SENTINEL_DERIVE_ANGLE = cli_touch_last_arg()
 
@@ -45,8 +43,6 @@ if args.print_summary == "yes":
 
 GDAL_TRANSLATE = cli_touch_last_arg()
 
-APPLY_S2_QUALITY_MASK = cli_noop()
-
 UNPACKAGE_S2 = cli_noop()
 
 CONVERT_SENTINEL_TO_ESPA = make_python_script("""
@@ -60,8 +56,6 @@ cwd = Path.cwd()
 (cwd / "S2A_TEST_sr_aerosol_qa.img").touch()
 (cwd / "S2A_TEST_sr_band5.img").touch()
 """)
-
-CREATE_SR_HDF_XML = cli_touch_nth_arg(2)
 
 CONVERT_ESPA_TO_HDF = cli_touch_flag_arg("--hdf")
 
@@ -203,16 +197,12 @@ VI_GENERATE_STAC_ITEMS = cli_touch_last_arg()
 
 SENTINEL_SCRIPTS = {
     # ----- sentinel_granule.sh
-    "check_solar_zenith_sentinel": CHECK_SZA,
     "gdal_translate": GDAL_TRANSLATE,
-    "apply_s2_quality_mask": APPLY_S2_QUALITY_MASK,
     "sentinel-derive-angle": SENTINEL_DERIVE_ANGLE,
-    "check_sentinel_clouds": CHECK_SENTINEL_CLOUDS,
     "fmask": FMASK_V5,
     "unpackage_s2.py": UNPACKAGE_S2,
     "convert_sentinel_to_espa": CONVERT_SENTINEL_TO_ESPA,
     "do_lasrc_sentinel.py": DO_LASRC_SENTINEL,
-    "create_sr_hdf_xml": CREATE_SR_HDF_XML,
     "convert_espa_to_hdf": CONVERT_ESPA_TO_HDF,
     "sentinel-twohdf2one": SENTINEL_TWOHDF2ONE,
     "sentinel-add-fmask-sds": SENTINEL_ADD_FMASK_SDS,
@@ -236,9 +226,29 @@ SENTINEL_SCRIPTS = {
 
 
 @pytest.fixture
-def mock_binaries(install_mock_binaries: Callable[[dict[str, str]], Path]) -> Path:
+def mock_hls_utilities(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Replace the hls-utilities functions used by the Sentinel-2 tasks."""
+
+    def _create_sr_hdf_xml(input_xml: str, output_xml: str, part: str) -> None:
+        Path(output_xml).touch()
+
+    monkeypatch.setattr(
+        check_solar_zenith_sentinel, "solar_zenith_is_valid", lambda mtd_tl: True
+    )
+    monkeypatch.setattr(
+        check_sentinel_clouds, "cloud_cover_is_valid", lambda mtd_msil1c: True
+    )
+    monkeypatch.setattr(mapped_tasks, "apply_s2_quality_mask", lambda granule_dir: None)
+    monkeypatch.setattr(mapped_tasks, "create_sr_hdf_xml", _create_sr_hdf_xml)
+
+
+@pytest.fixture
+def mock_binaries(
+    install_mock_binaries: Callable[[dict[str, str]], Path],
+    mock_hls_utilities: None,
+) -> Path:
     """
-    Installs Sentinel-specific mock binaries.
+    Installs Sentinel-specific mock binaries and mocks hls-utilities functions.
     Uses `install_mock_binaries` from the root conftest.py.
     """
     return install_mock_binaries(SENTINEL_SCRIPTS)

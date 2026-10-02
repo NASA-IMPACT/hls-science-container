@@ -14,16 +14,13 @@ L_GRANULE = "LC09_L1TP_001066_20260314_20260314_02_T1"
 # The rust path validates only the download command at construction time
 # (RunLaSRCRust imports the lasrc Python API lazily inside run(), so it needs no
 # command on PATH to build the pipeline).
-_DOWNLOAD_COMMANDS = ["unzip", "download_landsat"]
+_DOWNLOAD_COMMANDS = ["unzip"]
 
 # The C path instantiates the real ESPA/LaSRC tasks, which each validate their
 # external command in __post_init__. Note: NO Fmask commands -- the just-LaSRC C
 # path does not run Fmask.
 _C_PATH_COMMANDS = _DOWNLOAD_COMMANDS + [
     "gdal_translate",
-    "check_solar_zenith_sentinel",
-    "check_solar_zenith_landsat",
-    "apply_s2_quality_mask",
     "sentinel-derive-angle",
     "unpackage_s2.py",
     "convert_sentinel_to_espa",

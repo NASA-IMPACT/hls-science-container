@@ -1,16 +1,22 @@
-import os
+import re
+from pathlib import Path
 
-from click.testing import CliRunner
+from hls_utilities.check_sentinel_clouds import cloud_cover_is_valid
 
-from hls_utilities.check_sentinel_clouds import main
-
-current_dir = os.path.dirname(__file__)
-test_dir = os.path.join(current_dir, "data")
+TEST_DATA = Path(__file__).parent / "data"
 
 
-def test_check_solar_zenith_angle():
-    inputxml = os.path.join(test_dir, "MTD_MSIL1C.xml")
-    runner = CliRunner(echo_stdin=True)
-    result = runner.invoke(main, [inputxml], catch_exceptions=False)
-    assert result.exit_code == 0
-    assert result.stdout == "valid\n"
+def test_cloud_cover_is_valid():
+    assert cloud_cover_is_valid(TEST_DATA / "MTD_MSIL1C.xml")
+
+
+def test_cloud_cover_is_invalid(tmp_path: Path):
+    xml = (TEST_DATA / "MTD_MSIL1C.xml").read_text()
+    xml = re.sub(
+        r"<Cloud_Coverage_Assessment>[\d.]+<",
+        "<Cloud_Coverage_Assessment>95.1<",
+        xml,
+    )
+    mtd = tmp_path / "MTD_MSIL1C.xml"
+    mtd.write_text(xml)
+    assert not cloud_cover_is_valid(mtd)

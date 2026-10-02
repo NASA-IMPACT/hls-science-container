@@ -10,6 +10,7 @@ from hls_utilities.apply_s2_quality_mask import (
     JPEG2000_NO_COMPRESSION_OPTIONS,
     SPECTRAL_BANDS,
     apply_quality_mask,
+    apply_s2_quality_mask,
     find_affected_bands,
     find_image_mask_pairs,
 )
@@ -160,3 +161,22 @@ def test_apply_quality_mask_overwrites_value(tmp_path: Path):
         image_data,
         np.array([[1, 0], [0, 0]], dtype="uint16"),
     )
+
+
+def test_apply_s2_quality_mask(tmp_path: Path):
+    """Ensure every band is masked when there is no quality report"""
+    mask_data = np.zeros((8, 2, 2), dtype="uint8")
+    mask_data[2, 0, 1] = 1
+
+    granule_id = "L1C_T45TXF_A038726_20221121T050115"
+    granule_prefix = tmp_path / f"{granule_id}.SAFE" / "GRANULE" / granule_id
+    images = [
+        make_fake_s2_granule(granule_prefix, band, mask_data)[0]
+        for band in sorted(SPECTRAL_BANDS)
+    ]
+
+    apply_s2_quality_mask(tmp_path)
+
+    for image in images:
+        with rasterio.open(image) as src:
+            np.testing.assert_array_equal(src.read(1), [[1, 0], [1, 1]])

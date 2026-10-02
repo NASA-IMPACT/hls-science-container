@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import boto3
-import click
 
 
 class KeyDoesNotExist(Exception):
@@ -54,7 +53,8 @@ def get_updated_key(client, bucket, path):
             return updated_key[0]
 
 
-def get_landsat(bucket, path, output_directory):
+def get_landsat(bucket: str, path: str, output_directory: Path | str) -> str:
+    """Download a Landsat granule, returning the (possibly updated) granule ID"""
     client = boto3.client("s3")
     if key_exists(client, bucket, path):
         download_files(client, bucket, path, output_directory)
@@ -65,18 +65,3 @@ def get_landsat(bucket, path, output_directory):
         download_files(client, bucket, updated_path, output_directory)
         updated_id = Path(updated_path).parts[-1]
         return updated_id
-
-
-@click.command()
-@click.argument("bucket", type=click.STRING)
-@click.argument(
-    "path",
-    type=click.STRING,
-)
-@click.argument(
-    "output_directory",
-    type=click.Path(),
-)
-def main(bucket, path, output_directory):
-    id = get_landsat(bucket, path, output_directory)
-    click.echo(id)

@@ -42,8 +42,10 @@ import os.path
 import re
 from io import StringIO
 
-LOGGER = logging.getLogger("pygaarst.mtlutils")
-logging.disable(logging.WARNING)
+LOGGER = logging.getLogger(__name__)
+# Only surface errors from this module, matching upstream's intent without
+# globally disabling logging
+LOGGER.setLevel(logging.ERROR)
 # ==================================================================
 # = USGS MTL metadata parsing for Landsat, ALI, Hyperion
 #
@@ -198,7 +200,7 @@ def _transstat(status, grouppath, dictpath, line):
             and newval.startswith('"')
             and newval.endswith('"')
         ):
-            logging.warning("Strip quotes off SCENE_CENTER_TIME.")
+            LOGGER.warning("Strip quotes off SCENE_CENTER_TIME.")
             newval = newval[1:-1]
 
         currentdict[newkey] = _postprocess(newval)
@@ -261,7 +263,7 @@ def _postprocess(valuestr):
             pass
 
     # If we get here, we still haven't returned anything.
-    logging.info(
+    LOGGER.info(
         f"The value {valuestr} couldn't be parsed as "
         + "int, float, date, time, datetime. Returning it as string."
     )
@@ -286,14 +288,14 @@ def parsemeta(metadataloc):
             metadatafn = metalist[0]
             filehandle = open(metadatafn)
             if len(metalist) > 1:
-                logging.warning(
+                LOGGER.warning(
                     "More than one file in directory match metadata "
                     + f"file pattern. Using {metadatafn}."
                 )
     elif os.path.isfile(metadataloc):
         metadatafn = metadataloc
         filehandle = open(metadatafn)
-        logging.info(f"Using file {metadatafn}.")
+        LOGGER.info(f"Using file {metadatafn}.")
     elif "L1_METADATA_FILE" in metadataloc:
         filehandle = StringIO.StringIO(metadataloc)
     else:
@@ -312,7 +314,7 @@ def parsemeta(metadataloc):
         if status == 4:
             # we reached the end in the previous iteration,
             # but are still reading lines
-            logging.warning(
+            LOGGER.warning(
                 f"Metadata file {metadatafn} appears to "
                 + "have extra lines after the end of the metadata. "
                 + "This is probably, but not necessarily, harmless."
