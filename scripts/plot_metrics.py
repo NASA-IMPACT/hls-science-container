@@ -5,8 +5,10 @@ HLS metrics CLI — fetch and plot CloudWatch EMF metrics from Batch jobs.
 Commands:
     fetch             Query Logs Insights and save to Parquet
     plot scatter      Paired scatter per granule comparing two values of a dimension
+    plot distribution Box plot per value of a dimension, one point per granule
     plot timeseries   Stacked total metric over time by task_name
 """
+
 from __future__ import annotations
 
 import datetime
@@ -17,6 +19,7 @@ import boto3
 import click
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 import numpy as np
 import pandas as pd
 
@@ -147,37 +150,75 @@ def _build_dataframe(
 # ---------------------------------------------------------------------------
 
 
+def _latest_per_granule(
+    df: pd.DataFrame, task_group: str, dimension: str, metric: str
+) -> pd.DataFrame:
+    return (
+        df[df["task_name"] == task_group][
+            ["input_granule_id", dimension, "workflow", "timestamp", metric]
+        ]
+        .dropna(subset=[metric])
+        .sort_values("timestamp")
+        .drop_duplicates(subset=["input_granule_id", dimension], keep="last")
+    )
+
+
+def _metric_grid(n_rows: int) -> tuple[plt.Figure, np.ndarray]:
+    return plt.subplots(
+        n_rows,
+        len(METRICS),
+        figsize=(13, 4.6 * n_rows),
+        squeeze=False,
+        constrained_layout=True,
+    )
+
+
+def _gg_grid(ax: plt.Axes, axis: str = "both") -> None:
+    """Major plus finer minor grid lines, as in ggplot2's default theme."""
+    targets = [ax.xaxis, ax.yaxis] if axis == "both" else [getattr(ax, f"{axis}axis")]
+    for target in targets:
+        target.set_major_locator(mticker.MaxNLocator(5))
+        target.set_minor_locator(mticker.AutoMinorLocator(2))
+    ax.tick_params(which="minor", length=0)
+    ax.grid(True, which="major", axis=axis, color="white", linewidth=1)
+    ax.grid(True, which="minor", axis=axis, color="white", linewidth=0.5)
+
+
+def _no_data(ax: plt.Axes, message: str, title: str) -> None:
+    ax.text(
+        0.5,
+        0.5,
+        message,
+        ha="center",
+        va="center",
+        transform=ax.transAxes,
+        fontsize=9,
+        color="grey",
+    )
+    ax.set_title(title, fontsize=10)
+
+
 def _plot_scatter(
     df: pd.DataFrame,
     versions: tuple[str, str],
     dimension: str,
 ) -> plt.Figure:
     task_groups = sorted(df["task_name"].unique())
-    n_rows, n_cols = len(METRICS), len(task_groups)
     v1, v2 = versions
 
-    fig, axes = plt.subplots(
-        n_rows,
-        n_cols,
-        figsize=(6 * n_cols, 4.5 * n_rows),
-        squeeze=False,
-        constrained_layout=True,
-    )
-    fig.suptitle(f"{dimension}={v1} vs {v2}", fontsize=13)
+    cycle = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    workflow_colors = {
+        wf: cycle[i % len(cycle)]
+        for i, wf in enumerate(sorted(df["workflow"].dropna().unique()))
+    }
 
-    for row_idx, metric in enumerate(METRICS):
-        for col_idx, task_group in enumerate(task_groups):
+    fig, axes = _metric_grid(len(task_groups))
+    fig.suptitle(f"{dimension}: {v1} vs {v2}", fontsize=11)
+
+    for row_idx, task_group in enumerate(task_groups):
+        for col_idx, metric in enumerate(METRICS):
             ax = axes[row_idx][col_idx]
-
-            subset = (
-                df[df["task_name"] == task_group][
-                    ["input_granule_id", dimension, "workflow", "timestamp", metric]
-                ]
-                .dropna(subset=[metric])
-                .sort_values("timestamp")
-                .drop_duplicates(subset=["input_granule_id", dimension], keep="last")
-            )
-
+            subset = _latest_per_granule(df, task_group, dimension, metric)
             pivot = subset.pivot_table(
                 index="input_granule_id",
                 columns=dimension,
@@ -186,17 +227,11 @@ def _plot_scatter(
             )
 
             if v1 not in pivot.columns or v2 not in pivot.columns:
-                ax.text(
-                    0.5,
-                    0.5,
+                _no_data(
+                    ax,
                     f"No paired data\n(need {dimension}={v1} and ={v2})",
-                    ha="center",
-                    va="center",
-                    transform=ax.transAxes,
-                    fontsize=9,
-                    color="grey",
+                    f"{task_group} -- {METRIC_LABELS[metric]}",
                 )
-                ax.set_title(f"{task_group} — {METRIC_LABELS[metric]}")
                 continue
 
             workflow_map = subset.groupby("input_granule_id")["workflow"].first()
@@ -206,45 +241,45 @@ def _plot_scatter(
 
             lo = min(paired[v1].min(), paired[v2].min())
             hi = max(paired[v1].max(), paired[v2].max())
-            pad = (hi - lo) * 0.05
+            pad = (hi - lo) * 0.06
             ref = [lo - pad, hi + pad]
-            ax.plot(
-                ref, ref, color="black", linewidth=0.9, linestyle="--", label="y = x"
+            ax.plot(ref, ref, color="dimgrey", linewidth=1, linestyle="--", zorder=1)
+            ax.annotate(
+                "no change",
+                xy=(0.97, 0.99),
+                xycoords="axes fraction",
+                ha="right",
+                va="top",
+                color="dimgrey",
+                fontsize=8,
             )
 
-            cycle = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-            workflow_colors = {
-                wf: cycle[i % len(cycle)]
-                for i, wf in enumerate(sorted(paired["workflow"].unique()))
-            }
-
             for workflow, wf_data in paired.groupby("workflow"):
-                color = workflow_colors[workflow]
                 ax.scatter(
-                    wf_data[v1], wf_data[v2], alpha=0.55, s=28, zorder=3, color=color
+                    wf_data[v1],
+                    wf_data[v2],
+                    alpha=0.55,
+                    s=28,
+                    zorder=3,
+                    color=workflow_colors[workflow],
+                    edgecolor="white",
+                    linewidth=0.5,
                 )
 
-                m, b = np.polyfit(wf_data[v1], wf_data[v2], 1)
-                r2 = np.corrcoef(wf_data[v1], wf_data[v2])[0, 1] ** 2
-                mean_v1 = wf_data[v1].mean()
-                mean_v2 = wf_data[v2].mean()
-                pct = (mean_v2 / mean_v1 - 1) * 100
-                sign = "+" if pct >= 0 else ""
-                ax.plot(
-                    np.array(ref),
-                    m * np.array(ref) + b,
-                    color=color,
-                    linewidth=1.2,
-                    label=f"{workflow}  μ: {mean_v1:.1f}→{mean_v2:.1f}  {sign}{pct:.1f}%  R²={r2:.2f}",
-                )
-
+            ratio = np.median(paired[v2] / paired[v1])
+            below = 100 * np.mean(paired[v2] < paired[v1])
+            ax.set_title(
+                f"{task_group} -- {METRIC_LABELS[metric]}\n"
+                f"median {v2}/{v1} {ratio:.2f}x ({100 * (ratio - 1):+.0f}%)\n"
+                f"{v2} lower on {below:.0f}% of granules",
+                fontsize=10,
+            )
             ax.set_xlim(ref)
             ax.set_ylim(ref)
             ax.set_aspect("equal", adjustable="box")
+            _gg_grid(ax)
             ax.set_xlabel(f"{dimension}={v1}", fontsize=9)
             ax.set_ylabel(f"{dimension}={v2}", fontsize=9)
-            ax.set_title(f"{task_group} — {METRIC_LABELS[metric]}", fontsize=9)
-            ax.legend(fontsize=8, loc="upper left")
             ax.text(
                 0.97,
                 0.03,
@@ -255,6 +290,103 @@ def _plot_scatter(
                 fontsize=8,
                 color="grey",
             )
+
+    if len(workflow_colors) > 1:
+        handles = [
+            plt.Line2D(
+                [], [], marker="o", linestyle="", color=color, alpha=0.55, label=wf
+            )
+            for wf, color in workflow_colors.items()
+        ]
+        fig.legend(
+            handles=handles,
+            title="workflow",
+            loc="outside lower center",
+            ncol=len(handles),
+            frameon=False,
+            fontsize=8,
+        )
+
+    return fig
+
+
+def _plot_distribution(
+    df: pd.DataFrame,
+    versions: tuple[str, str],
+    dimension: str,
+) -> plt.Figure:
+    task_groups = sorted(df["task_name"].unique())
+    cycle = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    version_colors = dict(zip(versions, cycle))
+    rng = np.random.default_rng(0)
+
+    fig, axes = _metric_grid(len(task_groups))
+    fig.suptitle(f"{dimension}: {versions[0]} vs {versions[1]}", fontsize=11)
+
+    for row_idx, task_group in enumerate(task_groups):
+        for col_idx, metric in enumerate(METRICS):
+            ax = axes[row_idx][col_idx]
+            title = f"{task_group} -- {METRIC_LABELS[metric]}"
+            subset = _latest_per_granule(df, task_group, dimension, metric)
+            data = [
+                subset.loc[subset[dimension] == v, metric].to_numpy() for v in versions
+            ]
+
+            if any(values.size == 0 for values in data):
+                _no_data(
+                    ax,
+                    f"No data\n(need {dimension}={versions[0]} and ={versions[1]})",
+                    title,
+                )
+                continue
+
+            positions = list(range(len(versions)))
+            boxes = ax.boxplot(
+                data,
+                positions=positions,
+                widths=0.5,
+                patch_artist=True,
+                showfliers=False,
+                medianprops={"color": "black", "linewidth": 1.6},
+            )
+            for patch, version in zip(boxes["boxes"], versions):
+                patch.set_facecolor(version_colors[version])
+                patch.set_alpha(0.25)
+                patch.set_edgecolor(version_colors[version])
+
+            for pos, version, values in zip(positions, versions, data):
+                jitter = rng.uniform(-0.12, 0.12, size=values.size)
+                ax.scatter(
+                    pos + jitter,
+                    values,
+                    s=16,
+                    alpha=0.55,
+                    color=version_colors[version],
+                    edgecolor="white",
+                    linewidth=0.5,
+                    zorder=3,
+                )
+                # Right of the box so the label never sits on the points
+                ax.annotate(
+                    f"median {np.median(values):,.0f}",
+                    xy=(pos + 0.28, np.median(values)),
+                    xytext=(4, 0),
+                    textcoords="offset points",
+                    ha="left",
+                    va="center",
+                    color="dimgrey",
+                    fontsize=8,
+                )
+
+            ax.set_xticks(positions)
+            ax.set_xticklabels(
+                [f"{v}\n(n = {values.size})" for v, values in zip(versions, data)],
+                fontsize=9,
+            )
+            ax.set_xlim(-0.5, len(versions) - 0.25)
+            ax.set_ylabel(METRIC_LABELS[metric], fontsize=9)
+            _gg_grid(ax, axis="y")
+            ax.set_title(title, fontsize=10)
 
     return fig
 
@@ -415,37 +547,43 @@ def fetch(
 @cli.group()
 def plot() -> None:
     """Visualization subcommands (load from a Parquet file produced by fetch)."""
+    plt.style.use("ggplot")
 
 
-@plot.command()
-@click.argument("inputs", nargs=-1, default="metrics.parquet")
-@click.option(
-    "--dimension",
-    required=True,
-    help="Column to compare across values",
-)
-@click.option("--x", "x_val", required=True, help="Dimension value for x-axis")
-@click.option("--y", "y_val", required=True, help="Dimension value for y-axis")
-@click.option(
-    "--tasks",
-    multiple=True,
-    default=None,
-    help="Task(s) to plot (repeat for multiple, e.g. --tasks Fmask --tasks LaSRC). Defaults to all tasks in the data.",
-)
-@click.option("--output", default=None, help="Save figure to file instead of showing")
-def scatter(
-    inputs: tuple[str, ...],
-    dimension: str,
-    x_val: str,
-    y_val: str,
-    tasks: tuple[str, ...],
-    output: str | None,
-) -> None:
-    """Paired scatter: dimension x vs y, one point per granule."""
-    dfs: list[pd.DataFrame] = []
-    for input_ in inputs:
-        dfs.append(pd.read_parquet(input_))
-    df = pd.concat(dfs)
+def _comparison_options(func):
+    for option in reversed(
+        [
+            click.argument("inputs", nargs=-1, default="metrics.parquet"),
+            click.option(
+                "--dimension",
+                required=True,
+                help="Column to compare across values",
+            ),
+            click.option(
+                "--x", "x_val", required=True, help="Dimension value for x-axis"
+            ),
+            click.option(
+                "--y", "y_val", required=True, help="Dimension value for y-axis"
+            ),
+            click.option(
+                "--tasks",
+                multiple=True,
+                default=None,
+                help="Task(s) to plot (repeat for multiple, e.g. --tasks Fmask --tasks LaSRC). Defaults to all tasks in the data.",
+            ),
+            click.option(
+                "--output", default=None, help="Save figure to file instead of showing"
+            ),
+        ]
+    ):
+        func = option(func)
+    return func
+
+
+def _load_granule_metrics(
+    inputs: tuple[str, ...], tasks: tuple[str, ...]
+) -> pd.DataFrame:
+    df = pd.concat([pd.read_parquet(input_) for input_ in inputs])
 
     has_granule = df.get("input_granule_id", pd.Series(pd.NA, index=df.index))
     df = df[has_granule.notna() & (has_granule != "")]
@@ -455,8 +593,38 @@ def scatter(
 
     if df.empty:
         raise click.ClickException("No rows with input_granule_id in the data.")
+    return df
 
+
+@plot.command()
+@_comparison_options
+def scatter(
+    inputs: tuple[str, ...],
+    dimension: str,
+    x_val: str,
+    y_val: str,
+    tasks: tuple[str, ...],
+    output: str | None,
+) -> None:
+    """Paired scatter: dimension x vs y, one point per granule."""
+    df = _load_granule_metrics(inputs, tasks)
     fig = _plot_scatter(df, versions=(x_val, y_val), dimension=dimension)
+    _save_or_show(fig, output)
+
+
+@plot.command()
+@_comparison_options
+def distribution(
+    inputs: tuple[str, ...],
+    dimension: str,
+    x_val: str,
+    y_val: str,
+    tasks: tuple[str, ...],
+    output: str | None,
+) -> None:
+    """Box plot per dimension value (x, then y), one point per granule."""
+    df = _load_granule_metrics(inputs, tasks)
+    fig = _plot_distribution(df, versions=(x_val, y_val), dimension=dimension)
     _save_or_show(fig, output)
 
 
