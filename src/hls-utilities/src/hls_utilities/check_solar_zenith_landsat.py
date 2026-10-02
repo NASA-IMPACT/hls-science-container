@@ -13,7 +13,7 @@ def solar_zenith_is_valid(mtl: Path) -> bool:
     mtl
         Path to the granule's `_MTL.txt` metadata file.
     """
-    metadata = parsemeta(str(mtl))
+    metadata = parsemeta(mtl)
     try:
         sun_elevation = float(
             metadata["L1_METADATA_FILE"]["IMAGE_ATTRIBUTES"]["SUN_ELEVATION"]

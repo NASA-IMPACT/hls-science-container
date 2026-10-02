@@ -13,7 +13,8 @@ def solar_zenith_is_valid(mtd_tl: Path) -> bool:
     mtd_tl
         Path to the granule's `MTD_TL.xml` metadata file.
     """
-    doc = etree.parse(mtd_tl)
-    element = doc.xpath("//Mean_Sun_Angle/ZENITH_ANGLE")[0]
-    solar_zenith = float(element.text)
+    text = etree.parse(mtd_tl).findtext(".//Mean_Sun_Angle/ZENITH_ANGLE")
+    if text is None:
+        raise ValueError(f"No Mean_Sun_Angle/ZENITH_ANGLE found in {mtd_tl}")
+    solar_zenith = float(text)
     return solar_zenith <= MAX_SOLAR_ZENITH

@@ -38,9 +38,11 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import datetime
 import glob
 import logging
-import os.path
+import os
 import re
+from collections.abc import Iterable
 from io import StringIO
+from typing import Any
 
 LOGGER = logging.getLogger(__name__)
 # Only surface errors from this module, matching upstream's intent without
@@ -93,39 +95,39 @@ class MTLParseError(Exception):
 
 
 # Help functions to identify the current line and extract information
-def _islinetype(line, testchar):
+def _islinetype(line: str, testchar: str) -> bool:
     """Checks for various kinds of line types based on line head"""
     return line.strip().startswith(testchar)
 
 
-def _isassignment(line):
+def _isassignment(line: str) -> bool:
     """Checks if the line is a key-value assignment"""
     return ASSIGNCHAR in line
 
 
-def _isfinal(line):
+def _isfinal(line: str) -> bool:
     """Checks if line finishes a group"""
     return line.strip() == FINAL
 
 
-def _getgroupname(line):
+def _getgroupname(line: str) -> str:
     """Returns group name, if used with group start lines"""
     return line.strip().split(GRPSTART)[-1]
 
 
-def _getendgroupname(line):
+def _getendgroupname(line: str) -> str:
     """Returns group name, if used with group end lines"""
     return line.strip().split(GRPEND)[-1]
 
 
-def _getmetadataitem(line):
+def _getmetadataitem(line: str) -> list[str]:
     """Returns key/value pair for assignment type lines"""
     return line.strip().split(ASSIGNCHAR)
 
 
 # After reading a line, what state we're in depends on the line
 # and the state before reading
-def _checkstatus(status, line):
+def _checkstatus(status: int, line: str) -> int:
     """Returns state/status after reading the next line.
 
     The status codes are::
@@ -175,10 +177,16 @@ def _checkstatus(status, line):
             "Cannot parse the following line after status "
             + f"'{STATUSCODE[status]}':\n{line}"
         )
+    return status
 
 
 # Function to execute when reading a line in a given state
-def _transstat(status, grouppath, dictpath, line):
+def _transstat(
+    status: int,
+    grouppath: list[str],
+    dictpath: list[dict[str, Any]],
+    line: str,
+) -> tuple[list[str], list[dict[str, Any]]]:
     """Executes processing steps when reading a line"""
     if status == 0:
         raise MTLParseError(
@@ -212,10 +220,6 @@ def _transstat(status, grouppath, dictpath, line):
             )
         del grouppath[-1]
         del dictpath[-1]
-        try:
-            currentgroup = grouppath[-1]
-        except IndexError:
-            currentgroup = None
     elif status == 4:
         if grouppath:
             raise MTLParseError(f"Reached end before end of group '{grouppath[-1]}'")
@@ -223,7 +227,9 @@ def _transstat(status, grouppath, dictpath, line):
 
 
 # Identifying data type of a metadata item and
-def _postprocess(valuestr):
+def _postprocess(
+    valuestr: str,
+) -> str | int | float | datetime.date | datetime.datetime | datetime.time:
     """
     Takes value as str, returns str, int, float, date, datetime, or time
     """
@@ -270,13 +276,14 @@ def _postprocess(valuestr):
     return valuestr
 
 
-def parsemeta(metadataloc):
+def parsemeta(metadataloc: str | os.PathLike[str]) -> dict[str, Any]:
     """Parses the metadata.
 
     Arguments:
         metadataloc: a filename or a directory.
     Returns metadata dictionary
     """
+    metadataloc = os.fspath(metadataloc)
     # filename or directory? if several fit, use first one and warn
     if os.path.isdir(metadataloc):
         metalist = glob.glob(os.path.join(metadataloc, METAPATTERN))
@@ -284,33 +291,35 @@ def parsemeta(metadataloc):
             raise MTLParseError(
                 f"No files matching metadata file pattern in directory {metadataloc}."
             )
-        elif len(metalist) > 0:
-            metadatafn = metalist[0]
-            filehandle = open(metadatafn)
-            if len(metalist) > 1:
-                LOGGER.warning(
-                    "More than one file in directory match metadata "
-                    + f"file pattern. Using {metadatafn}."
-                )
+        metadatafn = metalist[0]
+        if len(metalist) > 1:
+            LOGGER.warning(
+                "More than one file in directory match metadata "
+                + f"file pattern. Using {metadatafn}."
+            )
     elif os.path.isfile(metadataloc):
         metadatafn = metadataloc
-        filehandle = open(metadatafn)
         LOGGER.info(f"Using file {metadatafn}.")
     elif "L1_METADATA_FILE" in metadataloc:
-        filehandle = StringIO.StringIO(metadataloc)
+        return _parselines(StringIO(metadataloc), "<string>")
     else:
         raise MTLParseError(
             f"File location {metadataloc} is unavailable "
             + "or doesn't contain a suitable metadata file."
         )
 
-    # Reading file line by line and inserting data into metadata dictionary
+    with open(metadatafn) as filehandle:
+        return _parselines(filehandle, metadatafn)
+
+
+def _parselines(lines: Iterable[str], metadatafn: str) -> dict[str, Any]:
+    """Reads lines and inserts data into the metadata dictionary"""
     status = 0
-    metadata = {}
-    grouppath = []
+    metadata: dict[str, Any] = {}
+    grouppath: list[str] = []
     dictpath = [metadata]
 
-    for line in filehandle:
+    for line in lines:
         if status == 4:
             # we reached the end in the previous iteration,
             # but are still reading lines

@@ -1,6 +1,7 @@
 import logging
+from collections.abc import Iterable
 from pathlib import Path
-from typing import TypeVar
+from typing import cast
 
 import rasterio
 from lxml import etree
@@ -37,12 +38,10 @@ JPEG2000_NO_COMPRESSION_OPTIONS = {
 }
 
 
-T = TypeVar("T")
-
-
 def _one_or_none[T](seq: list[T]) -> T | None:
     if len(seq) == 1:
         return seq[0]
+    return None
 
 
 def find_affected_bands(granule_dir: Path) -> list[str]:
@@ -70,12 +69,15 @@ def find_affected_bands(granule_dir: Path) -> list[str]:
     # We want to grab the text from the "Affected_Bands" when the message
     # indicates there is data loss in the tile.
     data_loss_bands_txt = _one_or_none(
-        root.xpath(
-            (
-                ".//qa:check[qa:message/text() = 'There is data loss in this tile']/"
-                "qa:extraValues/qa:value[@name = 'Affected_Bands']/text()"
+        cast(
+            list[str],
+            root.xpath(
+                (
+                    ".//qa:check[qa:message/text() = 'There is data loss in this tile']/"
+                    "qa:extraValues/qa:value[@name = 'Affected_Bands']/text()"
+                ),
+                namespaces=nsmap,
             ),
-            namespaces=nsmap,
         )
     )
     if data_loss_bands_txt is not None:
@@ -84,7 +86,7 @@ def find_affected_bands(granule_dir: Path) -> list[str]:
 
 
 def find_image_mask_pairs(
-    granule_dir: Path, bands: list[str]
+    granule_dir: Path, bands: Iterable[str]
 ) -> list[tuple[Path, Path]]:
     """Search granule directory for image + mask pairs
 
@@ -120,7 +122,7 @@ def find_image_mask_pairs(
     return pairs
 
 
-def apply_quality_mask(image: Path, mask: Path):
+def apply_quality_mask(image: Path, mask: Path) -> None:
     """Apply Sentinel-2 image quality mask
 
     Each spectral band (`IMG_DATA/B*.jp2`) has a corresponding quality mask

@@ -13,7 +13,8 @@ def cloud_cover_is_valid(mtd_msil1c: Path) -> bool:
     mtd_msil1c
         Path to the granule's `MTD_MSIL1C.xml` metadata file.
     """
-    doc = etree.parse(mtd_msil1c)
-    element = doc.xpath("//Cloud_Coverage_Assessment")[0]
-    cloud = float(element.text)
+    text = etree.parse(mtd_msil1c).findtext(".//Cloud_Coverage_Assessment")
+    if text is None:
+        raise ValueError(f"No Cloud_Coverage_Assessment found in {mtd_msil1c}")
+    cloud = float(text)
     return cloud <= MAX_CLOUD_COVER

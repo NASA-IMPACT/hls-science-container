@@ -57,7 +57,7 @@ TEST_DATA = Path(__file__).parents[0].joinpath("data", "quality-mask")
         ),
     ],
 )
-def test_find_affected_bands(granule_dir: Path, affected_bands: list[str]):
+def test_find_affected_bands(granule_dir: Path, affected_bands: list[str]) -> None:
     """Test we find the bands affected by a quality issue correctly from metadata"""
     test = find_affected_bands(granule_dir)
     assert set(test) == set(affected_bands)
@@ -92,7 +92,7 @@ def make_fake_s2_granule(
     return image_path, mask_path
 
 
-def test_find_image_mask_pairs_found_all(tmp_path: Path):
+def test_find_image_mask_pairs_found_all(tmp_path: Path) -> None:
     """Test successfully finding location of all imagery data"""
     granule_id = "L1C_T45TXF_A038726_20221121T050115"
     granule_prefix = tmp_path / f"{granule_id}.SAFE" / "GRANULE" / granule_id
@@ -112,7 +112,7 @@ def test_find_image_mask_pairs_found_all(tmp_path: Path):
         assert image_mask_pair in image_mask_pairs
 
 
-def test_find_image_mask_pairs_found_not_all(tmp_path: Path):
+def test_find_image_mask_pairs_found_not_all(tmp_path: Path) -> None:
     """Ensure we return what we found even if some are missing"""
     granule_id = "L1C_T45TXF_A038726_20221121T050115"
     granule_prefix = tmp_path / f"{granule_id}.SAFE" / "GRANULE" / granule_id
@@ -132,7 +132,7 @@ def test_find_image_mask_pairs_found_not_all(tmp_path: Path):
     assert len(image_mask_pairs) == len(bands_with_masks)
 
 
-def test_apply_quality_mask_overwrites_value(tmp_path: Path):
+def test_apply_quality_mask_overwrites_value(tmp_path: Path) -> None:
     """Ensure image data are set to no data value (0) per mask band"""
     # Mask is 2x2 with 4 test cases,
     #   * (0, 0) ~> unmasked
@@ -163,7 +163,7 @@ def test_apply_quality_mask_overwrites_value(tmp_path: Path):
     )
 
 
-def test_apply_s2_quality_mask(tmp_path: Path):
+def test_apply_s2_quality_mask(tmp_path: Path) -> None:
     """Ensure every band is masked when there is no quality report"""
     mask_data = np.zeros((8, 2, 2), dtype="uint8")
     mask_data[2, 0, 1] = 1
