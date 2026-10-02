@@ -12,6 +12,7 @@ Commands:
 from __future__ import annotations
 
 import datetime
+import fnmatch
 import time
 from typing import TYPE_CHECKING
 
@@ -198,10 +199,20 @@ def _no_data(ax: plt.Axes, message: str, title: str) -> None:
     ax.set_title(title, fontsize=10)
 
 
+def _comparison_title(
+    dimension: str, versions: tuple[str, str], granules: tuple[str, ...]
+) -> str:
+    title = f"{dimension}: {versions[0]} vs {versions[1]}"
+    if granules:
+        title += f" (granules: {', '.join(granules)})"
+    return title
+
+
 def _plot_scatter(
     df: pd.DataFrame,
     versions: tuple[str, str],
     dimension: str,
+    granules: tuple[str, ...] = (),
 ) -> plt.Figure:
     task_groups = sorted(df["task_name"].unique())
     v1, v2 = versions
@@ -213,7 +224,7 @@ def _plot_scatter(
     }
 
     fig, axes = _metric_grid(len(task_groups))
-    fig.suptitle(f"{dimension}: {v1} vs {v2}", fontsize=11)
+    fig.suptitle(_comparison_title(dimension, versions, granules), fontsize=11)
 
     for row_idx, task_group in enumerate(task_groups):
         for col_idx, metric in enumerate(METRICS):
@@ -314,6 +325,7 @@ def _plot_distribution(
     df: pd.DataFrame,
     versions: tuple[str, str],
     dimension: str,
+    granules: tuple[str, ...] = (),
 ) -> plt.Figure:
     task_groups = sorted(df["task_name"].unique())
     cycle = plt.rcParams["axes.prop_cycle"].by_key()["color"]
@@ -321,7 +333,7 @@ def _plot_distribution(
     rng = np.random.default_rng(0)
 
     fig, axes = _metric_grid(len(task_groups))
-    fig.suptitle(f"{dimension}: {versions[0]} vs {versions[1]}", fontsize=11)
+    fig.suptitle(_comparison_title(dimension, versions, granules), fontsize=11)
 
     for row_idx, task_group in enumerate(task_groups):
         for col_idx, metric in enumerate(METRICS):
@@ -572,6 +584,12 @@ def _comparison_options(func):
                 help="Task(s) to plot (repeat for multiple, e.g. --tasks Fmask --tasks LaSRC). Defaults to all tasks in the data.",
             ),
             click.option(
+                "--granules",
+                multiple=True,
+                default=None,
+                help="Glob pattern(s) on input_granule_id to keep (repeat for multiple, e.g. --granules 'LC*'). Defaults to all granules.",
+            ),
+            click.option(
                 "--output", default=None, help="Save figure to file instead of showing"
             ),
         ]
@@ -581,7 +599,7 @@ def _comparison_options(func):
 
 
 def _load_granule_metrics(
-    inputs: tuple[str, ...], tasks: tuple[str, ...]
+    inputs: tuple[str, ...], tasks: tuple[str, ...], granules: tuple[str, ...]
 ) -> pd.DataFrame:
     df = pd.concat([pd.read_parquet(input_) for input_ in inputs])
 
@@ -591,8 +609,17 @@ def _load_granule_metrics(
     if tasks:
         df = df[df["task_name"].isin(tasks)]
 
+    if granules:
+        df = df[
+            df["input_granule_id"].map(
+                lambda gid: any(fnmatch.fnmatchcase(gid, pat) for pat in granules)
+            )
+        ]
+
     if df.empty:
-        raise click.ClickException("No rows with input_granule_id in the data.")
+        raise click.ClickException(
+            "No rows with input_granule_id matching the task/granule filters."
+        )
     return df
 
 
@@ -604,11 +631,14 @@ def scatter(
     x_val: str,
     y_val: str,
     tasks: tuple[str, ...],
+    granules: tuple[str, ...],
     output: str | None,
 ) -> None:
     """Paired scatter: dimension x vs y, one point per granule."""
-    df = _load_granule_metrics(inputs, tasks)
-    fig = _plot_scatter(df, versions=(x_val, y_val), dimension=dimension)
+    df = _load_granule_metrics(inputs, tasks, granules)
+    fig = _plot_scatter(
+        df, versions=(x_val, y_val), dimension=dimension, granules=granules
+    )
     _save_or_show(fig, output)
 
 
@@ -620,11 +650,14 @@ def distribution(
     x_val: str,
     y_val: str,
     tasks: tuple[str, ...],
+    granules: tuple[str, ...],
     output: str | None,
 ) -> None:
     """Box plot per dimension value (x, then y), one point per granule."""
-    df = _load_granule_metrics(inputs, tasks)
-    fig = _plot_distribution(df, versions=(x_val, y_val), dimension=dimension)
+    df = _load_granule_metrics(inputs, tasks, granules)
+    fig = _plot_distribution(
+        df, versions=(x_val, y_val), dimension=dimension, granules=granules
+    )
     _save_or_show(fig, output)
 
 
