@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import os
 from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 from mypy_boto3_s3 import S3Client
 
+from hls_utilities import check_solar_zenith_sentinel
 from hls_workflows.base import TaskFailure
 from hls_workflows.common import Paths
 from hls_workflows.granules import Sentinel2Granule
@@ -91,18 +91,14 @@ def test_GetGranuleDir(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
 @pytest.mark.parametrize("valid", [True, False])
 def test_CheckSolarZenith(
     sentinel_config: EnvConfig,
-    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     valid: bool,
 ) -> None:
     """Tests that we handle valid or invalid solar zenith angle."""
     granule_id = "GRANULE_ID"
-    validity = "valid" if valid else "invalid"
-
-    binary = tmp_path / "check_solar_zenith_sentinel"
-    binary.write_text(f"#!/bin/bash\necho {validity}")
-    binary.chmod(0o755)
-    monkeypatch.setenv("PATH", str(tmp_path), prepend=os.pathsep)
+    monkeypatch.setattr(
+        check_solar_zenith_sentinel, "solar_zenith_is_valid", lambda mtd_tl: valid
+    )
 
     task = CheckSolarZenith.map(granule_id)("check_sza")
 

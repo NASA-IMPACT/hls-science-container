@@ -1,70 +1,40 @@
-import click
+from pathlib import Path
+
 from espa import Metadata
 
+HLS_PRODUCT = "hls"
 
-@click.command()
-@click.argument(
-    "inputxmlfile",
-    type=click.Path(
-        dir_okay=False,
-        file_okay=True,
-    ),
-)
-@click.argument(
-    "outputxmlfile",
-    type=click.Path(),
-)
-def main(
-    inputxmlfile,
-    outputxmlfile,
-):
-    mm = Metadata(xml_filename=inputxmlfile)
+BAND_RENAMES: dict[str, str] = {
+    "sr_band1": "band01",
+    "sr_band2": "band02-blue",
+    "sr_band3": "band03-green",
+    "sr_band4": "band04-red",
+    "sr_band5": "band05",
+    "sr_band6": "band06",
+    "sr_band7": "band07",
+    "radsat_qa": "bandQA",
+    "toa_band9": "band09",
+    "bt_band10": "band10",
+    "bt_band11": "band11",
+    "sr_aerosol_qa": "CLOUD",
+}
+
+
+def create_landsat_sr_hdf_xml(input_xml: Path | str, output_xml: Path | str) -> None:
+    """Create the ESPA XML for the Landsat HLS SR HDF
+
+    HLS bands are renamed to their HLS names, and all other bands are removed.
+    """
+    mm = Metadata(xml_filename=str(input_xml))
     mm.parse()
-    hls_product = "hls"
     for band in mm.xml_object.bands.iterchildren():
-        if band.get("name") == "sr_band1":
-            band.set("name", "band01")
-            band.set("product", hls_product)
-        elif band.get("name") == "sr_band2":
-            band.set("name", "band02-blue")
-            band.set("product", hls_product)
-        elif band.get("name") == "sr_band3":
-            band.set("name", "band03-green")
-            band.set("product", hls_product)
-        elif band.get("name") == "sr_band4":
-            band.set("name", "band04-red")
-            band.set("product", hls_product)
-        elif band.get("name") == "sr_band5":
-            band.set("name", "band05")
-            band.set("product", hls_product)
-        elif band.get("name") == "sr_band6":
-            band.set("name", "band06")
-            band.set("product", hls_product)
-        elif band.get("name") == "sr_band7":
-            band.set("name", "band07")
-            band.set("product", hls_product)
-        elif band.get("name") == "radsat_qa":
-            band.set("name", "bandQA")
-            band.set("product", hls_product)
-        elif band.get("name") == "toa_band9":
-            band.set("name", "band09")
-            band.set("product", hls_product)
-        elif band.get("name") == "bt_band10":
-            band.set("name", "band10")
-            band.set("product", hls_product)
-        elif band.get("name") == "bt_band11":
-            band.set("name", "band11")
-            band.set("product", hls_product)
-        elif band.get("name") == "sr_aerosol_qa":
-            band.set("name", "CLOUD")
-            band.set("product", hls_product)
+        name = band.get("name")
+        if name in BAND_RENAMES:
+            band.set("name", BAND_RENAMES[name])
+            band.set("product", HLS_PRODUCT)
 
     for band in mm.xml_object.bands.iterchildren():
-        if band.get("product") != hls_product:
+        if band.get("product") != HLS_PRODUCT:
             mm.xml_object.bands.remove(band)
 
-    mm.write(xml_filename=outputxmlfile)
-
-
-if __name__ == "__main__":
-    main()
+    mm.write(xml_filename=str(output_xml))

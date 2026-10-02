@@ -12,10 +12,13 @@ import shutil
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 import boto3
 
+from hls_utilities import check_sentinel_clouds, check_solar_zenith_sentinel
+from hls_utilities.apply_s2_quality_mask import apply_s2_quality_mask
+from hls_utilities.create_sr_hdf_xml import create_sr_hdf_xml
 from hls_workflows.base import (
     AssetBundle,
     Assets,
@@ -177,20 +180,11 @@ class CheckSolarZenith(MappedTask):
     requires_factory = lambda gid: (mtd_tl_asset(gid),)
     provides_factory = lambda gid: (solar_valid_asset(gid),)
 
-    def __post_init__(self) -> None:
-        validate_command("check_solar_zenith_sentinel")
-
     def run(self, bundle: AssetBundle) -> AssetBundle:
         mtd_tl = bundle[self.requires[0]]
 
         logger.info("Checking solar zenith angle")
-        result = run_command(
-            ["check_solar_zenith_sentinel", str(mtd_tl)],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        if result.stdout.strip() == "invalid":
+        if not check_solar_zenith_sentinel.solar_zenith_is_valid(mtd_tl):
             raise TaskFailure("Invalid solar zenith angle", exit_code=3)
 
         return {solar_valid_asset(self.granule_id): True}
@@ -257,13 +251,10 @@ class ApplyQualityMask(MappedTask):
     requires_factory = lambda gid: (granule_dir_asset(gid), solar_valid_asset(gid))
     provides_factory = lambda gid: (quality_mask_applied_asset(gid),)
 
-    def __post_init__(self) -> None:
-        validate_command("apply_s2_quality_mask")
-
     def run(self, bundle: AssetBundle) -> AssetBundle:
         inner_dir = bundle[granule_dir_asset(self.granule_id)]
         logger.info(f"Applying quality mask in {inner_dir}")
-        run_command(["apply_s2_quality_mask", str(inner_dir)], check=True)
+        apply_s2_quality_mask(inner_dir)
         return {quality_mask_applied_asset(self.granule_id): True}
 
 
@@ -330,7 +321,6 @@ class RunFmaskV5(MappedTask):
 
     def __post_init__(self) -> None:
         validate_command("fmask")
-        validate_command("check_sentinel_clouds")
         validate_command("gdal_translate")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
@@ -389,13 +379,7 @@ class RunFmaskV5(MappedTask):
         2. Fmask v5 summary shows less than 2% clear pixels.
         """
         logger.info("Checking Sentinel-2 metadata cloud cover...")
-        result = run_command(
-            ["check_sentinel_clouds", str(mtd_msil1c)],
-            check=True,
-            text=True,
-            capture_output=True,
-        )
-        l1c_invalid = result.stdout.strip() == "invalid"
+        l1c_invalid = not check_sentinel_clouds.cloud_cover_is_valid(mtd_msil1c)
         fmask_invalid = self._parse_fmask_v5_clear(fmask_summary) < 2.0
         return l1c_invalid and fmask_invalid
 
@@ -526,26 +510,26 @@ class ProcessHdfParts(MappedTask):
     provides_factory = lambda gid: (split_hdf_parts_asset(gid),)
 
     def __post_init__(self) -> None:
-        validate_command("create_sr_hdf_xml")
-        validate_command("convert_sentinel_to_espa")
+        validate_command("convert_espa_to_hdf")
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
         espa_xml = bundle[espa_xml_asset(self.granule_id)]
         espa_id = espa_xml.stem
 
-        # NOTE: the programs below do NOT work with fully qualified file
-        #       paths, only with relative paths.
+        # NOTE: these do NOT work with fully qualified file paths, only with
+        #       relative paths.
         os.chdir(espa_xml.parent)
 
         parts = Paths()
-        for part, suffix in [("one", "1"), ("two", "2")]:
+        part_suffixes: list[tuple[Literal["one", "two"], str]] = [
+            ("one", "1"),
+            ("two", "2"),
+        ]
+        for part, suffix in part_suffixes:
             hls_xml = espa_xml.parent / f"{espa_id}_{suffix}_hls.xml"
             out_hdf = espa_xml.parent / f"{espa_id}_sr_{suffix}.hdf"
 
-            # create_sr_hdf_xml "$espa_xml" "$hls_espa_one_xml" one
-            run_command(
-                ["create_sr_hdf_xml", espa_xml.name, hls_xml.name, part], check=True
-            )
+            create_sr_hdf_xml(espa_xml.name, hls_xml.name, part)
 
             # convert_espa_to_hdf --xml="$hls_espa_one_xml" --hdf="$sr_hdf_one"
             run_command(

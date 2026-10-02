@@ -1,25 +1,19 @@
-import click
+from pathlib import Path
+
 from lxml import etree
 
+MAX_CLOUD_COVER = 95.0
 
-@click.command()
-@click.argument(
-    "inputxml",
-    type=click.Path(
-        dir_okay=False,
-        file_okay=True,
-    ),
-)
-def main(inputxml):
-    """check_sentinel_clouds MTD_MSIL1C.xml"""
-    doc = etree.parse(inputxml)
+
+def cloud_cover_is_valid(mtd_msil1c: Path) -> bool:
+    """Check the Sentinel-2 L1C cloud cover assessment is within limits
+
+    Parameters
+    ----------
+    mtd_msil1c
+        Path to the granule's `MTD_MSIL1C.xml` metadata file.
+    """
+    doc = etree.parse(mtd_msil1c)
     element = doc.xpath("//Cloud_Coverage_Assessment")[0]
     cloud = float(element.text)
-    if cloud > 95:
-        click.echo("invalid")
-    else:
-        click.echo("valid")
-
-
-if __name__ == "__main__":
-    main()
+    return cloud <= MAX_CLOUD_COVER

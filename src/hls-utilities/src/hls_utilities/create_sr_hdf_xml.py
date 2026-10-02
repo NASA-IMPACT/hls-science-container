@@ -1,84 +1,60 @@
-import click
+import logging
+from pathlib import Path
+from typing import Literal
+
 from espa import Metadata
 
+logger = logging.getLogger(__name__)
 
-@click.command()
-@click.argument(
-    "inputxmlfile",
-    type=click.Path(
-        dir_okay=False,
-        file_okay=True,
-    ),
-)
-@click.argument(
-    "outputxmlfile",
-    type=click.Path(),
-)
-@click.argument(
-    "hdffile",
-    type=click.Choice(
-        ["one", "two"],
-        case_sensitive=True,
-    ),
-)
-def main(inputxmlfile, outputxmlfile, hdffile):
-    mm = Metadata(xml_filename=inputxmlfile)
+HLS_PRODUCT = "hls"
+
+# Sentinel-2 bands are split across two HDF files ("parts"), with the ESPA band
+# names renamed to their HLS equivalents
+BAND_RENAMES: dict[str, dict[str, str]] = {
+    "one": {
+        "sr_band1": "band01",
+        "sr_band2": "blue",
+        "sr_band3": "green",
+        "sr_band4": "red",
+        "sr_band5": "band05",
+        "sr_band6": "band06",
+        "sr_band7": "band07",
+        "sr_band8": "band08",
+    },
+    "two": {
+        "sr_band8a": "band8a",
+        "sr_band9": "band09",
+        "sr_band10": "band10",
+        "sr_band11": "band11",
+        "sr_band12": "band12",
+        "sr_aerosol_qa": "CLOUD",
+    },
+}
+
+
+def create_sr_hdf_xml(
+    input_xml: Path | str,
+    output_xml: Path | str,
+    part: Literal["one", "two"],
+) -> None:
+    """Create the ESPA XML for one part of the Sentinel-2 HLS SR HDF
+
+    Bands belonging to the requested part are renamed to their HLS names, and
+    all other bands are removed.
+    """
+    renames = BAND_RENAMES[part]
+
+    mm = Metadata(xml_filename=str(input_xml))
     mm.parse()
-    hls_product = "hls"
-    if hdffile == "one":
-        for band in mm.xml_object.bands.iterchildren():
-            if band.get("name") == "sr_band1":
-                band.set("name", "band01")
-                band.set("product", hls_product)
-            elif band.get("name") == "sr_band2":
-                band.set("name", "blue")
-                band.set("product", hls_product)
-            elif band.get("name") == "sr_band3":
-                band.set("name", "green")
-                band.set("product", hls_product)
-            elif band.get("name") == "sr_band4":
-                band.set("name", "red")
-                band.set("product", hls_product)
-            elif band.get("name") == "sr_band5":
-                band.set("name", "band05")
-                band.set("product", hls_product)
-            elif band.get("name") == "sr_band6":
-                band.set("name", "band06")
-                band.set("product", hls_product)
-            elif band.get("name") == "sr_band7":
-                band.set("name", "band07")
-                band.set("product", hls_product)
-            elif band.get("name") == "sr_band8":
-                band.set("name", "band08")
-                band.set("product", hls_product)
-    elif hdffile == "two":
-        for band in mm.xml_object.bands.iterchildren():
-            if band.get("name") == "sr_band8a":
-                band.set("name", "band8a")
-                band.set("product", hls_product)
-            elif band.get("name") == "sr_band9":
-                band.set("name", "band09")
-                band.set("product", hls_product)
-            elif band.get("name") == "sr_band10":
-                band.set("name", "band10")
-                band.set("product", hls_product)
-            elif band.get("name") == "sr_band11":
-                band.set("name", "band11")
-                band.set("product", hls_product)
-            elif band.get("name") == "sr_band12":
-                band.set("name", "band12")
-                band.set("product", hls_product)
-            elif band.get("name") == "sr_aerosol_qa":
-                band.set("name", "CLOUD")
-                band.set("product", hls_product)
+    for band in mm.xml_object.bands.iterchildren():
+        name = band.get("name")
+        if name in renames:
+            band.set("name", renames[name])
+            band.set("product", HLS_PRODUCT)
 
     for band in mm.xml_object.bands.iterchildren():
-        if band.get("product") != hls_product:
-            print(band.get("name"))
+        if band.get("product") != HLS_PRODUCT:
+            logger.debug(f"Removing band {band.get('name')}")
             mm.xml_object.bands.remove(band)
 
-    mm.write(xml_filename=outputxmlfile)
-
-
-if __name__ == "__main__":
-    main()
+    mm.write(xml_filename=str(output_xml))

@@ -1,19 +1,19 @@
-import click
+from pathlib import Path
 
 from hls_utilities.mtlutils import parsemeta
 
+MAX_SOLAR_ZENITH = 76.0
 
-@click.command()
-@click.argument(
-    "inputmtl",
-    type=click.Path(
-        dir_okay=False,
-        file_okay=True,
-    ),
-)
-def main(inputmtl):
-    """check_solar_zenith_landsat _MTL.txt"""
-    metadata = parsemeta(inputmtl)
+
+def solar_zenith_is_valid(mtl: Path) -> bool:
+    """Check the Landsat scene center solar zenith angle is within limits
+
+    Parameters
+    ----------
+    mtl
+        Path to the granule's `_MTL.txt` metadata file.
+    """
+    metadata = parsemeta(str(mtl))
     try:
         sun_elevation = float(
             metadata["L1_METADATA_FILE"]["IMAGE_ATTRIBUTES"]["SUN_ELEVATION"]
@@ -24,11 +24,4 @@ def main(inputmtl):
         )
 
     solar_zenith = 90 - sun_elevation
-    if solar_zenith > 76:
-        click.echo("invalid")
-    else:
-        click.echo("valid")
-
-
-if __name__ == "__main__":
-    main()
+    return solar_zenith <= MAX_SOLAR_ZENITH

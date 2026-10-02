@@ -13715,7 +13715,6 @@ packages:
   name: hls-utilities
   requires_dist:
   - boto3
-  - click
   - espa-python-library @ git+https://github.com/USGS-EROS/espa-python-library.git@v2.0.0
   - lxml
   - numpy
@@ -13729,6 +13728,7 @@ packages:
   requires_dist:
   - boto3>=1.42.34
   - click>=8.1
+  - hls-utilities
   - psutil>=6.0
   - boto3-stubs[logs,s3]>=1.36.0 ; extra == 'dev'
   - moto[s3]>=5.0.0 ; extra == 'dev'

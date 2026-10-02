@@ -10,6 +10,9 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 import boto3
 
+from hls_utilities.check_solar_zenith_landsat import solar_zenith_is_valid
+from hls_utilities.create_landsat_sr_hdf_xml import create_landsat_sr_hdf_xml
+from hls_utilities.download_landsat import get_landsat
 from hls_workflows.base import (
     Asset,
     AssetBundle,
@@ -103,28 +106,15 @@ class DownloadGranule(Task):
     requires = (CONFIG,)
     provides = (CONFIG, GRANULE_DIR, MTL_FILE)
 
-    def __post_init__(self) -> None:
-        # FIXME: import & run the Python code instead of calling via CLI
-        validate_command("download_landsat")
-
     def run(self, inputs: AssetBundle) -> dict[Asset[Any], Any]:
         config: EnvConfig = inputs[CONFIG]
 
         prefix = config.landsat_granule.usgs_c2_key_prefix
 
         logger.info(f"Downloading {config.granule} from {config.input_bucket}...")
-        result = run_command(
-            [
-                "download_landsat",
-                config.input_bucket,
-                prefix,
-                str(config.granule_dir),
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
+        downloaded_granule_id = get_landsat(
+            config.input_bucket, prefix, config.granule_dir
         )
-        downloaded_granule_id = result.stdout.strip()
 
         granule_dir = config.granule_dir
         if downloaded_granule_id != config.granule:
@@ -160,9 +150,6 @@ class LocalGranule(Task):
 
     name: str
     local_granule_dir: Path
-
-    def __post_init__(self) -> None:
-        validate_command("download_landsat")
 
     def run(self, inputs: AssetBundle) -> dict[Asset[Any], Any]:
         config: EnvConfig = inputs[CONFIG]
@@ -220,21 +207,10 @@ class CheckSolarZenith(Task):
     requires = (MTL_FILE,)
     provides = (SOLAR_VALID,)
 
-    def __post_init__(self) -> None:
-        # FIXME: import & run the Python code instead of calling via CLI
-        validate_command("check_solar_zenith_landsat")
-
     def run(self, inputs: AssetBundle) -> AssetBundle:
         mtl_path: Path = inputs[MTL_FILE]
         logger.info("Checking Solar Zenith...")
-        result = run_command(
-            ["check_solar_zenith_landsat", str(mtl_path)],
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-
-        if result.stdout.strip() == "invalid":
+        if not solar_zenith_is_valid(mtl_path):
             raise TaskFailure("Invalid solar zenith angle", exit_code=3)
 
         return {SOLAR_VALID: True}
@@ -395,9 +371,6 @@ class CreateHlsXml(Task):
     requires = (CONFIG, ESPA_XML, RENAMED_ANGLES)
     provides = (HLS_XML,)
 
-    def __post_init__(self) -> None:
-        validate_command("create_landsat_sr_hdf_xml")
-
     def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
         config: EnvConfig = inputs[CONFIG]
         espa_xml: Path = inputs[ESPA_XML]
@@ -406,9 +379,7 @@ class CreateHlsXml(Task):
 
         logger.info("Creating updated ESPA XML")
         os.chdir(granule_dir)
-        run_command(
-            ["create_landsat_sr_hdf_xml", str(espa_xml), str(hls_xml.name)], check=True
-        )
+        create_landsat_sr_hdf_xml(espa_xml, hls_xml.name)
 
         if not hls_xml.exists():
             raise RuntimeError(f"Output file missing: {hls_xml}")

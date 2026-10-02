@@ -343,7 +343,6 @@ version = "1.11.4"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },
-    { name = "click" },
     { name = "espa-python-library" },
     { name = "lxml" },
     { name = "numpy" },
@@ -365,7 +364,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "boto3" },
-    { name = "click" },
     { name = "espa-python-library", git = "https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0" },
     { name = "lxml" },
     { name = "moto", extras = ["s3"], marker = "extra == 'dev'", specifier = ">=5.0.0" },
