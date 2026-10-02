@@ -1,3 +1,4 @@
+import logging
 import re
 from pathlib import Path
 
@@ -21,3 +22,8 @@ def test_solar_zenith_is_invalid(mtl: Path, tmp_path: Path):
     invalid_mtl = tmp_path / mtl.name
     invalid_mtl.write_text(text)
     assert not solar_zenith_is_valid(invalid_mtl)
+
+
+def test_mtl_parsing_does_not_disable_logging():
+    solar_zenith_is_valid(MTL_C2)
+    assert logging.root.manager.disable == logging.NOTSET

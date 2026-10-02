@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from hls_utilities.mtlutils import parsemeta
+from hls_utilities.vendored.mtlutils import parsemeta
 
 MAX_SOLAR_ZENITH = 76.0
 
