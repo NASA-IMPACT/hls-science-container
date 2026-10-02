@@ -231,7 +231,7 @@ class CheckSolarZenith(Task):
             ["check_solar_zenith_landsat", str(mtl_path)],
             capture_output=True,
             text=True,
-            check=False,
+            check=True,
         )
 
         if result.stdout.strip() == "invalid":

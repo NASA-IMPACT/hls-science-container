@@ -1,4 +1,5 @@
-from collections.abc import Generator
+import subprocess
+from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -8,6 +9,7 @@ import pytest
 if TYPE_CHECKING:
     from mypy_boto3_s3 import S3Client
 
+from hls_nextgen_orchestration.base import TaskFailure
 from hls_nextgen_orchestration.landsat_ac.assets import (
     CONFIG,
     ESPA_XML,
@@ -103,6 +105,31 @@ def test_check_solar_zenith(mock_binaries: Path, mock_config: EnvConfig) -> None
     task = CheckSolarZenith("test_solar")
     outputs = task.run({MTL_FILE: mock_config.granule_dir / f"{GRANULE}_MTL.txt"})
     assert outputs[SOLAR_VALID] is True
+
+
+def test_check_solar_zenith_invalid(
+    install_mock_binaries: Callable[[dict[str, str]], Path], mock_config: EnvConfig
+) -> None:
+    install_mock_binaries({"check_solar_zenith_landsat": "#!/bin/bash\necho invalid"})
+    mtl = mock_config.granule_dir / f"{GRANULE}_MTL.txt"
+    mtl.touch()
+
+    task = CheckSolarZenith("test_solar")
+    with pytest.raises(TaskFailure) as exc_info:
+        task.run({MTL_FILE: mtl})
+    assert exc_info.value.exit_code == 3
+
+
+def test_check_solar_zenith_crash(
+    install_mock_binaries: Callable[[dict[str, str]], Path], mock_config: EnvConfig
+) -> None:
+    install_mock_binaries({"check_solar_zenith_landsat": "#!/bin/bash\nexit 1"})
+    mtl = mock_config.granule_dir / f"{GRANULE}_MTL.txt"
+    mtl.touch()
+
+    task = CheckSolarZenith("test_solar")
+    with pytest.raises(subprocess.CalledProcessError):
+        task.run({MTL_FILE: mtl})
 
 
 def test_run_fmask_v5(mock_binaries: Path, mock_config: EnvConfig) -> None:
