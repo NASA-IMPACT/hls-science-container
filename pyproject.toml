@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
-addopts = "--ignore=src/hls-nextgen-orchestration/tests/benchmarks"
+addopts = "--ignore=src/hls-workflows/tests/benchmarks"
 
 [tool.ruff]
 line-length = 88

@@ -2,5 +2,5 @@
 
 # Exit on any error
 set -o errexit
-hls-nextgen-orchestration landsat-tile
+hls-workflows landsat-tile
 exit $?

@@ -3,5 +3,5 @@
 # Exit on any error
 set -o errexit
 
-hls-nextgen-orchestration landsat-ac
+hls-workflows landsat-ac
 exit $?
