@@ -33,7 +33,7 @@ track **runtime, peak memory, and average CPU** together — including the heavy
 most of the work happens — all three are emitted into a single `customSmallerIsBetter` JSON and published in one step
 (chart group "HLS pipeline benchmarks").
 
-The measurements reuse the same sampler the pipelines use in production: `hls_nextgen_orchestration.metrics`. Its
+The measurements reuse the same sampler the pipelines use in production: `hls_workflows.metrics`. Its
 `_PollingThread` samples the whole process tree's peak RSS and rolls up subprocess CPU via `cpu_times()`. Each benchmark
 injects an `InMemorySink` into `construct_pipeline(..., metric_sink=...)`, so the pipeline's existing per-task
 (`collect()`, gated by `instrument=True`) and aggregate (`collect_pipeline()`) measurements are captured locally instead
@@ -135,7 +135,7 @@ docker run --rm \
   -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
   -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
   hls-science-container:benchmark \
-  "cd /app && pytest src/hls-nextgen-orchestration/tests/benchmarks -v"
+  "cd /app && pytest src/hls-workflows/tests/benchmarks -v"
 ```
 
 The metrics (runtime, peak memory, CPU) are written to `$BENCHMARK_OUTPUT_DIR/resources.json`.

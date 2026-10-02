@@ -1,0 +1,573 @@
+from __future__ import annotations
+
+import datetime as dt
+import logging
+import os
+import shutil
+from dataclasses import dataclass, field, replace
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, ClassVar
+
+import boto3
+
+from hls_workflows.base import (
+    Asset,
+    AssetBundle,
+    Assets,
+    DataSource,
+    Task,
+    TaskFailure,
+)
+from hls_workflows.common.utils import run_command
+from hls_workflows.constants import FMASK_VERSION_STRINGS
+from hls_workflows.utils import validate_command
+
+from .assets import (
+    CONFIG,
+    ESPA_XML,
+    FINAL_HDF,
+    FMASK_BIN,
+    GRANULE_DIR,
+    HLS_XML,
+    LASRC_DONE,
+    METADATA,
+    MTL_FILE,
+    RENAMED_ANGLES,
+    SCANLINE_DONE,
+    SOLAR_VALID,
+    SR_HDF,
+    UPLOAD_COMPLETE,
+    EnvConfig,
+    ProcessingMetadata,
+)
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3 import S3Client
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True, kw_only=True)
+class EnvSource(DataSource):
+    """Reads environment variables to configure the processing job."""
+
+    provides = (CONFIG,)
+
+    granule_id: str
+    scratch_dir: Path = field(
+        default_factory=lambda: Path(os.getenv("SCRATCH_DIR", "/var/scratch"))
+    )
+    working_dir: Path | None = None
+    granule_dir: Path | None = None
+    purge_granule_dir: bool = True
+
+    def fetch(self) -> dict[Asset[EnvConfig], EnvConfig]:
+        job_id = os.environ.get("AWS_BATCH_JOB_ID", "local_job")
+
+        working_dir = self.working_dir or self.scratch_dir / job_id
+        granule_dir = self.granule_dir or working_dir / self.granule_id
+
+        config = EnvConfig(
+            job_id=job_id,
+            granule=self.granule_id,
+            input_bucket=os.environ["INPUT_BUCKET"],
+            output_bucket=os.environ["OUTPUT_BUCKET"],
+            ac_code=os.environ["ACCODE"],
+            cloud_masking_code=FMASK_VERSION_STRINGS["v5"],
+            working_dir=working_dir,
+            granule_dir=granule_dir,
+            debug_bucket=os.environ.get("DEBUG_BUCKET"),
+        )
+
+        if config.granule_dir.exists() and self.purge_granule_dir:
+            logger.info(f"Deleting pre-existing {granule_dir=}")
+            shutil.rmtree(config.granule_dir)
+
+        if not config.granule_dir.exists():
+            logger.info(f"Creating {granule_dir=}")
+            config.granule_dir.mkdir(parents=True, exist_ok=True)
+
+        return {CONFIG: config}
+
+
+@dataclass(frozen=True)
+class DownloadGranule(Task):
+    """Download the Landsat granule
+
+    If a RT version is requested and it has been replaced by a standard processing
+    version then the granule ID will be updated. For example,
+    `LC08_L1TP_116030_20260107_20260107_02_RT` was replaced by the equivalent
+    standard version, `LC08_L1TP_116030_20260107_20260114_02_T1`.
+    """
+
+    requires = (CONFIG,)
+    provides = (CONFIG, GRANULE_DIR, MTL_FILE)
+
+    def __post_init__(self) -> None:
+        # FIXME: import & run the Python code instead of calling via CLI
+        validate_command("download_landsat")
+
+    def run(self, inputs: AssetBundle) -> dict[Asset[Any], Any]:
+        config: EnvConfig = inputs[CONFIG]
+
+        prefix = config.landsat_granule.usgs_c2_key_prefix
+
+        logger.info(f"Downloading {config.granule} from {config.input_bucket}...")
+        result = run_command(
+            [
+                "download_landsat",
+                config.input_bucket,
+                prefix,
+                str(config.granule_dir),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        downloaded_granule_id = result.stdout.strip()
+
+        granule_dir = config.granule_dir
+        if downloaded_granule_id != config.granule:
+            logger.info(
+                f"Downloaded an updated granule with ID={downloaded_granule_id}"
+            )
+            # Fmask v5 derives its expected MTL path as folder_name + "_MTL.txt",
+            # so the directory must be named after the actual granule ID.
+            granule_dir = config.granule_dir.parent / downloaded_granule_id
+            config.granule_dir.rename(granule_dir)
+
+        updated_config = replace(
+            config, granule=downloaded_granule_id, granule_dir=granule_dir
+        )
+
+        mtl_path = granule_dir / f"{downloaded_granule_id}_MTL.txt"
+        if not mtl_path.exists():
+            raise RuntimeError(f"Output file missing: {mtl_path}")
+
+        return {
+            CONFIG: updated_config,
+            GRANULE_DIR: granule_dir,
+            MTL_FILE: mtl_path,
+        }
+
+
+@dataclass(frozen=True)
+class LocalGranule(Task):
+    """Locate and describe a Landsat granule on local storage"""
+
+    requires = (CONFIG,)
+    provides = (CONFIG, GRANULE_DIR, MTL_FILE)
+
+    name: str
+    local_granule_dir: Path
+
+    def __post_init__(self) -> None:
+        validate_command("download_landsat")
+
+    def run(self, inputs: AssetBundle) -> dict[Asset[Any], Any]:
+        config: EnvConfig = inputs[CONFIG]
+
+        logger.info(f"Copying {self.local_granule_dir} to {config.granule_dir=}")
+        shutil.copytree(self.local_granule_dir, config.granule_dir, dirs_exist_ok=True)
+
+        mtl_paths = list(config.granule_dir.glob("*_MTL.txt"))
+        if len(mtl_paths) != 1:
+            raise RuntimeError("Cannot locate the _MTL.txt file")
+        mtl_path = mtl_paths[0]
+        granule = mtl_path.name.rstrip("_MTL.txt")
+        logger.info(f"Found {granule=} inside of {config.granule_dir}")
+
+        return {
+            CONFIG: replace(config, granule=granule),
+            GRANULE_DIR: config.granule_dir,
+            MTL_FILE: mtl_path,
+        }
+
+
+@dataclass(frozen=True)
+class ParseMetadata(Task):
+    """Parse metadata, determining output filename and prefix"""
+
+    requires = (CONFIG,)
+    provides = (METADATA,)
+
+    def run(self, inputs: AssetBundle) -> AssetBundle:
+        config: EnvConfig = inputs[CONFIG]
+
+        # Use the Dataclass property from EnvConfig
+        granule = config.landsat_granule
+
+        # Construct output names using the parsed object
+        # Format: YYYY-MM-DD_PPPRRR
+        date_str = granule.acquisition_date.strftime("%Y-%m-%d")
+        output_name = f"{date_str}_{granule.path_row}"
+
+        # Bucket key: YYYY-MM-DD/PPPRRR
+        bucket_key = f"{date_str}/{granule.path_row}"
+
+        return {
+            METADATA: ProcessingMetadata(
+                output_name=output_name,
+                bucket_key=bucket_key,
+            )
+        }
+
+
+@dataclass(frozen=True)
+class CheckSolarZenith(Task):
+    """Check if solar zenith angle (SZA) is too low to process"""
+
+    requires = (MTL_FILE,)
+    provides = (SOLAR_VALID,)
+
+    def __post_init__(self) -> None:
+        # FIXME: import & run the Python code instead of calling via CLI
+        validate_command("check_solar_zenith_landsat")
+
+    def run(self, inputs: AssetBundle) -> AssetBundle:
+        mtl_path: Path = inputs[MTL_FILE]
+        logger.info("Checking Solar Zenith...")
+        result = run_command(
+            ["check_solar_zenith_landsat", str(mtl_path)],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        if result.stdout.strip() == "invalid":
+            raise TaskFailure("Invalid solar zenith angle", exit_code=3)
+
+        return {SOLAR_VALID: True}
+
+
+@dataclass(frozen=True)
+class RunFmaskV5(Task):
+    """Run Fmask v5 on a Landsat L1 granule directory."""
+
+    instrument = True
+    requires = (CONFIG, GRANULE_DIR)
+    provides = (FMASK_BIN,)
+
+    def __post_init__(self) -> None:
+        validate_command("fmask")
+        validate_command("gdal_translate")
+
+    def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
+        granule_dir: Path = inputs[GRANULE_DIR]
+        fmask_bin_path = granule_dir / "fmask.bin"
+
+        model_name = "UPL"
+        cmd = [
+            "fmask",
+            f"--imagepath={granule_dir}",
+            f"--model={model_name}",
+            "--dcloud=1",
+            "--dshadow=5",
+        ]
+        logger.info("Running Fmask v5...")
+        run_command(cmd, check=True)
+
+        fmask_tif = granule_dir / f"{granule_dir.name}_{model_name}.tif"
+        if not fmask_tif.exists():
+            raise RuntimeError(f"Expected Fmask v5 output missing: {fmask_tif}")
+
+        logger.info("Converting Fmask v5 output to ENVI binary...")
+        run_command(
+            ["gdal_translate", "-of", "ENVI", str(fmask_tif), str(fmask_bin_path)],
+            check=True,
+        )
+
+        if not fmask_bin_path.exists():
+            raise RuntimeError(f"Output file missing: {fmask_bin_path}")
+        return {FMASK_BIN: fmask_bin_path}
+
+
+@dataclass(frozen=True)
+class ConvertScanline(Task):
+    """Convert tiled TIFFs to scanline (BIL) format ahead of ESPA format conversion"""
+
+    # Requires "FMASK_BIN" to keep granule dir clean since Fmask
+    # will have issues if this runs first.
+    requires: ClassVar[Assets] = (GRANULE_DIR, FMASK_BIN)
+    provides = (SCANLINE_DONE,)
+
+    def __post_init__(self) -> None:
+        validate_command("gdal_translate")
+
+    def run(self, inputs: AssetBundle) -> dict[Asset[bool], bool]:
+        granule_dir: Path = inputs[GRANULE_DIR]
+        tifs = list(granule_dir.glob("*.TIF"))
+        logger.info(f"Converting {len(tifs)} TIFs to scanline...")
+        for f in tifs:
+            scan_name = f.with_name(f"{f.stem}_scan.tif")
+            run_command(
+                ["gdal_translate", "-co", "TILED=NO", str(f), str(scan_name)],
+                check=True,
+            )
+            f.unlink()
+            scan_name.rename(f)
+            if not f.exists():
+                raise RuntimeError(f"Failed to create scanline file: {f}")
+        return {SCANLINE_DONE: True}
+
+
+@dataclass(frozen=True)
+class ConvertToEspa(Task):
+    """Convert to ESPA format ahead of LaSRC"""
+
+    requires = (CONFIG, MTL_FILE, GRANULE_DIR, SCANLINE_DONE)
+    provides = (ESPA_XML,)
+
+    def __post_init__(self) -> None:
+        validate_command("convert_lpgs_to_espa")
+
+    def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
+        config: EnvConfig = inputs[CONFIG]
+        mtl_path: Path = inputs[MTL_FILE]
+        granule_dir: Path = inputs[GRANULE_DIR]
+        espa_xml_path = granule_dir / f"{config.granule}.xml"
+
+        logger.info("Convert to ESPA")
+        os.chdir(granule_dir)
+        run_command(["convert_lpgs_to_espa", f"--mtl={mtl_path}"], check=True)
+
+        if not espa_xml_path.exists():
+            raise RuntimeError(f"Output file missing: {espa_xml_path}")
+
+        return {ESPA_XML: espa_xml_path}
+
+
+@dataclass(frozen=True)
+class RunLaSRC(Task):
+    """Run LaSRC to create atmospherically corrected surface reflectance estimates"""
+
+    instrument = True
+    requires = (ESPA_XML, SOLAR_VALID)
+    provides = (LASRC_DONE,)
+
+    def __post_init__(self) -> None:
+        validate_command("do_lasrc_landsat.py")
+
+    def run(self, inputs: AssetBundle) -> dict[Asset[bool], bool]:
+        xml_file: Path = inputs[ESPA_XML]
+        granule_dir = xml_file.parent
+
+        os.chdir(granule_dir)
+        logger.info("Run LaSRC")
+        run_command(["do_lasrc_landsat.py", "--xml", str(xml_file)], check=True)
+
+        # FIXME: check that we expected output files exist
+        return {LASRC_DONE: True}
+
+
+@dataclass(frozen=True)
+class RenameAngleBands(Task):
+    """Rename sun/sensor geometry angle bands"""
+
+    requires = (CONFIG, METADATA, GRANULE_DIR, LASRC_DONE)
+    provides = (RENAMED_ANGLES,)
+
+    def run(self, inputs: AssetBundle) -> dict[Asset[bool], bool]:
+        config: EnvConfig = inputs[CONFIG]
+        meta = inputs[METADATA]
+        granule_dir: Path = inputs[GRANULE_DIR]
+        old_base = config.granule
+        new_base = meta.output_name
+
+        logger.info("Rename angle bands")
+        suffixes = ["_VAA", "_VZA", "_SAA", "_SZA"]
+        extensions = [".hdr", ".img"]
+        for suffix in suffixes:
+            for ext in extensions:
+                old = granule_dir / f"{old_base}{suffix}{ext}"
+                new = granule_dir / f"{new_base}{suffix}{ext}"
+                if old.exists():
+                    old.rename(new)
+                else:
+                    logger.warning(f"File {old} not found for renaming")
+        return {RENAMED_ANGLES: True}
+
+
+@dataclass(frozen=True)
+class CreateHlsXml(Task):
+    """Create HLS project specific ESPA XML metadata"""
+
+    requires = (CONFIG, ESPA_XML, RENAMED_ANGLES)
+    provides = (HLS_XML,)
+
+    def __post_init__(self) -> None:
+        validate_command("create_landsat_sr_hdf_xml")
+
+    def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
+        config: EnvConfig = inputs[CONFIG]
+        espa_xml: Path = inputs[ESPA_XML]
+        granule_dir = espa_xml.parent
+        hls_xml = granule_dir / f"{config.granule}_hls.xml"
+
+        logger.info("Creating updated ESPA XML")
+        os.chdir(granule_dir)
+        run_command(
+            ["create_landsat_sr_hdf_xml", str(espa_xml), str(hls_xml.name)], check=True
+        )
+
+        if not hls_xml.exists():
+            raise RuntimeError(f"Output file missing: {hls_xml}")
+
+        return {HLS_XML: hls_xml}
+
+
+@dataclass(frozen=True)
+class ConvertToHdf(Task):
+    """Convert IMG/TIFFs to HDF"""
+
+    requires = (HLS_XML,)
+    provides = (SR_HDF,)
+
+    def __post_init__(self) -> None:
+        validate_command("convert_espa_to_hdf")
+
+    def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
+        xml: Path = inputs[HLS_XML]
+        granule_dir = xml.parent
+        sr_hdf = granule_dir / "sr.hdf"
+
+        logger.info("Convert to HDF")
+        os.chdir(granule_dir)
+        run_command(
+            ["convert_espa_to_hdf", f"--xml={xml}", f"--hdf={sr_hdf}"], check=True
+        )
+
+        if not sr_hdf.exists():
+            raise RuntimeError(f"Output file missing: {sr_hdf}")
+
+        return {SR_HDF: sr_hdf}
+
+
+@dataclass(frozen=True)
+class AddFmaskSds(Task):
+    """Bundle Fmask output into the HDF as a subdataset"""
+
+    requires = (CONFIG, METADATA, SR_HDF, FMASK_BIN, MTL_FILE)
+    provides = (FINAL_HDF,)
+
+    def __post_init__(self) -> None:
+        validate_command("landsat-add-fmask-sds")
+
+    def run(self, inputs: AssetBundle) -> dict[Asset[Path], Path]:
+        config: EnvConfig = inputs[CONFIG]
+        meta = inputs[METADATA]
+        sr_hdf: Path = inputs[SR_HDF]
+        granule_dir = sr_hdf.parent
+        output_hdf = granule_dir / f"{meta.output_name}.hdf"
+        aerosol_qa = granule_dir / f"{config.granule}_sr_aerosol_qa.img"
+
+        logger.info("Run addFmaskSDS")
+        os.chdir(granule_dir)
+        run_command(
+            [
+                "landsat-add-fmask-sds",
+                str(sr_hdf),
+                str(inputs[FMASK_BIN]),
+                str(aerosol_qa),
+                str(inputs[MTL_FILE]),
+                config.ac_code,
+                config.cloud_masking_code,
+                str(output_hdf),
+            ],
+            check=True,
+        )
+
+        if not output_hdf.exists():
+            raise RuntimeError(f"Output file missing: {output_hdf}")
+
+        return {FINAL_HDF: output_hdf}
+
+
+@dataclass(frozen=True)
+class UploadResults(Task):
+    """
+    Uploads the final results to the specified S3 bucket.
+    """
+
+    requires = (CONFIG, METADATA, FINAL_HDF, GRANULE_DIR)
+    provides = (UPLOAD_COMPLETE,)
+
+    def run(self, inputs: AssetBundle) -> AssetBundle:
+        """
+        Uploads HDF and angle files to output bucket, or all files to debug bucket.
+
+        Parameters
+        ----------
+        inputs : dict[Asset, Any]
+            Dictionary containing CONFIG, METADATA, FINAL_HDF, and GRANULE_DIR assets.
+
+        Returns
+        -------
+        dict[Asset, bool]
+            Dictionary containing the UPLOAD_COMPLETE asset.
+        """
+        config: EnvConfig = inputs[CONFIG]
+        meta = inputs[METADATA]
+        final_hdf: Path = inputs[FINAL_HDF]
+        granule_dir: Path = inputs[GRANULE_DIR]
+
+        s3: S3Client = boto3.client("s3")
+
+        if not config.debug_bucket:
+            self._upload_production(s3, config, meta, final_hdf, granule_dir)
+        else:
+            self._upload_debug(s3, config, granule_dir)
+
+        logger.info("Upload complete!")
+        return {UPLOAD_COMPLETE: True}
+
+    def _upload_production(
+        self,
+        s3: S3Client,
+        config: EnvConfig,
+        meta: ProcessingMetadata,
+        final_hdf: Path,
+        granule_dir: Path,
+    ) -> None:
+        """Handles production upload logic."""
+        bucket = config.output_bucket
+        bucket_key = meta.bucket_key
+        hdf_key = f"{bucket_key}/{final_hdf.name}"
+
+        logger.info(f"Uploading {final_hdf.name} to s3://{bucket}/{hdf_key}...")
+        s3.upload_file(str(final_hdf), bucket, hdf_key)
+
+        logger.info("Uploading angle files...")
+        include_globs = [
+            "*_VAA.img",
+            "*_VAA.hdr",
+            "*_VZA.hdr",
+            "*_VZA.img",
+            "*_SAA.hdr",
+            "*_SAA.img",
+            "*_SZA.hdr",
+            "*_SZA.img",
+        ]
+        for pattern in include_globs:
+            for f in granule_dir.glob(pattern):
+                key = f"{bucket_key}/{f.name}"
+                logger.info(f"Uploading {f} to s3://{bucket}/{key}...")
+                s3.upload_file(str(f), bucket, key)
+
+    def _upload_debug(self, s3: S3Client, config: EnvConfig, granule_dir: Path) -> None:
+        """Handles debug mode upload logic."""
+        timestamp = dt.datetime.now().strftime("%Y_%m_%d_%H_%M")
+        bucket = config.debug_bucket
+        # debug_bucket checked for None in run, but typing needs reassurance
+        if bucket is None:
+            raise ValueError("Debug bucket must be set for debug upload")
+
+        base_key = f"{config.granule}_{timestamp}"
+        logger.info(f"Uploading debug files to s3://{bucket}/{base_key}")
+
+        for f in granule_dir.rglob("*"):
+            if f.is_file():
+                rel_path = f.relative_to(granule_dir)
+                key = f"{base_key}/{rel_path}"
+                logger.info(f"Uploading {f} to s3://{bucket}/{key}...")
+                s3.upload_file(str(f), bucket, key)

@@ -21,4 +21,4 @@ docker run --rm \
     -e PIXI_FROZEN=true \
     -e BENCHMARK_OUTPUT_DIR=/output \
     "$IMAGE" \
-    "mkdir -p /output && pixi run -e benchmark pytest src/hls-nextgen-orchestration/tests/benchmarks -v"
+    "mkdir -p /output && pixi run -e benchmark pytest src/hls-workflows/tests/benchmarks -v"
