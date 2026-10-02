@@ -21,6 +21,8 @@ strict = true
 python_version = "3.13"
 namespace_packages = true
 explicit_package_bases = true
+# TODO: type hls-utilities and drop this exclusion
+exclude = ["^src/hls-utilities/"]
 
 [[tool.mypy.overrides]]
 module = [

@@ -17,6 +17,7 @@ lasrc-rs = "=0.1.3"
 lasrc-rs = { path = "./packages/lasrc-rs" }
 
 [pypi-dependencies]
+hls-utilities = { path = "./src/hls-utilities", editable = false }
 hls-workflows = { path = "./src/hls-workflows", editable = false}
 # Remote repositories
 hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", tag = "v1.8"}
@@ -25,7 +26,6 @@ hls-hdf_to_cog = { git = "https://github.com/NASA-IMPACT/hls-hdf_to_cog", tag = 
 hls-manifest = { git = "https://github.com/NASA-IMPACT/hls-manifest", tag = "v2.1" }
 metadata-creator = { git = "https://github.com/NASA-IMPACT/hls-metadata", tag = "v2.9" }
 hls-thumbnails = { git = "https://github.com/NASA-IMPACT/hls-thumbnails", tag=  "v1.3" }
-hls-utilities = { git = "https://github.com/NASA-IMPACT/hls-utilities", tag = "v1.11.4" }
 hls-vi = { url = "https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl" }
 
 [dependencies]
@@ -62,6 +62,7 @@ scalene = "*"
 py-spy = "*"
 
 [feature.dev.pypi-dependencies]
+hls-utilities = { path = "./src/hls-utilities", editable = true, extras = ["dev"] }
 hls-workflows = { path = "./src/hls-workflows", editable = true, extras = ["dev"] }
 # Type stubs for boto3 clients (e.g. CloudWatchLogsClient in scripts/plot_metrics.py)
 boto3-stubs = { version = ">=1", extras = ["logs"] }

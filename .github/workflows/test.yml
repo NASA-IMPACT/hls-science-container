@@ -1,0 +1,66 @@
+name: Test
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      packages: ${{ steps.packages.outputs.packages }}
+
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          # Filter names other than "shared" must match a directory in src/.
+          # List a package's in-repo dependencies so it is retested when they change.
+          filters: |
+            shared: &shared
+              - "pixi.toml"
+              - "pixi.lock"
+              - "pyproject.toml"
+              - "scripts/test"
+              - ".github/workflows/test.yml"
+            hls-utilities:
+              - *shared
+              - "src/hls-utilities/**"
+            hls-workflows:
+              - *shared
+              - "src/hls-workflows/**"
+              - "src/hls-utilities/**"
+
+      - name: List changed packages
+        id: packages
+        env:
+          CHANGES: ${{ steps.filter.outputs.changes }}
+        run: |
+          echo "packages=$(jq -c 'map(select(. != "shared"))' <<< "$CHANGES")" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs: changes
+    if: needs.changes.outputs.packages != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJSON(needs.changes.outputs.packages) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: prefix-dev/setup-pixi@v0.9.3
+        with:
+          frozen: true
+          environments: dev
+
+      - name: Run tests
+        run: |
+          scripts/test src/${{ matrix.package }}

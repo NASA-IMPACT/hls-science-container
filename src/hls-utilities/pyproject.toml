@@ -1,0 +1,58 @@
+[project]
+name = "hls-utilities"
+version = "1.11.4"
+description = "Python utilities for HLS data processing"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "boto3",
+    "click",
+    "espa-python-library @ git+https://github.com/USGS-EROS/espa-python-library.git@v2.0.0",
+    "lxml",
+    "numpy",
+    "rasterio",
+]
+
+[project.scripts]
+apply_s2_quality_mask = "hls_utilities.apply_s2_quality_mask:main"
+check_sentinel_clouds = "hls_utilities.check_sentinel_clouds:main"
+check_solar_zenith_landsat = "hls_utilities.check_solar_zenith_landsat:main"
+check_solar_zenith_sentinel = "hls_utilities.check_solar_zenith_sentinel:main"
+create_landsat_sr_hdf_xml = "hls_utilities.create_landsat_sr_hdf_xml:main"
+create_sr_hdf_xml = "hls_utilities.create_sr_hdf_xml:main"
+download_landsat = "hls_utilities.download_landsat:main"
+get_detector_footprint = "hls_utilities.get_detector_footprint:main"
+get_detector_footprint_extension = "hls_utilities.get_detector_footprint_extension:main"
+get_doy = "hls_utilities.get_doy:main"
+get_s2_granule_dir = "hls_utilities.get_s2_granule_dir:main"
+parse_fmask = "hls_utilities.parse_fmask:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[project.optional-dependencies]
+dev = [
+    "moto[s3]>=5.0.0",
+    "pytest>=9.0.2",
+    "ruff>=0.9.0",
+]
+
+[dependency-groups]
+dev = [
+    "hls-utilities[dev]",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "UP"]
+ignore = ["E501", "E731"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["hls_utilities"]
