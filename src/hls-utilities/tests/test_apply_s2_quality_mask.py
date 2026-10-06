@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import rasterio
 from affine import Affine
+from numpy.typing import NDArray
 from rasterio.crs import CRS
 
 from hls_utilities.apply_s2_quality_mask import (
@@ -66,7 +67,7 @@ def test_find_affected_bands(granule_dir: Path, affected_bands: list[str]) -> No
 def make_fake_s2_granule(
     prefix: Path,
     band: str,
-    mask_data: np.ndarray,
+    mask_data: NDArray[np.uint8],
 ) -> tuple[Path, Path]:
     """Create a fake S2 L1C granule"""
 
