@@ -6,11 +6,11 @@ from hls_utilities.check_solar_zenith_sentinel import solar_zenith_is_valid
 TEST_DATA = Path(__file__).parent / "data"
 
 
-def test_solar_zenith_is_valid():
+def test_solar_zenith_is_valid() -> None:
     assert solar_zenith_is_valid(TEST_DATA / "MTD_TL.xml")
 
 
-def test_solar_zenith_is_invalid(tmp_path: Path):
+def test_solar_zenith_is_invalid(tmp_path: Path) -> None:
     xml = (TEST_DATA / "MTD_TL.xml").read_text()
     # Only the first ZENITH_ANGLE is the mean sun angle
     xml = re.sub(

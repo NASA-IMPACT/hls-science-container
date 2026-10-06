@@ -12,18 +12,18 @@ MTL_C2 = TEST_DATA / "LC08_L1TP_231089_20200807_20200808_02_RT_MTL.txt"
 
 
 @pytest.mark.parametrize("mtl", [MTL_C1, MTL_C2], ids=["c1", "c2"])
-def test_solar_zenith_is_valid(mtl: Path):
+def test_solar_zenith_is_valid(mtl: Path) -> None:
     assert solar_zenith_is_valid(mtl)
 
 
 @pytest.mark.parametrize("mtl", [MTL_C1, MTL_C2], ids=["c1", "c2"])
-def test_solar_zenith_is_invalid(mtl: Path, tmp_path: Path):
+def test_solar_zenith_is_invalid(mtl: Path, tmp_path: Path) -> None:
     text = re.sub(r"SUN_ELEVATION = [\d.]+", "SUN_ELEVATION = 13.9", mtl.read_text())
     invalid_mtl = tmp_path / mtl.name
     invalid_mtl.write_text(text)
     assert not solar_zenith_is_valid(invalid_mtl)
 
 
-def test_mtl_parsing_does_not_disable_logging():
+def test_mtl_parsing_does_not_disable_logging() -> None:
     solar_zenith_is_valid(MTL_C2)
     assert logging.root.manager.disable == logging.NOTSET

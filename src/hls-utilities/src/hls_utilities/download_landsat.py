@@ -1,29 +1,33 @@
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import boto3
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3 import S3Client
 
 
 class KeyDoesNotExist(Exception):
     pass
 
 
-def key_exists(client, bucket, path):
+def key_exists(client: S3Client, bucket: str, path: str) -> bool:
     result = client.list_objects_v2(
         Bucket=bucket, Prefix=path, RequestPayer="requester"
     )
-    if result.get("KeyCount") > 0:
-        return True
-    else:
-        return False
+    return result.get("KeyCount", 0) > 0
 
 
-def download_files(client, bucket, path, output_directory):
+def download_files(
+    client: S3Client, bucket: str, path: str, output_directory: Path | str
+) -> None:
     result = client.list_objects_v2(
         Bucket=bucket, Prefix=path, RequestPayer="requester"
     )
-    contents = result.get("Contents")
-    for content in contents:
-        key = content.get("Key")
+    for content in result.get("Contents", []):
+        key = content["Key"]
         filename = Path(key).name
         output_file = Path(output_directory).joinpath(filename)
         client.download_file(
@@ -31,7 +35,7 @@ def download_files(client, bucket, path, output_directory):
         )
 
 
-def get_updated_key(client, bucket, path):
+def get_updated_key(client: S3Client, bucket: str, path: str) -> str:
     path_root = Path(path).parent
     result = client.list_objects_v2(
         Bucket=bucket,
@@ -44,7 +48,7 @@ def get_updated_key(client, bucket, path):
     else:
         updated_key = [
             prefix["Prefix"]
-            for prefix in result.get("CommonPrefixes")
+            for prefix in result.get("CommonPrefixes", [])
             if prefix["Prefix"].split("_")[3] == path.split("_")[3]
         ]
         if len(updated_key) == 0:

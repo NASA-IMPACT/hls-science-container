@@ -1,9 +1,15 @@
 import io
 import os
+from collections.abc import Iterator
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import boto3
 import pytest
 from moto import mock_aws
+
+if TYPE_CHECKING:
+    from mypy_boto3_s3 import S3Client
 
 from hls_utilities.download_landsat import KeyDoesNotExist, get_landsat
 
@@ -16,7 +22,7 @@ T1_KEY = f"{BASE_KEY}/{T1_ROOT}"
 
 
 @pytest.fixture(scope="function")
-def aws_credentials():
+def aws_credentials() -> None:
     """Mocked AWS Credentials for moto."""
     os.environ["AWS_ACCESS_KEY_ID"] = "testing"
     os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
@@ -26,7 +32,7 @@ def aws_credentials():
 
 
 @pytest.fixture(scope="function")
-def s3(aws_credentials):
+def s3(aws_credentials: None) -> Iterator["S3Client"]:
     with mock_aws():
         client = boto3.client("s3", region_name="us-east-1")
         client.create_bucket(Bucket=BUCKET)
@@ -37,7 +43,7 @@ def s3(aws_credentials):
         yield client
 
 
-def test_download(s3, tmp_path):
+def test_download(s3: "S3Client", tmp_path: Path) -> None:
     fo = io.BytesIO(b"file object in RAM")
     filename = "rt.json"
     s3.upload_fileobj(fo, BUCKET, f"{RT_KEY}/{filename}")
@@ -46,12 +52,12 @@ def test_download(s3, tmp_path):
     assert actual == RT_ROOT
 
 
-def test_download_no_keys(s3, tmp_path):
+def test_download_no_keys(s3: "S3Client", tmp_path: Path) -> None:
     with pytest.raises(KeyDoesNotExist):
         get_landsat(BUCKET, RT_KEY, str(tmp_path))
 
 
-def test_download_updated_tier(s3, tmp_path):
+def test_download_updated_tier(s3: "S3Client", tmp_path: Path) -> None:
     fo = io.BytesIO(b"file object in RAM")
     filename = "t1.json"
     s3.upload_fileobj(fo, BUCKET, f"{T1_KEY}/{filename}")

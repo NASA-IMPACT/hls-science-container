@@ -21,8 +21,6 @@ strict = true
 python_version = "3.13"
 namespace_packages = true
 explicit_package_bases = true
-# TODO: type hls-utilities and drop this exclusion
-exclude = ["^src/hls-utilities/"]
 
 [[tool.mypy.overrides]]
 module = [
@@ -40,6 +38,11 @@ warn_return_any = false
 # lazily at runtime only.
 [[tool.mypy.overrides]]
 module = ["lasrc", "lasrc.*"]
+ignore_missing_imports = true
+
+# Third-party packages without type hints
+[[tool.mypy.overrides]]
+module = ["espa", "espa.*", "rasterio", "rasterio.*"]
 ignore_missing_imports = true
 
 [tool.pixi.workspace]
