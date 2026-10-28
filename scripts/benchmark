@@ -17,6 +17,7 @@ docker run --rm \
     -e BENCHMARK_NUM_THREADS \
     -e AWS_ACCESS_KEY_ID \
     -e AWS_SECRET_ACCESS_KEY \
+    -e AWS_SESSION_TOKEN \
     -e AWS_DEFAULT_REGION \
     -e PIXI_FROZEN=true \
     -e BENCHMARK_OUTPUT_DIR=/output \
