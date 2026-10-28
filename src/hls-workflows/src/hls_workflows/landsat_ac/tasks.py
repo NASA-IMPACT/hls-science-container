@@ -103,13 +103,24 @@ class DownloadGranule(Task):
     standard version, `LC08_L1TP_116030_20260107_20260114_02_T1`.
     """
 
+    #: Key prefix holding the per-granule directories, replacing the USGS
+    #: Collection 2 layout that is otherwise derived from the granule ID. Empty
+    #: means the input bucket follows the USGS layout.
+    input_prefix: str = field(default_factory=lambda: os.getenv("INPUT_PREFIX", ""))
+
     requires = (CONFIG,)
     provides = (CONFIG, GRANULE_DIR, MTL_FILE)
+
+    def granule_key_prefix(self, config: EnvConfig) -> str:
+        """S3 key prefix (no bucket) of this granule's directory."""
+        if not self.input_prefix:
+            return config.landsat_granule.usgs_c2_key_prefix
+        return f"{self.input_prefix.strip('/')}/{config.landsat_granule.to_str()}/"
 
     def run(self, inputs: AssetBundle) -> dict[Asset[Any], Any]:
         config: EnvConfig = inputs[CONFIG]
 
-        prefix = config.landsat_granule.usgs_c2_key_prefix
+        prefix = self.granule_key_prefix(config)
 
         logger.info(f"Downloading {config.granule} from {config.input_bucket}...")
         downloaded_granule_id = get_landsat(

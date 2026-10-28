@@ -119,6 +119,20 @@ def test_sentinel_rust_provides_aerosol_qa(download_bins: Path, base_env: None) 
     assert any("lasrc_aerosol_qa" in key for key in provided)
 
 
+def test_sentinel_rust_applies_quality_mask_first(
+    download_bins: Path, base_env: None
+) -> None:
+    """Rust S2 LaSRC runs on the quality-masked SAFE, like the C path."""
+    pipeline = construct_pipeline(S2_GRANULE, lasrc_version="rust")
+    order = [type(t).__name__ for t in pipeline.execution_order]
+    mask_idx = next(i for i, n in enumerate(order) if n.startswith("ApplyQualityMask"))
+    rust_idx = next(i for i, n in enumerate(order) if n.startswith("RunLaSRCRust"))
+    assert mask_idx < rust_idx
+
+    rust = pipeline.execution_order[rust_idx]
+    assert any("quality_mask" in a.key for a in rust.requires)
+
+
 # ----- C path: reuses the existing ESPA chain up through LaSRC, sans Fmask
 
 
