@@ -72,7 +72,7 @@ jobs:
 
       - name: Authenticate rattler-build with S3
         run: |
-          rattler-build auth login "s3://${{ secrets.CONDA_CHANNEL_BUCKET }}" \
+          rattler-build auth login "s3://${{ vars.CONDA_CHANNEL_BUCKET }}" \
             --s3-access-key-id "$AWS_ACCESS_KEY_ID" \
             --s3-secret-access-key "$AWS_SECRET_ACCESS_KEY" \
             --s3-session-token "$AWS_SESSION_TOKEN"
@@ -80,7 +80,7 @@ jobs:
       - name: Build conda packages
         uses: ./.github/actions/build-conda-packages
         with:
-          channel-bucket: ${{ secrets.CONDA_CHANNEL_BUCKET }}
+          channel-bucket: ${{ vars.CONDA_CHANNEL_BUCKET }}
           recipes: |
             packages/espa-product-formatter/recipe.yml
             packages/espa-surface-reflectance/recipe.yml
