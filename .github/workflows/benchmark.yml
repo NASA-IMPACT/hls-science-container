@@ -76,9 +76,9 @@ jobs:
           IMAGE: ${{ env.ECR_REPOSITORY }}:benchmark
           BENCHMARK_S2_GRANULE_IDS: ${{ vars.BENCHMARK_S2_GRANULE_IDS }}
           BENCHMARK_LS_GRANULE_IDS: ${{ vars.BENCHMARK_LS_GRANULE_IDS }}
-          BENCHMARK_INPUT_BUCKET: ${{ secrets.BENCHMARK_INPUT_BUCKET }}
+          BENCHMARK_INPUT_BUCKET: ${{ vars.BENCHMARK_INPUT_BUCKET }}
           BENCHMARK_INPUT_PREFIX: ${{ vars.BENCHMARK_INPUT_PREFIX }}
-          BENCHMARK_AUX_BUCKET: ${{ secrets.BENCHMARK_AUX_BUCKET }}
+          BENCHMARK_AUX_BUCKET: ${{ vars.BENCHMARK_AUX_BUCKET }}
           BENCHMARK_AUX_PREFIX: ${{ vars.BENCHMARK_AUX_PREFIX }}
           BENCHMARK_NUM_THREADS: ${{ github.event.inputs.num_threads || '2' }}
         run: scripts/benchmark
