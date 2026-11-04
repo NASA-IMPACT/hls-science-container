@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7-labs
 ARG PLATFORM=linux/amd64
-FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:0.83.0@sha256:3dce86c6e87371c58035aa41b09f2b56ca8f011722320551e0c2bfc1c59da5fb AS build
+FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:0.84.0@sha256:d0a89f1fa67547b36f042597482d722c9e6e5a329dff36feabde27d12e2442fb AS build
 
 ARG AWS_DEFAULT_REGION=us-west-2
 
