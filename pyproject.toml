@@ -33,9 +33,8 @@ disallow_incomplete_defs = false
 check_untyped_defs = true
 warn_return_any = false
 
-# The Rust LaSRC package (lasrc-rs / `lasrc`) is a linux-64-only conda package
-# absent from the dev/typecheck environment; the orchestration tasks import it
-# lazily at runtime only.
+# The Rust LaSRC package (lasrc-rs / `lasrc`) is absent from the dev/typecheck
+# environment; the orchestration tasks import it lazily at runtime only.
 [[tool.mypy.overrides]]
 module = ["lasrc", "lasrc.*"]
 ignore_missing_imports = true
