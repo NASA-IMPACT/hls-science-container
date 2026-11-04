@@ -90,7 +90,8 @@ class UploadLaSRCDebug(Task):
     and has none of the downstream products the full ``UploadResults`` requires.
 
     Uploads only the ``*_sr_band*`` / ``*_sr_aerosol*`` products, skipping inputs
-    and ESPA intermediates.
+    and ESPA intermediates. The products are flattened into a single
+    ``<prefix>/<granule_id>/`` directory rather than mirroring the local tree.
 
     No-ops (with a warning) when ``DEBUG_BUCKET`` is unset.
     """
@@ -113,7 +114,7 @@ class UploadLaSRCDebug(Task):
 
         for f in config.granule_dir.rglob("*"):
             if f.is_file() and is_sr_product(f.name):
-                dest = base / str(f.relative_to(config.granule_dir))
+                dest = base / f.name
                 s3.upload_file(str(f), dest.bucket, dest.key)
 
         return {UPLOAD_COMPLETE: True}

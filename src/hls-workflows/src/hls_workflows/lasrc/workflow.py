@@ -122,6 +122,13 @@ def _build_sentinel(
         .add(download)
     )
 
+    # Both paths apply ESA's quality mask so they read the same radiances.
+    builder = (
+        builder.add(s2_mapped.GetGranuleDir.map(granule_id)("GetInnerDir"))
+        .add(s2_mapped.CheckSolarZenith.map(granule_id)("CheckSolar"))
+        .add(s2_mapped.ApplyQualityMask.map(granule_id)(name="ApplyMask"))
+    )
+
     if lasrc_version == "rust":
         builder = builder.add(s2_lasrc.RunLaSRCRust.map(granule_id)("LaSRC"))
     else:
@@ -129,10 +136,7 @@ def _build_sentinel(
         # LaSRC needs (DeriveAngles -> FindFootprint/ApplyQualityMask). Only
         # Fmask is omitted; the ESPA prep variant drops its ordering hack.
         builder = (
-            builder.add(s2_mapped.GetGranuleDir.map(granule_id)("GetInnerDir"))
-            .add(s2_mapped.CheckSolarZenith.map(granule_id)("CheckSolar"))
-            .add(s2_mapped.FindFootprint.map(granule_id)(name="FindFootprint"))
-            .add(s2_mapped.ApplyQualityMask.map(granule_id)(name="ApplyMask"))
+            builder.add(s2_mapped.FindFootprint.map(granule_id)(name="FindFootprint"))
             .add(s2_mapped.DeriveAngles.map(granule_id)(name="DeriveAngles"))
             .add(s2_lasrc.PrepareEspaInputNoFmask.map(granule_id)("PrepareEspa"))
             .add(s2_mapped.RunLaSRC.map(granule_id)("LaSRC"))

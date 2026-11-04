@@ -85,7 +85,6 @@ jobs:
             packages/espa-product-formatter/recipe.yml
             packages/espa-surface-reflectance/recipe.yml
             packages/hls-libs/recipe.yml
-            packages/lasrc-rs/recipe.yml
 
       - name: Verify new packages were built
         # Skipped for docs:/chore:/ci: PRs where a version bump is not expected

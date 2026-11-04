@@ -11,10 +11,6 @@ conda-pypi-map = { conda-forge = { mapping-mode = "replace" } }
 espa-product-formatter = "=3.5.0"
 espa-surface-reflectance = "=v3.5.1.0"
 hls-libs = "=v3.5.1.2"
-lasrc-rs = "=0.1.3"
-
-[target.osx-arm64.dependencies]
-lasrc-rs = { path = "./packages/lasrc-rs" }
 
 [pypi-dependencies]
 hls-utilities = { path = "./src/hls-utilities", editable = false }
@@ -44,6 +40,8 @@ zip = "*"
 unzip = "*"
 # Fmask v5.0.1-1
 fmask = { git = "https://github.com/NASA-IMPACT/fmask-v5", rev = "47c04feecae1f52838b4d344389a083b14251ce0" }
+# lasrc-rs (TODO: point to released conda package)
+lasrc-rs = { git = "https://github.com/NASA-IMPACT/lasrc-rs", rev = "d9bc35222992d05569e698d88094ed40fa6af965", subdirectory = "conda" }
 
 [feature.dev.dependencies]
 ruff = "*"

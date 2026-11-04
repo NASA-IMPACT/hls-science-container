@@ -25,8 +25,12 @@ Landsat resolves against ``LDCMLUT/`` and Sentinel-2 against ``MSILUT/``.
 from __future__ import annotations
 
 import datetime as dt
+import glob
+import logging
 import os
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 _LADS_AUX_SOURCES = ("VIIRS", "MODIS")
 
@@ -41,17 +45,26 @@ def _require(path: Path, description: str) -> Path:
     return path
 
 
-def _glob_one(directory: Path, pattern: str, description: str) -> Path:
-    """Return the single file in ``directory`` matching ``pattern``.
+def _glob_any(directory: Path, pattern: str, description: str) -> list[Path]:
+    """Return all files in ``directory`` matching ``pattern``, raising if none.
 
-    Raises if zero or more than one match (ambiguous aux data).
+    Matches are in filesystem listing order (``glob.glob``), not sorted.
     """
-    matches = sorted(directory.glob(pattern))
+    matches = [Path(m) for m in glob.glob(str(directory / pattern))]
     if not matches:
         raise FileNotFoundError(
             f"Could not find LaSRC aux {description} matching '{pattern}' "
             f"in {directory}. Check LASRC_AUX_DIR and its layout."
         )
+    return matches
+
+
+def _glob_one(directory: Path, pattern: str, description: str) -> Path:
+    """Return the single file in ``directory`` matching ``pattern``.
+
+    Raises if zero or more than one match (ambiguous aux data).
+    """
+    matches = sorted(_glob_any(directory, pattern, description))
     if len(matches) > 1:
         raise ValueError(
             f"Ambiguous LaSRC aux {description}: multiple files match "
@@ -129,17 +142,43 @@ def _resolve_lads_file(
 
     VIIRS files are named like ``V*04ANC.A<year><doy>.*.h5``; MODIS files like
     ``M*<year><doy>*``. Both live under ``LADS/<year>/``.
+
+    If several VIIRS files match, the first one listed by the filesystem is
+    used, matching the upstream C wrappers (see :func:`_first_viirs_file`).
     """
     year = acquisition.strftime("%Y")
     doy = acquisition.strftime("%j")
     lads_year_dir = _require(aux_dir / "LADS" / year, f"LADS directory for {year}")
+    description = f"{aux_source} daily water-vapor/ozone (DOY {doy})"
 
     if aux_source == "VIIRS":
-        # e.g. VJ104ANC.A2026073.001.h5 / VNP04ANC.A2026073...
-        pattern = f"V*04ANC.A{year}{doy}.*"
-    else:  # MODIS, e.g. MOD04... / MYD04...
-        pattern = f"M*{year}{doy}*"
+        # e.g. VJ104ANC.A2026073.002.2026078091843.h5 / VNP04ANC.A2026073...
+        pattern = f"V*04ANC.A{year}{doy}.*.h5"
+        return _first_viirs_file(lads_year_dir, pattern, description)
 
-    return _glob_one(
-        lads_year_dir, pattern, f"{aux_source} daily water-vapor/ozone (DOY {doy})"
-    )
+    # MODIS, e.g. MOD04... / MYD04...
+    return _glob_one(lads_year_dir, f"M*{year}{doy}*", description)
+
+
+def _first_viirs_file(directory: Path, pattern: str, description: str) -> Path:
+    """Return the first VIIRS LADS file matching ``pattern``, like upstream.
+
+    This is not great! We should ideally use the latest processed version of
+    the preferred product when we find more than one source.
+
+    For now we keep to the same logic as "do_lasrc_{sentinel,landsat}.py" so
+    we can verify the Rust port.
+    """
+    matches = _glob_any(directory, pattern, description)
+    chosen = matches[0]
+    if len(matches) > 1:
+        logger.warning(
+            "Multiple LaSRC aux %s files match '%s' in %s: %s. Using %s, the "
+            "first in filesystem order, to match the upstream C LaSRC scripts.",
+            description,
+            pattern,
+            directory,
+            [m.name for m in matches],
+            chosen.name,
+        )
+    return chosen
