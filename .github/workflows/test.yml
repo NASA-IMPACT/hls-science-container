@@ -17,7 +17,7 @@ jobs:
       packages: ${{ steps.packages.outputs.packages }}
 
     steps:
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3.0.4
         id: filter
         with:
           # Filter names other than "shared" must match a directory in src/.
@@ -54,9 +54,9 @@ jobs:
         package: ${{ fromJSON(needs.changes.outputs.packages) }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: prefix-dev/setup-pixi@v0.9.3
+      - uses: prefix-dev/setup-pixi@82d477f15f3a381dbcc8adc1206ce643fe110fb7 # v0.9.3
         with:
           frozen: true
           environments: dev
