@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793831045625,
+  "lastUpdate": 1793832485692,
   "repoUrl": "https://github.com/NASA-IMPACT/hls-science-container",
   "entries": {
     "HLS pipeline benchmarks": [
@@ -3137,6 +3137,120 @@ window.BENCHMARK_DATA = {
           {
             "name": "sentinel-ac avg_cpu_percent [S2B_MSIL1C_20260124T073109_N0511_R049_T38PNC_20260124T092241 (v5)]",
             "value": 95.9,
+            "unit": "%"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ceholden@users.noreply.github.com",
+            "name": "Chris Holden",
+            "username": "ceholden"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "cc583b65d9bc7739c795f9227547432a73f9b4ff",
+          "message": "feat: update lasrc-rs post-alignment of C-to-Rust code (#63)",
+          "timestamp": "2026-11-04T17:09:27-05:00",
+          "tree_id": "739b94b68e53b785132feff4d217894182ae2e5d",
+          "url": "https://github.com/NASA-IMPACT/hls-science-container/commit/cc583b65d9bc7739c795f9227547432a73f9b4ff"
+        },
+        "date": 1793832484685,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Fmask runtime_seconds [LC08_L1TP_184033_20260103_20260107_02_T1 (v5)]",
+            "value": 354.138,
+            "unit": "s"
+          },
+          {
+            "name": "Fmask peak_memory_mb [LC08_L1TP_184033_20260103_20260107_02_T1 (v5)]",
+            "value": 11350.6,
+            "unit": "MB"
+          },
+          {
+            "name": "Fmask avg_cpu_percent [LC08_L1TP_184033_20260103_20260107_02_T1 (v5)]",
+            "value": 176.3,
+            "unit": "%"
+          },
+          {
+            "name": "LaSRC runtime_seconds [LC08_L1TP_184033_20260103_20260107_02_T1 (v5)]",
+            "value": 24.782,
+            "unit": "s"
+          },
+          {
+            "name": "LaSRC peak_memory_mb [LC08_L1TP_184033_20260103_20260107_02_T1 (v5)]",
+            "value": 4625.2,
+            "unit": "MB"
+          },
+          {
+            "name": "LaSRC avg_cpu_percent [LC08_L1TP_184033_20260103_20260107_02_T1 (v5)]",
+            "value": 156.1,
+            "unit": "%"
+          },
+          {
+            "name": "landsat-ac runtime_seconds [LC08_L1TP_184033_20260103_20260107_02_T1 (v5)]",
+            "value": 450.359,
+            "unit": "s"
+          },
+          {
+            "name": "landsat-ac peak_memory_mb [LC08_L1TP_184033_20260103_20260107_02_T1 (v5)]",
+            "value": 11379.5,
+            "unit": "MB"
+          },
+          {
+            "name": "landsat-ac avg_cpu_percent [LC08_L1TP_184033_20260103_20260107_02_T1 (v5)]",
+            "value": 162.6,
+            "unit": "%"
+          },
+          {
+            "name": "Fmask runtime_seconds [S2B_MSIL1C_20260124T073109_N0511_R049_T38PNC_20260124T092241 (v5)]",
+            "value": 115.229,
+            "unit": "s"
+          },
+          {
+            "name": "Fmask peak_memory_mb [S2B_MSIL1C_20260124T073109_N0511_R049_T38PNC_20260124T092241 (v5)]",
+            "value": 7628.8,
+            "unit": "MB"
+          },
+          {
+            "name": "Fmask avg_cpu_percent [S2B_MSIL1C_20260124T073109_N0511_R049_T38PNC_20260124T092241 (v5)]",
+            "value": 110.3,
+            "unit": "%"
+          },
+          {
+            "name": "LaSRC runtime_seconds [S2B_MSIL1C_20260124T073109_N0511_R049_T38PNC_20260124T092241 (v5)]",
+            "value": 63.59,
+            "unit": "s"
+          },
+          {
+            "name": "LaSRC peak_memory_mb [S2B_MSIL1C_20260124T073109_N0511_R049_T38PNC_20260124T092241 (v5)]",
+            "value": 13108.7,
+            "unit": "MB"
+          },
+          {
+            "name": "LaSRC avg_cpu_percent [S2B_MSIL1C_20260124T073109_N0511_R049_T38PNC_20260124T092241 (v5)]",
+            "value": 97.2,
+            "unit": "%"
+          },
+          {
+            "name": "sentinel-ac runtime_seconds [S2B_MSIL1C_20260124T073109_N0511_R049_T38PNC_20260124T092241 (v5)]",
+            "value": 311.056,
+            "unit": "s"
+          },
+          {
+            "name": "sentinel-ac peak_memory_mb [S2B_MSIL1C_20260124T073109_N0511_R049_T38PNC_20260124T092241 (v5)]",
+            "value": 13138.3,
+            "unit": "MB"
+          },
+          {
+            "name": "sentinel-ac avg_cpu_percent [S2B_MSIL1C_20260124T073109_N0511_R049_T38PNC_20260124T092241 (v5)]",
+            "value": 102.4,
             "unit": "%"
           }
         ]
