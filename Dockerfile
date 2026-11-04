@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7-labs
 ARG PLATFORM=linux/amd64
-FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi AS build
+FROM --platform=${PLATFORM} ghcr.io/prefix-dev/pixi:0.83.0@sha256:3dce86c6e87371c58035aa41b09f2b56ca8f011722320551e0c2bfc1c59da5fb AS build
 
 ARG AWS_DEFAULT_REGION=us-west-2
 
@@ -72,7 +72,7 @@ CMD [ "/bin/bash" ]
 
 # ===== Production installation
 # "Productionize" pixi install: https://pixi.sh/latest/deployment/container/
-FROM --platform=${PLATFORM} debian:bookworm-slim AS prod
+FROM --platform=${PLATFORM} debian:bookworm-slim@sha256:99c0b25c46d0214d5a2091092e7908907dcaecd6a962cde0ac700acee222b6f3 AS prod
 
 ARG GIT_SHA
 ENV GIT_SHA=${GIT_SHA}
