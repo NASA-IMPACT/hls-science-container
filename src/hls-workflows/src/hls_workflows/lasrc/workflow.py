@@ -22,7 +22,7 @@ import os
 from pathlib import Path
 
 from hls_workflows.constants import LASRC_VERSION
-from hls_workflows.granules import LandsatGranule, Sentinel2Granule
+from hls_workflows.granules import LandsatGranule, Sentinel2Granule, resolve_granule
 from hls_workflows.landsat_ac import tasks as l_tasks
 from hls_workflows.metrics import MetricsCollector, MetricSink
 from hls_workflows.pipeline import Pipeline, PipelineBuilder
@@ -33,27 +33,6 @@ from . import landsat as l_lasrc
 from . import sentinel as s2_lasrc
 
 logger = logging.getLogger(__name__)
-
-
-def _is_sentinel(granule_id: str) -> bool:
-    """Detect Sentinel-2 vs Landsat from a granule ID.
-
-    Tries the Sentinel-2 parser first, then the Landsat parser, raising a clear
-    error if neither matches.
-    """
-    try:
-        Sentinel2Granule.from_str(granule_id)
-        return True
-    except ValueError:
-        pass
-    try:
-        LandsatGranule.from_str(granule_id)
-        return False
-    except ValueError:
-        pass
-    raise ValueError(
-        f"Could not identify {granule_id!r} as a Sentinel-2 or Landsat granule ID"
-    )
 
 
 def construct_pipeline(
@@ -80,11 +59,19 @@ def construct_pipeline(
     metric_sink
         Optional metrics sink.
     """
-    builder = (
-        _build_sentinel(granule_id, lasrc_version, working_dir, local_granule)
-        if _is_sentinel(granule_id)
-        else _build_landsat(granule_id, lasrc_version, working_dir, local_granule)
-    )
+    match resolve_granule(granule_id):
+        case Sentinel2Granule():
+            builder = _build_sentinel(
+                granule_id, lasrc_version, working_dir, local_granule
+            )
+        case LandsatGranule():
+            builder = _build_landsat(
+                granule_id, lasrc_version, working_dir, local_granule
+            )
+        case other:
+            raise ValueError(
+                f"Expected a Sentinel-2 or Landsat granule ID, got {type(other).__name__}"
+            )
 
     return builder.build(
         metrics=MetricsCollector(
