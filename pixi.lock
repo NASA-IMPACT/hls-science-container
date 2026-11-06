@@ -333,7 +333,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
       - conda_source: fmask[37b42cac] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
-      - conda_source: lasrc-rs[e2d3c462] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=d9bc35222992d05569e698d88094ed40fa6af965#d9bc35222992d05569e698d88094ed40fa6af965
+      - conda_source: lasrc-rs[7c1aa2dd] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=2c5a859d71bdb8d376281b379435ed99e8e3206e#2c5a859d71bdb8d376281b379435ed99e8e3206e
       - pypi: ./src/hls-utilities
       - pypi: ./src/hls-workflows
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
@@ -648,7 +648,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-ng-2.3.3-hed4e4f5_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - conda_source: fmask[069737ad] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
-      - conda_source: lasrc-rs[b9c64116] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=d9bc35222992d05569e698d88094ed40fa6af965#d9bc35222992d05569e698d88094ed40fa6af965
+      - conda_source: lasrc-rs[f208d4ef] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=2c5a859d71bdb8d376281b379435ed99e8e3206e#2c5a859d71bdb8d376281b379435ed99e8e3206e
       - pypi: ./src/hls-utilities
       - pypi: ./src/hls-workflows
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
@@ -1100,7 +1100,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
       - conda_source: fmask[37b42cac] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
-      - conda_source: lasrc-rs[e2d3c462] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=d9bc35222992d05569e698d88094ed40fa6af965#d9bc35222992d05569e698d88094ed40fa6af965
+      - conda_source: lasrc-rs[7c1aa2dd] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=2c5a859d71bdb8d376281b379435ed99e8e3206e#2c5a859d71bdb8d376281b379435ed99e8e3206e
       - pypi: ./src/hls-utilities
       - pypi: ./src/hls-workflows
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
@@ -1469,7 +1469,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-ng-2.3.3-hed4e4f5_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - conda_source: fmask[069737ad] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
-      - conda_source: lasrc-rs[b9c64116] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=d9bc35222992d05569e698d88094ed40fa6af965#d9bc35222992d05569e698d88094ed40fa6af965
+      - conda_source: lasrc-rs[f208d4ef] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=2c5a859d71bdb8d376281b379435ed99e8e3206e#2c5a859d71bdb8d376281b379435ed99e8e3206e
       - pypi: ./src/hls-utilities
       - pypi: ./src/hls-workflows
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
@@ -1829,7 +1829,7 @@ environments:
       - conda: s3://hls-conda-channels/linux-64/espa-surface-reflectance-v3.5.1.0-hb0f4dca_1.conda
       - conda: s3://hls-conda-channels/linux-64/hls-libs-v3.5.1.2-hb0f4dca_0.conda
       - conda_source: fmask[37b42cac] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
-      - conda_source: lasrc-rs[e2d3c462] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=d9bc35222992d05569e698d88094ed40fa6af965#d9bc35222992d05569e698d88094ed40fa6af965
+      - conda_source: lasrc-rs[7c1aa2dd] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=2c5a859d71bdb8d376281b379435ed99e8e3206e#2c5a859d71bdb8d376281b379435ed99e8e3206e
       - pypi: ./src/hls-utilities
       - pypi: ./src/hls-workflows
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
@@ -2121,7 +2121,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zlib-ng-2.3.3-hed4e4f5_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hbf9d68e_6.conda
       - conda_source: fmask[069737ad] @ git+https://github.com/nasa-impact/fmask-v5?rev=47c04feecae1f52838b4d344389a083b14251ce0#47c04feecae1f52838b4d344389a083b14251ce0
-      - conda_source: lasrc-rs[b9c64116] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=d9bc35222992d05569e698d88094ed40fa6af965#d9bc35222992d05569e698d88094ed40fa6af965
+      - conda_source: lasrc-rs[f208d4ef] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=2c5a859d71bdb8d376281b379435ed99e8e3206e#2c5a859d71bdb8d376281b379435ed99e8e3206e
       - pypi: ./src/hls-utilities
       - pypi: ./src/hls-workflows
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
@@ -5386,19 +5386,18 @@ packages:
     - libuuid >=2.42.2,<3.0a0
   size: 40017
   timestamp: 1781625522462
-- conda: https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.42.4-hcfc3c73_0.conda
-  sha256: f34b8d1de9a2bf62476d8608057d9b8a918d97444236dc53a47128f2fae79041
-  md5: 54a948337e66706380ff24d6b5fde63f
+- conda: https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.42.4-hcfc3c73_1.conda
+  sha256: 0e2e8f2daa9306e67f046e31092d637431d8cf0a26c407ab22401d108c2d4631
+  md5: d852293faea3c04a6e896b908b43aded
   depends:
-  - libgcc >=15
   - __glibc >=2.17,<3.0.a0
+  - libgcc >=15
   license: BSD-3-Clause
-  license_family: BSD
   run_exports:
     weak:
     - libuuid >=2.42.4,<3.0a0
-  size: 34442
-  timestamp: 1790121449161
+  size: 36134
+  timestamp: 1793891599274
 - conda: https://conda.anaconda.org/conda-forge/linux-64/libuv-1.52.1-h280c20c_0.conda
   sha256: e28e4519223f78b3163599ca89c3f2d80bfb53e907e7fc74e806e60d1efa578b
   md5: 4e33d49bf4fc853855a3b00643aa5484
@@ -14070,46 +14069,7 @@ packages:
   - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.4.1-pyhcf101f3_0.conda
   - conda: https://conda.anaconda.org/conda-forge/noarch/trove-classifiers-2026.6.1.19-pyhcf101f3_0.conda
   - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
-- conda_source: lasrc-rs[b9c64116] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=d9bc35222992d05569e698d88094ed40fa6af965#d9bc35222992d05569e698d88094ed40fa6af965
-  version: 0.0.0
-  build: h60d57d3_0
-  subdir: osx-arm64
-  variants:
-    target_platform: osx-arm64
-  depends:
-  - click >=8.1
-  - h5py >=3.8
-  - lxml >=4.9
-  - numpy >=1.24
-  - pyhdf >=0.10,<0.11.7
-  - python 3.13.*
-  - python_abi 3.13.* *_cp313
-  - rasterio >=1.3
-  license: Unlicense
-  build_packages:
-  - conda: https://conda.anaconda.org/conda-forge/noarch/rust-std-aarch64-apple-darwin-1.99.1-h451e77e_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/rust-1.99.1-h2d846b0_0.conda
-  host_packages:
-  - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.10.23-hbd8a1cb_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/pip-26.2.2-pyh145f28c_2.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.13-9_cp313.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026e-h5d301ff_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/bzip2-1.0.8-h4e30115_10.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libexpat-2.9.0-h6111c0a_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libffi-3.7.0-h47dc5ef_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/liblzma-5.8.3-h8088a28_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libmpdec-4.0.0-h84a0fba_2.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libpython-3.13.18-h0af5753_100_cp313.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libsqlite-3.54.1-h34a968b_101.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libzlib-1.3.2-h8088a28_3.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/maturin-1.16.0-py311ha2a04c9_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ncurses-6.6-he64c551_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/openssl-3.6.5-h55eecbc_0.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-3.13.18-hb59dee6_100_cp313.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/readline-8.3-h8b90a29_1.conda
-  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-hbeba79b_4.conda
-- conda_source: lasrc-rs[e2d3c462] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=d9bc35222992d05569e698d88094ed40fa6af965#d9bc35222992d05569e698d88094ed40fa6af965
+- conda_source: lasrc-rs[7c1aa2dd] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=2c5a859d71bdb8d376281b379435ed99e8e3206e#2c5a859d71bdb8d376281b379435ed99e8e3206e
   version: 0.0.0
   build: hb0f4dca_0
   subdir: linux-64
@@ -14157,7 +14117,7 @@ packages:
   - conda: https://conda.anaconda.org/conda-forge/linux-64/libmpdec-4.0.0-hb03c661_2.conda
   - conda: https://conda.anaconda.org/conda-forge/linux-64/libpython-3.13.18-hd51c5da_100_cp313.conda
   - conda: https://conda.anaconda.org/conda-forge/linux-64/libsqlite-3.54.1-h0737f62_101.conda
-  - conda: https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.42.4-hcfc3c73_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/linux-64/libuuid-2.42.4-hcfc3c73_1.conda
   - conda: https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.3.2-h25fd6f3_3.conda
   - conda: https://conda.anaconda.org/conda-forge/linux-64/maturin-1.16.0-py311h9fc2d8e_0.conda
   - conda: https://conda.anaconda.org/conda-forge/linux-64/ncurses-6.6-hdb14827_1.conda
@@ -14171,6 +14131,45 @@ packages:
   - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.13-9_cp313.conda
   - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
   - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026e-h5d301ff_0.conda
+- conda_source: lasrc-rs[f208d4ef] @ git+https://github.com/nasa-impact/lasrc-rs?subdirectory=conda&rev=2c5a859d71bdb8d376281b379435ed99e8e3206e#2c5a859d71bdb8d376281b379435ed99e8e3206e
+  version: 0.0.0
+  build: h60d57d3_0
+  subdir: osx-arm64
+  variants:
+    target_platform: osx-arm64
+  depends:
+  - click >=8.1
+  - h5py >=3.8
+  - lxml >=4.9
+  - numpy >=1.24
+  - pyhdf >=0.10,<0.11.7
+  - python 3.13.*
+  - python_abi 3.13.* *_cp313
+  - rasterio >=1.3
+  license: Unlicense
+  build_packages:
+  - conda: https://conda.anaconda.org/conda-forge/noarch/rust-std-aarch64-apple-darwin-1.99.1-h451e77e_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/rust-1.99.1-h2d846b0_0.conda
+  host_packages:
+  - conda: https://conda.anaconda.org/conda-forge/noarch/ca-certificates-2026.10.23-hbd8a1cb_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/pip-26.2.2-pyh145f28c_2.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/python_abi-3.13-9_cp313.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/tomli-2.5.0-pyh5ded981_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026e-h5d301ff_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/bzip2-1.0.8-h4e30115_10.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libexpat-2.9.0-h6111c0a_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libffi-3.7.0-h47dc5ef_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/liblzma-5.8.3-h8088a28_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libmpdec-4.0.0-h84a0fba_2.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libpython-3.13.18-h0af5753_100_cp313.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libsqlite-3.54.1-h34a968b_101.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libzlib-1.3.2-h8088a28_3.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/maturin-1.16.0-py311ha2a04c9_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ncurses-6.6-he64c551_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/openssl-3.6.5-h55eecbc_0.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-3.13.18-hb59dee6_100_cp313.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/readline-8.3-h8b90a29_1.conda
+  - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-hbeba79b_4.conda
 - pypi: ./src/hls-utilities
   name: hls-utilities
   requires_dist:
