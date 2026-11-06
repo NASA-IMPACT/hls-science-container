@@ -259,7 +259,10 @@ class ApplyQualityMask(MappedTask):
     Ports: apply_s2_quality_mask
     """
 
-    requires_factory = lambda gid: (granule_dir_asset(gid), solar_valid_asset(gid))
+    requires_factory: ClassVar[Callable[[str], Assets] | None] = lambda gid: (
+        granule_dir_asset(gid),
+        solar_valid_asset(gid),
+    )
     provides_factory = lambda gid: (quality_mask_applied_asset(gid),)
 
     def run(self, bundle: AssetBundle) -> AssetBundle:
