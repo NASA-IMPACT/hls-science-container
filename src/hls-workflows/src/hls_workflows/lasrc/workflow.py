@@ -130,7 +130,7 @@ def _build_sentinel(
         )
 
     upload = s2_lasrc.UploadLaSRCDebug.map(granule_id)(
-        "Upload", prefix=f"lasrc-port/{lasrc_version}"
+        "Upload", prefix=f"lasrc/{lasrc_version}"
     )
     return builder.add(upload)
 
@@ -168,5 +168,5 @@ def _build_landsat(
             .add(l_tasks.RunLaSRC("LaSRC"))
         )
 
-    upload = l_lasrc.UploadLaSRCDebug("Upload", prefix=f"lasrc-port/{lasrc_version}")
+    upload = l_lasrc.UploadLaSRCDebug("Upload", prefix=f"lasrc/{lasrc_version}")
     return builder.add(upload)

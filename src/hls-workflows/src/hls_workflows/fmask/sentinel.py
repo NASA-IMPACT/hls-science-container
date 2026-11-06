@@ -13,8 +13,7 @@ from typing import TYPE_CHECKING
 import boto3
 
 from hls_workflows.base import AssetBundle, MappedTask
-from hls_workflows.common import S3Path
-from hls_workflows.fmask.products import is_fmask_product
+from hls_workflows.fmask import products
 from hls_workflows.sentinel.assets import (
     CONFIG,
     UPLOAD_COMPLETE,
@@ -46,8 +45,9 @@ class UploadFmaskDebug(MappedTask):
     """Upload the Fmask cloud mask to the debug bucket.
 
     Uploads only the ``*_UPL.tif`` mask, flattened into a single
-    ``<prefix>/<granule_id>/`` directory. Depends on the Fmask ENVI binary
-    purely to order after Fmask.
+    ``<prefix>/<fmask version>/<granule_id>/`` directory (see
+    ``products.debug_upload_base``). Depends on the Fmask ENVI binary purely to
+    order after Fmask.
 
     No-ops (with a warning) when ``DEBUG_BUCKET`` is unset.
     """
@@ -65,11 +65,13 @@ class UploadFmaskDebug(MappedTask):
             return {UPLOAD_COMPLETE: True}
 
         s3: S3Client = boto3.client("s3")
-        base = S3Path(config.debug_bucket, f"{self.prefix}/{self.granule_id}")
+        base = products.debug_upload_base(
+            config.debug_bucket, self.prefix, self.granule_id
+        )
         logger.info(f"Uploading Fmask debug files to {base}")
 
         for f in (config.working_dir / self.granule_id).rglob("*"):
-            if f.is_file() and is_fmask_product(f.name):
+            if f.is_file() and products.is_fmask_product(f.name):
                 dest = base / f.name
                 s3.upload_file(str(f), dest.bucket, dest.key)
 
