@@ -330,3 +330,31 @@ class HlsGranule:
                 self.version.to_str(),
             ]
         )
+
+
+Granule = LandsatGranule | Sentinel2Granule | HlsGranule
+
+#: Granule ID parsers tried, in order, by ``resolve_granule``. Each format is
+#: distinct, so at most one parser accepts a given ID.
+GRANULE_TYPES: tuple[type[Granule], ...] = (
+    LandsatGranule,
+    Sentinel2Granule,
+    HlsGranule,
+)
+
+
+def resolve_granule(granule_id: str) -> Granule:
+    """Parse a granule ID with whichever registered granule type accepts it.
+
+    Raises
+    ------
+    ValueError
+        If no type in ``GRANULE_TYPES`` can parse ``granule_id``.
+    """
+    for granule_type in GRANULE_TYPES:
+        try:
+            return granule_type.from_str(granule_id)
+        except ValueError:
+            continue
+    names = ", ".join(t.__name__ for t in GRANULE_TYPES)
+    raise ValueError(f"Could not parse {granule_id!r} as any of: {names}")

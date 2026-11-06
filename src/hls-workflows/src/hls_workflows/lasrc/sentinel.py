@@ -1,4 +1,4 @@
-"""Sentinel-2 tasks specific to the standalone "just-LaSRC" pipeline.
+"""Sentinel-2 tasks specific to the standalone ``lasrc`` pipeline.
 
 Kept out of the production ``sentinel`` package so the main S30 pipeline stays
 clean; this whole module is expected to be removed once the Rust LaSRC is

@@ -1,4 +1,4 @@
-"""Landsat tasks specific to the standalone "just-LaSRC" pipeline.
+"""Landsat tasks specific to the standalone ``lasrc`` pipeline.
 
 Kept out of the production ``landsat_ac`` package so the main L30-AC pipeline
 stays clean; this whole module is expected to be removed once the Rust LaSRC is

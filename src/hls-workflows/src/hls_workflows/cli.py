@@ -254,5 +254,43 @@ def lasrc(
     )
 
 
+@cli.command("fmask")
+@click.option(
+    "--granule",
+    envvar="GRANULE",
+    required=True,
+    help="Sentinel-2 or Landsat granule ID, auto-detected (env: GRANULE).",
+)
+@click.option(
+    "--local-granule",
+    envvar="LOCAL_GRANULE",
+    default=None,
+    type=click.Path(path_type=Path),
+    help="Pre-downloaded granule (.zip for S2, dir for Landsat) (env: LOCAL_GRANULE).",
+)
+@_cleanup_option
+def fmask(
+    granule: str,
+    local_granule: Path | None,
+    cleanup_working_dir: bool,
+) -> None:
+    """Run the standalone Fmask pipeline (Download -> Fmask -> Upload).
+
+    Debug pipeline for testing Fmask performance in isolation. Uploads the
+    Fmask cloud mask to DEBUG_BUCKET. Does not skip granules with an invalid
+    solar zenith angle.
+    """
+    from hls_workflows.fmask import construct_pipeline
+
+    _run(
+        construct_pipeline(
+            granule_id=granule,
+            local_granule=local_granule,
+            cleanup_working_dir=cleanup_working_dir,
+        ),
+        "fmask-workflow",
+    )
+
+
 if __name__ == "__main__":
     cli()

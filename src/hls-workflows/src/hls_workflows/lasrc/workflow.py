@@ -1,4 +1,4 @@
-"""Construct the standalone "just-LaSRC" pipeline.
+"""Construct the standalone ``lasrc`` pipeline.
 
 One unified ``construct_pipeline`` detects whether the granule is Sentinel-2 or
 Landsat and assembles the minimal chain needed to reach LaSRC, reusing the
@@ -22,7 +22,7 @@ import os
 from pathlib import Path
 
 from hls_workflows.constants import LASRC_VERSION
-from hls_workflows.granules import LandsatGranule, Sentinel2Granule
+from hls_workflows.granules import LandsatGranule, Sentinel2Granule, resolve_granule
 from hls_workflows.landsat_ac import tasks as l_tasks
 from hls_workflows.metrics import MetricsCollector, MetricSink
 from hls_workflows.pipeline import Pipeline, PipelineBuilder
@@ -33,27 +33,6 @@ from . import landsat as l_lasrc
 from . import sentinel as s2_lasrc
 
 logger = logging.getLogger(__name__)
-
-
-def _is_sentinel(granule_id: str) -> bool:
-    """Detect Sentinel-2 vs Landsat from a granule ID.
-
-    Tries the Sentinel-2 parser first, then the Landsat parser, raising a clear
-    error if neither matches.
-    """
-    try:
-        Sentinel2Granule.from_str(granule_id)
-        return True
-    except ValueError:
-        pass
-    try:
-        LandsatGranule.from_str(granule_id)
-        return False
-    except ValueError:
-        pass
-    raise ValueError(
-        f"Could not identify {granule_id!r} as a Sentinel-2 or Landsat granule ID"
-    )
 
 
 def construct_pipeline(
@@ -80,11 +59,19 @@ def construct_pipeline(
     metric_sink
         Optional metrics sink.
     """
-    builder = (
-        _build_sentinel(granule_id, lasrc_version, working_dir, local_granule)
-        if _is_sentinel(granule_id)
-        else _build_landsat(granule_id, lasrc_version, working_dir, local_granule)
-    )
+    match resolve_granule(granule_id):
+        case Sentinel2Granule():
+            builder = _build_sentinel(
+                granule_id, lasrc_version, working_dir, local_granule
+            )
+        case LandsatGranule():
+            builder = _build_landsat(
+                granule_id, lasrc_version, working_dir, local_granule
+            )
+        case other:
+            raise ValueError(
+                f"Expected a Sentinel-2 or Landsat granule ID, got {type(other).__name__}"
+            )
 
     return builder.build(
         metrics=MetricsCollector(
@@ -104,7 +91,7 @@ def _build_sentinel(
     working_dir: Path | None,
     local_granule: Path | None,
 ) -> PipelineBuilder:
-    """Sentinel-2 just-LaSRC builder (single granule, no twin consolidation)."""
+    """Sentinel-2 ``lasrc`` pipeline builder (single granule, no twin consolidation)."""
     # The Sentinel EnvSource reads GRANULE_LIST from the environment.
     os.environ["GRANULE_LIST"] = granule_id
 
@@ -143,7 +130,7 @@ def _build_sentinel(
         )
 
     upload = s2_lasrc.UploadLaSRCDebug.map(granule_id)(
-        "Upload", prefix=f"lasrc-port/{lasrc_version}"
+        "Upload", prefix=f"lasrc/{lasrc_version}"
     )
     return builder.add(upload)
 
@@ -154,7 +141,7 @@ def _build_landsat(
     working_dir: Path | None,
     local_granule: Path | None,
 ) -> PipelineBuilder:
-    """Landsat just-LaSRC builder."""
+    """Landsat ``lasrc`` pipeline builder."""
     download: l_tasks.LocalGranule | l_tasks.DownloadGranule
     if local_granule:
         download = l_tasks.LocalGranule("LocalGranule", local_granule_dir=local_granule)
@@ -181,5 +168,5 @@ def _build_landsat(
             .add(l_tasks.RunLaSRC("LaSRC"))
         )
 
-    upload = l_lasrc.UploadLaSRCDebug("Upload", prefix=f"lasrc-port/{lasrc_version}")
+    upload = l_lasrc.UploadLaSRCDebug("Upload", prefix=f"lasrc/{lasrc_version}")
     return builder.add(upload)

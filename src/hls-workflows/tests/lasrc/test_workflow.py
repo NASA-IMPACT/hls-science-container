@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from hls_workflows.lasrc import sentinel as s2_lasrc
-from hls_workflows.lasrc.workflow import _is_sentinel, construct_pipeline
+from hls_workflows.lasrc.workflow import construct_pipeline
 
 S2_GRANULE = "S2B_MSIL1C_20230602T155819_N0510_R097_T18SUJ_20240911T062140"
 L_GRANULE = "LC09_L1TP_001066_20260314_20260314_02_T1"
@@ -17,7 +17,7 @@ L_GRANULE = "LC09_L1TP_001066_20260314_20260314_02_T1"
 _DOWNLOAD_COMMANDS = ["unzip"]
 
 # The C path instantiates the real ESPA/LaSRC tasks, which each validate their
-# external command in __post_init__. Note: NO Fmask commands -- the just-LaSRC C
+# external command in __post_init__. Note: NO Fmask commands -- the standalone LaSRC C
 # path does not run Fmask.
 _C_PATH_COMMANDS = _DOWNLOAD_COMMANDS + [
     "gdal_translate",
@@ -63,11 +63,18 @@ def base_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("SCRATCH_DIR", str(tmp_path / "scratch"))
 
 
-def test_is_sentinel_detection() -> None:
-    assert _is_sentinel(S2_GRANULE) is True
-    assert _is_sentinel(L_GRANULE) is False
-    with pytest.raises(ValueError, match="Could not identify"):
-        _is_sentinel("not-a-granule")
+@pytest.mark.parametrize(
+    ("granule_id", "match"),
+    [
+        ("HLS.S30.T18TYL.2020001T153621.v2.0", "got HlsGranule"),
+        ("not-a-granule", "Could not parse"),
+    ],
+)
+def test_rejects_non_l1_granule_ids(
+    base_env: None, granule_id: str, match: str
+) -> None:
+    with pytest.raises(ValueError, match=match):
+        construct_pipeline(granule_id)
 
 
 # ----- Rust path (the new behaviour): minimal Download -> LaSRC -> Upload
@@ -142,7 +149,7 @@ def test_sentinel_c_pipeline_shape(c_path_bins: Path, base_env: None) -> None:
     assert any(t.startswith("RunLaSRC-") for t in classes)
     assert any(t.startswith("PrepareEspaInputNoFmask") for t in classes)
     assert not any(t.startswith("RunLaSRCRust") for t in classes)
-    # The just-LaSRC C path does not run Fmask.
+    # The standalone LaSRC C path does not run Fmask.
     assert not any(t.startswith("RunFmask") for t in classes)
 
 
@@ -153,5 +160,5 @@ def test_landsat_c_pipeline_shape(c_path_bins: Path, base_env: None) -> None:
     assert "ConvertToEspa" in classes
     assert "ScanlineNoFmask" in classes
     assert "RunLaSRCRust" not in classes
-    # The just-LaSRC C path does not run Fmask.
+    # The standalone LaSRC C path does not run Fmask.
     assert not any(t.startswith("RunFmask") for t in classes)

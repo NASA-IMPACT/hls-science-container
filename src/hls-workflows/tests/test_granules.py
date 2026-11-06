@@ -6,6 +6,7 @@ from hls_workflows.granules import (
     HlsGranule,
     LandsatGranule,
     Sentinel2Granule,
+    resolve_granule,
 )
 
 
@@ -215,3 +216,26 @@ class TestHlsGranule:
         # 2020-01-01 is DOY 001. HMS is 102431 (from T102431)
         expected = "HLS.S30.T32TQM.2020001T102431.v2.0"
         assert HlsGranule.from_sentinel2("HLS", granule).to_str() == expected
+
+
+# --- resolve_granule Tests ---
+@pytest.mark.parametrize(
+    ("granule_id", "expected_type"),
+    [
+        ("LC08_L1TP_046028_20200908_20200918_02_T1", LandsatGranule),
+        (
+            "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841",
+            Sentinel2Granule,
+        ),
+        ("HLS.S30.T18TYL.2020001T153621.v2.0", HlsGranule),
+    ],
+)
+def test_resolve_granule(granule_id: str, expected_type: type) -> None:
+    granule = resolve_granule(granule_id)
+    assert isinstance(granule, expected_type)
+    assert granule.to_str() == granule_id
+
+
+def test_resolve_granule_unknown() -> None:
+    with pytest.raises(ValueError, match="Could not parse 'not-a-granule'"):
+        resolve_granule("not-a-granule")
