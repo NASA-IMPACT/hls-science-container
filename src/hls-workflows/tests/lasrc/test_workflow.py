@@ -17,7 +17,7 @@ L_GRANULE = "LC09_L1TP_001066_20260314_20260314_02_T1"
 _DOWNLOAD_COMMANDS = ["unzip"]
 
 # The C path instantiates the real ESPA/LaSRC tasks, which each validate their
-# external command in __post_init__. Note: NO Fmask commands -- the just-LaSRC C
+# external command in __post_init__. Note: NO Fmask commands -- the standalone LaSRC C
 # path does not run Fmask.
 _C_PATH_COMMANDS = _DOWNLOAD_COMMANDS + [
     "gdal_translate",
@@ -149,7 +149,7 @@ def test_sentinel_c_pipeline_shape(c_path_bins: Path, base_env: None) -> None:
     assert any(t.startswith("RunLaSRC-") for t in classes)
     assert any(t.startswith("PrepareEspaInputNoFmask") for t in classes)
     assert not any(t.startswith("RunLaSRCRust") for t in classes)
-    # The just-LaSRC C path does not run Fmask.
+    # The standalone LaSRC C path does not run Fmask.
     assert not any(t.startswith("RunFmask") for t in classes)
 
 
@@ -160,5 +160,5 @@ def test_landsat_c_pipeline_shape(c_path_bins: Path, base_env: None) -> None:
     assert "ConvertToEspa" in classes
     assert "ScanlineNoFmask" in classes
     assert "RunLaSRCRust" not in classes
-    # The just-LaSRC C path does not run Fmask.
+    # The standalone LaSRC C path does not run Fmask.
     assert not any(t.startswith("RunFmask") for t in classes)

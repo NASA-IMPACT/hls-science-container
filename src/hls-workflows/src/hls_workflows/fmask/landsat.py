@@ -1,4 +1,4 @@
-"""Landsat tasks specific to the standalone "just-Fmask" pipeline.
+"""Landsat tasks specific to the standalone ``fmask`` pipeline.
 
 Kept out of the production ``landsat_ac`` package so the main L30-AC pipeline
 stays clean.

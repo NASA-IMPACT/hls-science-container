@@ -1,4 +1,4 @@
-"""Standalone "just-Fmask" pipeline for Fmask performance testing.
+"""Standalone ``fmask`` pipeline for Fmask performance testing.
 
 A debug-oriented pipeline that runs only the Fmask step (Download -> Fmask ->
 Upload) so changes to Fmask can be measured in isolation from the rest of the

@@ -1,4 +1,4 @@
-"""Standalone "just-LaSRC" pipeline for C vs Rust intercomparison.
+"""Standalone ``lasrc`` pipeline for C vs Rust intercomparison.
 
 This is a temporary, debug-oriented pipeline that runs only the LaSRC step
 (Download -> LaSRC -> Upload) so the C LaSRC and the Rust ``lasrc-rs`` port can

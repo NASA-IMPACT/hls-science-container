@@ -1,4 +1,4 @@
-"""Construct the standalone "just-LaSRC" pipeline.
+"""Construct the standalone ``lasrc`` pipeline.
 
 One unified ``construct_pipeline`` detects whether the granule is Sentinel-2 or
 Landsat and assembles the minimal chain needed to reach LaSRC, reusing the
@@ -91,7 +91,7 @@ def _build_sentinel(
     working_dir: Path | None,
     local_granule: Path | None,
 ) -> PipelineBuilder:
-    """Sentinel-2 just-LaSRC builder (single granule, no twin consolidation)."""
+    """Sentinel-2 ``lasrc`` pipeline builder (single granule, no twin consolidation)."""
     # The Sentinel EnvSource reads GRANULE_LIST from the environment.
     os.environ["GRANULE_LIST"] = granule_id
 
@@ -141,7 +141,7 @@ def _build_landsat(
     working_dir: Path | None,
     local_granule: Path | None,
 ) -> PipelineBuilder:
-    """Landsat just-LaSRC builder."""
+    """Landsat ``lasrc`` pipeline builder."""
     download: l_tasks.LocalGranule | l_tasks.DownloadGranule
     if local_granule:
         download = l_tasks.LocalGranule("LocalGranule", local_granule_dir=local_granule)

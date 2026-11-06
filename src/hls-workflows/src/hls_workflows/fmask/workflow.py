@@ -1,4 +1,4 @@
-"""Construct the standalone "just-Fmask" pipeline.
+"""Construct the standalone ``fmask`` pipeline.
 
 One unified ``construct_pipeline`` detects whether the granule is Sentinel-2 or
 Landsat and assembles the minimal chain needed to reach Fmask, reusing the
@@ -83,7 +83,7 @@ def _build_sentinel(
     working_dir: Path | None,
     local_granule: Path | None,
 ) -> PipelineBuilder:
-    """Sentinel-2 just-Fmask builder (single granule, no twin consolidation)."""
+    """Sentinel-2 ``fmask`` pipeline builder (single granule, no twin consolidation)."""
     # The Sentinel EnvSource reads GRANULE_LIST from the environment.
     os.environ["GRANULE_LIST"] = granule_id
 
@@ -111,7 +111,7 @@ def _build_landsat(
     working_dir: Path | None,
     local_granule: Path | None,
 ) -> PipelineBuilder:
-    """Landsat just-Fmask builder."""
+    """Landsat ``fmask`` pipeline builder."""
     download: l_tasks.LocalGranule | l_tasks.DownloadGranule
     if local_granule:
         download = l_tasks.LocalGranule("LocalGranule", local_granule_dir=local_granule)
