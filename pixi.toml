@@ -39,7 +39,7 @@ click = "*"
 zip = "*"
 unzip = "*"
 # Fmask v5.0.1-1
-fmask = { git = "https://github.com/NASA-IMPACT/fmask-v5", rev = "47c04feecae1f52838b4d344389a083b14251ce0" }
+fmask = { git = "https://github.com/NASA-IMPACT/fmask-v5", rev = "47c04feecae1f52838b4d344389a083b14251ce0", subdirectory = "recipe" }
 # lasrc-rs (TODO: point to released conda package)
 lasrc-rs = { git = "https://github.com/NASA-IMPACT/lasrc-rs", rev = "2c5a859d71bdb8d376281b379435ed99e8e3206e", subdirectory = "conda" }
 
