@@ -128,6 +128,7 @@ def test_base_environment_overrides(granules_csv: Path) -> None:
     assert env["DEBUG_BUCKET"] == "dbg"
     assert env["METRIC_LOG_GROUP_NAME"] == "/custom"
     assert env["OMP_NUM_THREADS"] == "4"
+    assert env["RAYON_NUM_THREADS"] == "4"
     assert env["HLS_EXPERIMENT_FMASK_BUILD"] == "baseline"
     assert env["HLS_EXPERIMENT_RUN"] == "2"
 

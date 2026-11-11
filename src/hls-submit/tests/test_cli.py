@@ -66,6 +66,7 @@ def test_fmask_submit_requester_pays(
         "DEBUG_BUCKET": "hls-science-container-testing",
         "GIBS_OUTPUT_BUCKET": "foo",
         "OMP_NUM_THREADS": "2",
+        "RAYON_NUM_THREADS": "2",
         "METRIC_LOG_GROUP_NAME": f"/hls-orchestration/{stack['name']}/log-metrics",
         "INPUT_PREFIX": "datasets/belmanip2/S30/",
         "INPUT_REQUESTER_PAYS": "true",

@@ -24,9 +24,6 @@ def build_jobs(options: SubmitOptions, impls: tuple[str, ...]) -> list[JobSpec]:
         **options.base_environment(DEFAULT_S30_INPUT_PREFIX),
         "VIIRS_AUX_STARTING_DATE": "20210101",
         "LASRC_AUX_DIR": "/var/lasrc_aux",
-        # OMP_NUM_THREADS caps the C OpenMP loops; the Rust rayon pool reads
-        # RAYON_NUM_THREADS instead.
-        "RAYON_NUM_THREADS": str(options.threads),
     }
     return [
         JobSpec(

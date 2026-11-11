@@ -229,7 +229,11 @@ class SubmitOptions:
             "DEBUG_BUCKET": self.debug_bucket or self.output_bucket,
             # Required by the Sentinel environment config, unused by experiments.
             "GIBS_OUTPUT_BUCKET": "foo",
+            # Set even though the job definition has defaults, so the thread
+            # count is part of the submitted experiment. OpenMP (C LaSRC, numpy
+            # BLAS) and rayon (Rust LaSRC) each read their own variable.
             "OMP_NUM_THREADS": str(self.threads),
+            "RAYON_NUM_THREADS": str(self.threads),
         }
         if self.metric_log_group_name:
             env["METRIC_LOG_GROUP_NAME"] = self.metric_log_group_name
