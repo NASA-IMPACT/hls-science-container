@@ -2,7 +2,7 @@
 name = "hls-science-container"
 version = "0.1.0"
 platforms = ["linux-64", "osx-arm64"]
-channels = ["conda-forge", "s3://hls-conda-channels"]
+channels = ["conda-forge", "s3://hls-conda-channels/stable"]
 preview = ["pixi-build"]
 conda-pypi-map = { conda-forge = { mapping-mode = "replace" } }
 
