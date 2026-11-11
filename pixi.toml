@@ -33,6 +33,9 @@ libgdal-hdf4 = ">=3.10.3,<4"
 libgdal-hdf5 = ">=3.10.3,<4"
 libgdal-jp2openjpeg = "*"
 rasterio = "*"
+# hls-cmr_stac (<=v1.9) JSON-dumps rasterio's transform directly, which needs
+# affine.Affine to be a tuple subclass (dropped in affine 3)
+affine = ">=2,<3"
 pyproj = ">=3.7.2,<4"
 shapely = ">=2,<3"
 click = "*"
