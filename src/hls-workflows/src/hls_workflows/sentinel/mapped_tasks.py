@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import ClassVar, Literal
 
 import boto3
+from botocore.exceptions import ClientError
 
 from hls_utilities import check_sentinel_clouds, check_solar_zenith_sentinel
 from hls_utilities.apply_s2_quality_mask import apply_s2_quality_mask
@@ -63,6 +64,14 @@ class DownloadSentinelGranule(MappedTask):
     #: Key prefix within the input bucket holding the granule ZIPs. Empty means
     #: the ZIPs sit at the root of the bucket, which is the operational layout.
     input_prefix: str = field(default_factory=lambda: os.getenv("INPUT_PREFIX", ""))
+    #: Send ``RequestPayer=requester`` when downloading. Required to read from a
+    #: requester-pays bucket owned by another AWS account.
+    input_requester_pays: bool = field(
+        default_factory=lambda: (
+            os.getenv("INPUT_REQUESTER_PAYS", "").strip().lower()
+            in ("1", "true", "yes")
+        )
+    )
 
     requires = (CONFIG,)
     provides_factory = lambda granule_id: (safe_dir_asset(granule_id),)
@@ -86,7 +95,24 @@ class DownloadSentinelGranule(MappedTask):
 
         logger.info(f"Downloading s3://{config.input_bucket}/{self.granule_key}")
         s3 = boto3.client("s3")
-        s3.download_file(config.input_bucket, self.granule_key, str(zip_path))
+        extra_args = (
+            {"RequestPayer": "requester"} if self.input_requester_pays else None
+        )
+        try:
+            s3.download_file(
+                config.input_bucket,
+                self.granule_key,
+                str(zip_path),
+                ExtraArgs=extra_args,
+            )
+        except ClientError as err:
+            code = err.response.get("Error", {}).get("Code")
+            if not self.input_requester_pays and code in ("403", "AccessDenied"):
+                err.add_note(
+                    f"Access denied reading s3://{config.input_bucket}. If this is "
+                    "a requester-pays bucket, set INPUT_REQUESTER_PAYS=true."
+                )
+            raise
 
         logger.info(f"Unzipping {zip_path}")
         run_command(["unzip", "-q", str(zip_path), "-d", str(granule_dir)], check=True)

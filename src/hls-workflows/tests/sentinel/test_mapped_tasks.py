@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import pytest
+from botocore.exceptions import ClientError
 from mypy_boto3_s3 import S3Client
 
 from hls_utilities import check_solar_zenith_sentinel
@@ -98,6 +100,90 @@ def test_DownloadSentinelGranule_input_prefix(
     safe_dir = safe_dir_asset(granule_id)
     assert safe_dir in outputs
     assert outputs[safe_dir].exists()
+
+
+_BOTO3_CLIENT = "hls_workflows.sentinel.mapped_tasks.boto3.client"
+
+
+@pytest.mark.parametrize(
+    ("env_value", "expected_extra_args"),
+    [
+        (None, None),
+        ("false", None),
+        ("true", {"RequestPayer": "requester"}),
+        ("1", {"RequestPayer": "requester"}),
+    ],
+)
+def test_DownloadSentinelGranule_requester_pays(
+    s3_client: S3Client,
+    sentinel_config: EnvConfig,
+    tmp_path: Path,
+    populate_sentinel_safe: Callable[[Path, Sentinel2Granule], Path],
+    monkeypatch: pytest.MonkeyPatch,
+    env_value: str | None,
+    expected_extra_args: dict[str, str] | None,
+) -> None:
+    """Tests INPUT_REQUESTER_PAYS controls the RequestPayer download arg."""
+    granule_id = "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
+    granule = Sentinel2Granule.from_str(granule_id)
+    safe_zip = populate_sentinel_safe(tmp_path, granule)
+
+    s3_client.create_bucket(Bucket=sentinel_config.input_bucket)
+    s3_client.upload_file(
+        Filename=str(safe_zip),
+        Bucket=sentinel_config.input_bucket,
+        Key=f"{granule_id}.zip",
+    )
+
+    if env_value is None:
+        monkeypatch.delenv("INPUT_REQUESTER_PAYS", raising=False)
+    else:
+        monkeypatch.setenv("INPUT_REQUESTER_PAYS", env_value)
+
+    calls: list[dict[str, Any]] = []
+    real_download_file = s3_client.download_file
+
+    def _spy(*args: Any, **kwargs: Any) -> None:
+        calls.append(kwargs)
+        real_download_file(*args, **kwargs)
+
+    monkeypatch.setattr(s3_client, "download_file", _spy)
+    monkeypatch.setattr(_BOTO3_CLIENT, lambda *_a, **_k: s3_client)
+
+    task = DownloadSentinelGranule.map(granule_id)(name="download")
+    outputs = task.run({CONFIG: sentinel_config})
+
+    assert outputs[safe_dir_asset(granule_id)].exists()
+    assert len(calls) == 1
+    assert calls[0]["ExtraArgs"] == expected_extra_args
+
+
+@pytest.mark.parametrize("requester_pays", [False, True])
+def test_DownloadSentinelGranule_access_denied_hint(
+    sentinel_config: EnvConfig,
+    monkeypatch: pytest.MonkeyPatch,
+    requester_pays: bool,
+) -> None:
+    """Tests a 403 hints at INPUT_REQUESTER_PAYS only when it is not set."""
+    granule_id = "S2A_MSIL1C_20200101T102431_N0208_R065_T32TQM_20200101T122841"
+
+    class _DeniedClient:
+        def download_file(self, *args: Any, **kwargs: Any) -> None:
+            raise ClientError(
+                {"Error": {"Code": "403", "Message": "Forbidden"}}, "HeadObject"
+            )
+
+    monkeypatch.setattr(_BOTO3_CLIENT, lambda *_a, **_k: _DeniedClient())
+
+    task = DownloadSentinelGranule.map(granule_id)(
+        name="download", input_requester_pays=requester_pays
+    )
+    with pytest.raises(ClientError) as excinfo:
+        task.run({CONFIG: sentinel_config})
+
+    notes = getattr(excinfo.value, "__notes__", [])
+    has_hint = any("INPUT_REQUESTER_PAYS" in note for note in notes)
+    assert has_hint is not requester_pays
 
 
 def test_GetGranuleDir(sentinel_config: EnvConfig, mock_binaries: Path) -> None:
