@@ -321,7 +321,7 @@ environments:
       - pypi: ./src/hls-utilities
       - pypi: ./src/hls-workflows
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
-      - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
+      - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.9#38edfdb70f203696fad76062d8c7e92144bfc8d7
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
@@ -620,7 +620,7 @@ environments:
       - pypi: ./src/hls-utilities
       - pypi: ./src/hls-workflows
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
-      - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
+      - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.9#38edfdb70f203696fad76062d8c7e92144bfc8d7
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
@@ -1060,7 +1060,7 @@ environments:
       - pypi: ./src/hls-utilities
       - pypi: ./src/hls-workflows
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
-      - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
+      - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.9#38edfdb70f203696fad76062d8c7e92144bfc8d7
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
@@ -1416,7 +1416,7 @@ environments:
       - pypi: ./src/hls-utilities
       - pypi: ./src/hls-workflows
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
-      - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
+      - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.9#38edfdb70f203696fad76062d8c7e92144bfc8d7
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
@@ -1759,7 +1759,7 @@ environments:
       - pypi: ./src/hls-utilities
       - pypi: ./src/hls-workflows
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
-      - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
+      - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.9#38edfdb70f203696fad76062d8c7e92144bfc8d7
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
@@ -2035,7 +2035,7 @@ environments:
       - pypi: ./src/hls-utilities
       - pypi: ./src/hls-workflows
       - pypi: direct+https://github.com/NASA-IMPACT/hls-vi/releases/download/v1.20.2/hls_vi-1.20.2-py3-none-any.whl
-      - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
+      - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.9#38edfdb70f203696fad76062d8c7e92144bfc8d7
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
@@ -13653,9 +13653,9 @@ packages:
   - shapely
   - untangle
   requires_python: '>=3.12'
-- pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
+- pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.9#38edfdb70f203696fad76062d8c7e92144bfc8d7
   name: hls-browse-imagery-creator
-  version: '1.8'
+  version: '1.9'
   requires_dist:
   - numpy
   - gdal
@@ -13663,6 +13663,7 @@ packages:
   - click
   - dicttoxml
   - lxml
+  - importlib-resources ; python_full_version < '3.9'
   - pytest ; extra == 'test'
   - flake8 ; extra == 'test'
 - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f

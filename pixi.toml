@@ -16,7 +16,7 @@ hls-libs = "=v3.5.1.2"
 hls-utilities = { path = "./src/hls-utilities", editable = false }
 hls-workflows = { path = "./src/hls-workflows", editable = false}
 # Remote repositories
-hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", tag = "v1.8"}
+hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", tag = "v1.9"}
 hls-cmr_stac = { git = "https://github.com/NASA-IMPACT/hls-cmr_stac", tag = "v1.9" }
 hls-hdf_to_cog = { git = "https://github.com/NASA-IMPACT/hls-hdf_to_cog", tag = "v2.2" }
 hls-manifest = { git = "https://github.com/NASA-IMPACT/hls-manifest", tag = "v2.2" }
