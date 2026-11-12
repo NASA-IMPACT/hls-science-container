@@ -10,7 +10,7 @@ conda-pypi-map = { conda-forge = { mapping-mode = "replace" } }
 # C packages can only be compiled on Linux x86_64
 espa-product-formatter = "=3.5.0"
 espa-surface-reflectance = "=v3.5.1.0"
-hls-libs = "=v3.5.1.2"
+hls-libs = "=v3.5.1.3"
 
 [pypi-dependencies]
 hls-utilities = { path = "./src/hls-utilities", editable = false }
