@@ -324,7 +324,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
-      - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.1#177e6473591b5305f2448aeee9df06be7ea55796
+      - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -623,7 +623,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
-      - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.1#177e6473591b5305f2448aeee9df06be7ea55796
+      - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -1063,7 +1063,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
-      - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.1#177e6473591b5305f2448aeee9df06be7ea55796
+      - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -1419,7 +1419,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
-      - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.1#177e6473591b5305f2448aeee9df06be7ea55796
+      - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -1762,7 +1762,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
-      - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.1#177e6473591b5305f2448aeee9df06be7ea55796
+      - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -2038,7 +2038,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-browse_imagery?tag=v1.8#b82c7b4b053c27964930535436b446ab2936b480
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
-      - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.1#177e6473591b5305f2448aeee9df06be7ea55796
+      - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
       - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
@@ -13697,12 +13697,13 @@ packages:
   - tox ; extra == 'test'
   - flake8 ; extra == 'test'
   - pytest ; extra == 'test'
-- pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.1#177e6473591b5305f2448aeee9df06be7ea55796
+- pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
   name: hls-manifest
   version: '0.1'
   requires_dist:
   - click
   - jsonschema
+  - importlib-resources ; python_full_version < '3.9'
   - flake8 ; extra == 'dev'
   - black ; extra == 'dev'
   - flake8 ; extra == 'test'
