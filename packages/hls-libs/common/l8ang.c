@@ -39,6 +39,10 @@ int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz)
 	int nrow, ncol, i;
 	int16 tmp;
 
+	/* Indeed header files do not have the mapinfo.   Nov 5, 2020 */
+	char lines_found = 0;
+	char samples_found = 0;
+	char mapinfo_found = 0;
 
 	/* Read the header file of the solar zneith angle image */
 	strcpy(header, fname_sz);
@@ -58,10 +62,12 @@ int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz)
 		if (strstr(line, "lines")) {
 			cp = strrchr(line, '=');
 			l8ang->nrow = atoi(cp+1);
+			lines_found = 1;
 		}
 		if (strstr(line, "samples")) {
 			cp = strrchr(line, '=');
 			l8ang->ncol = atoi(cp+1);
+			samples_found = 1;
 		}
 		if (strstr(line, "map info")) {
 			int zone;
@@ -85,10 +91,18 @@ int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz)
 			else
 				sprintf(l8ang->zonehem, "%dS", zone);
 
-			break;
+
+			mapinfo_found = 1;
 		}
 	}
 	fclose(fhdr);
+
+	if ( ! lines_found || ! samples_found || ! mapinfo_found ) {
+		sprintf(message, "Image dimension or mapinfo not found in %s", header);
+		Error(message);
+		return(1);
+	}
+
 	nrow = l8ang->nrow;
 	ncol = l8ang->ncol;
 
