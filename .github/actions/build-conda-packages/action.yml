@@ -11,7 +11,7 @@ inputs:
     description: Newline-separated list of recipe.yml paths, in dependency order.
     required: true
   channel-bucket:
-    description: Name of the S3 bucket backing the conda channel (no s3:// prefix).
+    description: S3 bucket and optional prefix of the conda channel (no s3:// prefix), e.g. my-bucket/stable.
     required: true
   output-dir:
     description: Directory for built packages; also used as a local channel.

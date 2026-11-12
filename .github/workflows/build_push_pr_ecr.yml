@@ -80,7 +80,7 @@ jobs:
       - name: Build conda packages
         uses: ./.github/actions/build-conda-packages
         with:
-          channel-bucket: ${{ vars.CONDA_CHANNEL_BUCKET }}
+          channel-bucket: ${{ vars.CONDA_CHANNEL_BUCKET }}/stable
           recipes: |
             packages/espa-product-formatter/recipe.yml
             packages/espa-surface-reflectance/recipe.yml
