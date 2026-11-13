@@ -1,0 +1,34 @@
+{
+  "band_tags": [
+    {}
+  ],
+  "count": 1,
+  "crs": "EPSG:32656",
+  "descriptions": [
+    null
+  ],
+  "dtype": "uint16",
+  "height": 3660,
+  "is_cog": true,
+  "nodata": null,
+  "offsets": [
+    0.0
+  ],
+  "scales": [
+    1.0
+  ],
+  "tags": {
+    "AREA_OR_POINT": "Area",
+    "L1T_SceneID": "2026-11-05_093057_SZA.img",
+    "OVERVIEW_RESAMPLING": "NEAREST"
+  },
+  "transform": [
+    30.0,
+    0.0,
+    699960.0,
+    0.0,
+    -30.0,
+    500040.0
+  ],
+  "width": 3660
+}

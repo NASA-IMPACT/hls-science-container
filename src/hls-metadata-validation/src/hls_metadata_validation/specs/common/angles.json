@@ -1,0 +1,18 @@
+{
+  "SZA": {
+    "$include": "encodings/angle.json",
+    "stac_asset": "SZA"
+  },
+  "SAA": {
+    "$include": "encodings/angle.json",
+    "stac_asset": "SAA"
+  },
+  "VZA": {
+    "$include": "encodings/angle.json",
+    "stac_asset": "VZA"
+  },
+  "VAA": {
+    "$include": "encodings/angle.json",
+    "stac_asset": "VAA"
+  }
+}
