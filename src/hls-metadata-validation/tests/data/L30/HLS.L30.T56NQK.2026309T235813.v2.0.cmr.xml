@@ -1,0 +1,406 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<Granule>
+  <GranuleUR>HLS.L30.T56NQK.2026309T235813.v2.0</GranuleUR>
+  <InsertTime>2026-11-11T18:43:55.276158Z</InsertTime>
+  <LastUpdate>2026-11-11T18:43:55.276174Z</LastUpdate>
+  <Collection>
+    <DataSetId>HLS Landsat Operational Land Imager Surface Reflectance and TOA Brightness Daily Global 30m v2.0</DataSetId>
+  </Collection>
+  <DataGranule>
+    <DataGranuleSizeInBytes>37804835</DataGranuleSizeInBytes>
+    <ProducerGranuleId>HLS.L30.T56NQK.2026309T235813.v2.0</ProducerGranuleId>
+    <DayNightFlag>DAY</DayNightFlag>
+    <ProductionDateTime>2026-11-11T18:43:13.000000Z</ProductionDateTime>
+    <LocalVersionId>2.0</LocalVersionId>
+  </DataGranule>
+  <Temporal>
+    <RangeDateTime>
+      <BeginningDateTime>2026-11-05T23:58:13.862304Z</BeginningDateTime>
+      <EndingDateTime>2026-11-05T23:58:13.862304Z</EndingDateTime>
+    </RangeDateTime>
+  </Temporal>
+  <Spatial>
+    <HorizontalSpatialDomain>
+      <Geometry>
+        <GPolygon>
+          <Boundary>
+            <Point>
+              <PointLongitude>154.80226744</PointLongitude>
+              <PointLatitude>4.5216809</PointLatitude>
+            </Point>
+            <Point>
+              <PointLongitude>155.07200944</PointLongitude>
+              <PointLatitude>4.52095913</PointLatitude>
+            </Point>
+            <Point>
+              <PointLongitude>154.85947886</PointLongitude>
+              <PointLatitude>3.52871195</PointLatitude>
+            </Point>
+            <Point>
+              <PointLongitude>154.80008491</PointLongitude>
+              <PointLatitude>3.5288293</PointLatitude>
+            </Point>
+          </Boundary>
+        </GPolygon>
+      </Geometry>
+    </HorizontalSpatialDomain>
+  </Spatial>
+  <Platforms>
+    <Platform>
+      <ShortName>LANDSAT-8</ShortName>
+      <Instruments>
+        <Instrument>
+          <ShortName>OLI</ShortName>
+        </Instrument>
+      </Instruments>
+    </Platform>
+  </Platforms>
+  <AdditionalAttributes>
+    <AdditionalAttribute>
+      <Name>LANDSAT_PRODUCT_ID</Name>
+      <Values>
+        <Value>LC08_L1TP_093057_20261105_20261106_02_RT</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>CLOUD_COVERAGE</Name>
+      <Values>
+        <Value>92</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>MGRS_TILE_ID</Name>
+      <Values>
+        <Value>56NQK</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>SPATIAL_COVERAGE</Name>
+      <Values>
+        <Value>16</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>SPATIAL_RESOLUTION</Name>
+      <Values>
+        <Value>30.0</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>SPATIAL_RESAMPLING_ALG</Name>
+      <Values>
+        <Value>Cubic Convolution</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>HLS_PROCESSING_TIME</Name>
+      <Values>
+        <Value>2026-11-11T18:43:13Z</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>SENSING_TIME</Name>
+      <Values>
+        <Value>2026-11-05T23:58:13.8623049Z</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>HORIZONTAL_CS_NAME</Name>
+      <Values>
+        <Value>UTM, WGS84, UTM ZONE 56</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>ULX</Name>
+      <Values>
+        <Value>699960.0</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>ULY</Name>
+      <Values>
+        <Value>500040.0</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>ADD_OFFSET</Name>
+      <Values>
+        <Value>0</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>REF_SCALE_FACTOR</Name>
+      <Values>
+        <Value>0.0001</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>THERM_SCALE_FACTOR</Name>
+      <Values>
+        <Value>0.01</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>ANG_SCALE_FACTOR</Name>
+      <Values>
+        <Value>0.01</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>FILLVALUE</Name>
+      <Values>
+        <Value>-9999</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>QA_FILLVALUE</Name>
+      <Values>
+        <Value>255</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>NCOLS</Name>
+      <Values>
+        <Value>3660</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>NROWS</Name>
+      <Values>
+        <Value>3660</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>MEAN_SUN_AZIMUTH_ANGLE</Name>
+      <Values>
+        <Value>133.86512212</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>MEAN_SUN_ZENITH_ANGLE</Name>
+      <Values>
+        <Value>29.18622484</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>MEAN_VIEW_AZIMUTH_ANGLE</Name>
+      <Values>
+        <Value>280.50415531</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>MEAN_VIEW_ZENITH_ANGLE</Name>
+      <Values>
+        <Value>7.4815672</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>NBAR_SOLAR_ZENITH</Name>
+      <Values>
+        <Value>28.05286927</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>ACCODE</Name>
+      <Values>
+        <Value>LaSRC v3.5.1.0</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>CLOUD_MASKING_CODE</Name>
+      <Values>
+        <Value>Fmask v5.0.1</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>TIRS_SSM_MODEL</Name>
+      <Values>
+        <Value>PRELIMINARY</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>TIRS_SSM_POSITION_STATUS</Name>
+      <Values>
+        <Value>ESTIMATED</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>USGS_SOFTWARE</Name>
+      <Values>
+        <Value>LPGS_16.6.0</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>IDENTIFIER_PRODUCT_DOI</Name>
+      <Values>
+        <Value>10.5067/HLS/HLSL30.002</Value>
+      </Values>
+    </AdditionalAttribute>
+    <AdditionalAttribute>
+      <Name>IDENTIFIER_PRODUCT_DOI_AUTHORITY</Name>
+      <Values>
+        <Value>https://doi.org</Value>
+      </Values>
+    </AdditionalAttribute>
+  </AdditionalAttributes>
+  <OnlineAccessURLs>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B11.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.B11.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B10.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.B10.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B07.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.B07.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B05.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.B05.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.Fmask.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.Fmask.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B04.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.B04.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.SAA.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.SAA.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.VZA.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.VZA.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.SZA.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.SZA.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B09.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.B09.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B06.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.B06.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.VAA.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.VAA.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B02.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.B02.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B03.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.B03.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B01.tif</URL>
+      <URLDescription>Download HLS.L30.T56NQK.2026309T235813.v2.0.B01.tif</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B11.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B10.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B07.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B05.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.Fmask.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B04.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.SAA.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.VZA.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.SZA.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B09.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B06.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.VAA.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B02.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B03.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+    <OnlineAccessURL>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.B01.tif</URL>
+      <URLDescription>This link provides direct download access via S3 to the granule</URLDescription>
+    </OnlineAccessURL>
+  </OnlineAccessURLs>
+  <OnlineResources>
+    <OnlineResource>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-public/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0_stac.json</URL>
+      <Description>Download HLS.L30.T56NQK.2026309T235813.v2.0_stac.json</Description>
+      <Type>EXTENDED METADATA</Type>
+    </OnlineResource>
+    <OnlineResource>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.cmr.xml</URL>
+      <Description>Download HLS.L30.T56NQK.2026309T235813.v2.0.cmr.xml</Description>
+      <Type>EXTENDED METADATA</Type>
+    </OnlineResource>
+    <OnlineResource>
+      <URL>s3://lp-prod-public/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0_stac.json</URL>
+      <Description>This link provides direct download access via S3 to the granule</Description>
+      <Type>EXTENDED METADATA</Type>
+    </OnlineResource>
+    <OnlineResource>
+      <URL>s3://lp-prod-protected/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.cmr.xml</URL>
+      <Description>This link provides direct download access via S3 to the granule</Description>
+      <Type>EXTENDED METADATA</Type>
+    </OnlineResource>
+    <OnlineResource>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/s3credentials</URL>
+      <Description>api endpoint to retrieve temporary credentials valid for same-region direct s3 access</Description>
+      <Type>VIEW RELATED INFORMATION</Type>
+    </OnlineResource>
+  </OnlineResources>
+  <DataFormat>Cloud Optimized GeoTIFF (COG)</DataFormat>
+  <AssociatedBrowseImageUrls>
+    <ProviderBrowseUrl>
+      <URL>https://data.lpdaac.earthdatacloud.nasa.gov/lp-prod-public/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.jpg</URL>
+      <Description>Download HLS.L30.T56NQK.2026309T235813.v2.0.jpg</Description>
+    </ProviderBrowseUrl>
+    <ProviderBrowseUrl>
+      <URL>s3://lp-prod-public/HLSL30.020/HLS.L30.T56NQK.2026309T235813.v2.0/HLS.L30.T56NQK.2026309T235813.v2.0.jpg</URL>
+      <Description>This link provides direct download access via S3 to the granule</Description>
+    </ProviderBrowseUrl>
+  </AssociatedBrowseImageUrls>
+</Granule>

@@ -1,0 +1,203 @@
+{
+  "product": "S30",
+  "version": "2.0",
+  "default_tolerance": 1e-06,
+  "attributes": {
+    "$include": "common/attributes.json",
+    "AROP_AVE_XSHIFT(METERS)": {
+      "required": true,
+      "type": "number",
+      "cog_tag": "arop_ave_xshift(meters)",
+      "cmr_additional_attribute": "AROP_AVE_XSHIFT(METERS)",
+      "stac_property": null,
+      "golden": "approx"
+    },
+    "AROP_AVE_YSHIFT(METERS)": {
+      "required": true,
+      "type": "number",
+      "cog_tag": "arop_ave_yshift(meters)",
+      "cmr_additional_attribute": "AROP_AVE_YSHIFT(METERS)",
+      "stac_property": null,
+      "golden": "approx"
+    },
+    "AROP_NCP": {
+      "required": true,
+      "type": "integer",
+      "cog_tag": "arop_ncp",
+      "cmr_additional_attribute": "AROP_NCP",
+      "stac_property": null,
+      "golden": "exact"
+    },
+    "AROP_RMSE(METERS)": {
+      "required": true,
+      "type": "number",
+      "cog_tag": "arop_rmse(meters)",
+      "cmr_additional_attribute": "AROP_RMSE(METERS)",
+      "stac_property": null,
+      "golden": "approx"
+    },
+    "AROP_S2_REFIMG": {
+      "required": true,
+      "type": "string",
+      "cog_tag": "arop_s2_refimg",
+      "cmr_additional_attribute": "AROP_S2_REFIMG",
+      "stac_property": null,
+      "golden": "exact"
+    },
+    "HORIZONTAL_CS_CODE": {
+      "required": true,
+      "type": "string",
+      "cog_tag": "HORIZONTAL_CS_CODE",
+      "cmr_additional_attribute": "HORIZONTAL_CS_CODE",
+      "stac_property": null,
+      "golden": "exact"
+    },
+    "MGRS_TILE_ID": {
+      "required": true,
+      "type": "string",
+      "cog_tag": null,
+      "cmr_additional_attribute": "MGRS_TILE_ID",
+      "stac_property": null,
+      "golden": "exact"
+    },
+    "MSI_BAND_01_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET": {
+      "required": true,
+      "type": "string",
+      "cog_tag": "MSI band 01 bandpass adjustment slope and offset",
+      "cmr_additional_attribute": "MSI_BAND_01_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET",
+      "stac_property": null,
+      "golden": "exact"
+    },
+    "MSI_BAND_02_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET": {
+      "required": true,
+      "type": "string",
+      "cog_tag": "MSI band 02 bandpass adjustment slope and offset",
+      "cmr_additional_attribute": "MSI_BAND_02_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET",
+      "stac_property": null,
+      "golden": "exact"
+    },
+    "MSI_BAND_03_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET": {
+      "required": true,
+      "type": "string",
+      "cog_tag": "MSI band 03 bandpass adjustment slope and offset",
+      "cmr_additional_attribute": "MSI_BAND_03_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET",
+      "stac_property": null,
+      "golden": "exact"
+    },
+    "MSI_BAND_04_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET": {
+      "required": true,
+      "type": "string",
+      "cog_tag": "MSI band 04 bandpass adjustment slope and offset",
+      "cmr_additional_attribute": "MSI_BAND_04_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET",
+      "stac_property": null,
+      "golden": "exact"
+    },
+    "MSI_BAND_11_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET": {
+      "required": true,
+      "type": "string",
+      "cog_tag": "MSI band 11 bandpass adjustment slope and offset",
+      "cmr_additional_attribute": "MSI_BAND_11_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET",
+      "stac_property": null,
+      "golden": "exact"
+    },
+    "MSI_BAND_12_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET": {
+      "required": true,
+      "type": "string",
+      "cog_tag": "MSI band 12 bandpass adjustment slope and offset",
+      "cmr_additional_attribute": "MSI_BAND_12_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET",
+      "stac_property": null,
+      "golden": "exact"
+    },
+    "MSI_BAND_8A_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET": {
+      "required": true,
+      "type": "string",
+      "cog_tag": "MSI band 8a bandpass adjustment slope and offset",
+      "cmr_additional_attribute": "MSI_BAND_8A_BANDPASS_ADJUSTMENT_SLOPE_AND_OFFSET",
+      "stac_property": null,
+      "golden": "exact"
+    },
+    "PROCESSING_BASELINE": {
+      "required": true,
+      "type": "string",
+      "cog_tag": "PROCESSING_BASELINE",
+      "cmr_additional_attribute": "PROCESSING_BASELINE",
+      "stac_property": null,
+      "golden": "exact"
+    },
+    "PRODUCT_URI": {
+      "required": true,
+      "type": "string",
+      "cog_tag": "PRODUCT_URI",
+      "cmr_additional_attribute": "PRODUCT_URI",
+      "stac_property": null,
+      "golden": "exact"
+    }
+  },
+  "assets": {
+    "$include": [
+      "common/angles.json",
+      "common/fmask.json"
+    ],
+    "B01": {
+      "$include": "common/encodings/reflectance.json",
+      "stac_asset": "B01"
+    },
+    "B02": {
+      "$include": "common/encodings/reflectance.json",
+      "stac_asset": "B02"
+    },
+    "B03": {
+      "$include": "common/encodings/reflectance.json",
+      "stac_asset": "B03"
+    },
+    "B04": {
+      "$include": "common/encodings/reflectance.json",
+      "stac_asset": "B04"
+    },
+    "B05": {
+      "$include": "common/encodings/reflectance.json",
+      "stac_asset": "B05"
+    },
+    "B06": {
+      "$include": "common/encodings/reflectance.json",
+      "stac_asset": "B06"
+    },
+    "B07": {
+      "$include": "common/encodings/reflectance.json",
+      "stac_asset": "B07"
+    },
+    "B08": {
+      "$include": "common/encodings/reflectance.json",
+      "stac_asset": "B08"
+    },
+    "B8A": {
+      "$include": "common/encodings/reflectance.json",
+      "stac_asset": "B8A"
+    },
+    "B09": {
+      "$include": "common/encodings/reflectance.json",
+      "stac_asset": "B09"
+    },
+    "B10": {
+      "$include": "common/encodings/reflectance.json",
+      "stac_asset": "B10"
+    },
+    "B11": {
+      "$include": "common/encodings/reflectance.json",
+      "stac_asset": "B11"
+    },
+    "B12": {
+      "$include": "common/encodings/reflectance.json",
+      "stac_asset": "B12"
+    }
+  },
+  "known_gaps": [
+    {
+      "id": "stac-no-raster-ext",
+      "surface": "stac",
+      "check": "asset.raster",
+      "target": null,
+      "reason": "hls-cmr_stac does not add the raster extension, so STAC assets carry no nodata/scale/offset."
+    }
+  ]
+}

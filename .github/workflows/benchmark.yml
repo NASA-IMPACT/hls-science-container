@@ -97,3 +97,36 @@ jobs:
           comment-on-alert: true
           alert-threshold: "150%"
           fail-on-alert: false
+
+      # Re-assume the role: the benchmark run can outlast the first session.
+      - name: Configure AWS credentials for golden references (OIDC)
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_TO_ASSUME_ARN }}
+          role-session-name: gha-${{ github.run_id }}-golden
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Fetch golden reference outputs
+        env:
+          GOLDEN_REFERENCE_PREFIX: ${{ vars.GOLDEN_REFERENCE_PREFIX }}
+        run: |
+          mkdir -p golden-reference
+          if [ -n "$GOLDEN_REFERENCE_PREFIX" ]; then
+            aws s3 sync --only-show-errors \
+              "s3://hls-validation-datasets/${GOLDEN_REFERENCE_PREFIX}" golden-reference/
+          else
+            echo "::warning::GOLDEN_REFERENCE_PREFIX is not set; every granule will be reported as skipped"
+          fi
+
+      - name: Compare metadata against golden references
+        env:
+          IMAGE: ${{ env.ECR_REPOSITORY }}:benchmark
+        run: scripts/golden
+
+      - name: Upload golden report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: golden-report
+          path: benchmark-output/golden-report.json
+          if-no-files-found: warn
