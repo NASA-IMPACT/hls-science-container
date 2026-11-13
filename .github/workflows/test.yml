@@ -36,6 +36,9 @@ jobs:
               - *shared
               - "src/hls-workflows/**"
               - "src/hls-utilities/**"
+            hls-metadata-validation:
+              - *shared
+              - "src/hls-metadata-validation/**"
 
       - name: List changed packages
         id: packages

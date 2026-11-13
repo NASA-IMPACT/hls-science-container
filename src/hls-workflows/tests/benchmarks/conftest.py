@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import shutil
 import tempfile
 from collections.abc import Iterator
@@ -69,6 +70,32 @@ class BenchmarkConfig:
             ls_granule_ids=_split_ids("BENCHMARK_LS_GRANULE_IDS"),
             num_threads=int(os.environ.get("BENCHMARK_NUM_THREADS", "2")),
         )
+
+
+FINAL_PRODUCT_RE = re.compile(
+    r"^(?P<granule>HLS\.[LS]30\.T\w{5}\.\d{7}T\d{6}\.v\d+\.\d+)"
+    r"(\.[A-Za-z0-9]+\.tif|\.cmr\.xml|_stac\.json|\.jpg)$"
+)
+
+
+def benchmark_output_dir() -> Path:
+    return Path(os.environ.get("BENCHMARK_OUTPUT_DIR", "benchmark-output"))
+
+
+def keep_products(work_dir: Path, out_root: Path) -> list[Path]:
+    """Copy final HLS products under ``work_dir`` to ``out_root/<granule>/``.
+
+    Intermediates (e.g. ``.hdf``) and VI outputs are skipped.
+    """
+    copied = []
+    for path in sorted(work_dir.rglob("*")):
+        m = FINAL_PRODUCT_RE.match(path.name)
+        if m is None or not path.is_file():
+            continue
+        dest = out_root / m["granule"]
+        dest.mkdir(parents=True, exist_ok=True)
+        copied.append(Path(shutil.copy2(path, dest / path.name)))
+    return copied
 
 
 def _split_ids(var: str) -> list[str]:
@@ -267,7 +294,7 @@ class ResourceMetrics:
                         }
                     )
 
-        out_dir = Path(os.environ.get("BENCHMARK_OUTPUT_DIR", "benchmark-output"))
+        out_dir = benchmark_output_dir()
         out_dir.mkdir(parents=True, exist_ok=True)
         out = out_dir / "resources.json"
         out.write_text(json.dumps(entries, indent=2))

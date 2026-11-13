@@ -15,6 +15,7 @@ hls-libs = "=v3.5.1.2"
 [pypi-dependencies]
 hls-utilities = { path = "./src/hls-utilities", editable = false }
 hls-workflows = { path = "./src/hls-workflows", editable = false}
+hls-metadata-validation = { path = "./src/hls-metadata-validation", editable = false }
 # Remote repositories
 hls-browse-imagery-creator = { git = "https://github.com/NASA-IMPACT/hls-browse_imagery", tag = "v1.9"}
 hls-cmr_stac = { git = "https://github.com/NASA-IMPACT/hls-cmr_stac", tag = "v1.9" }
@@ -67,11 +68,13 @@ py-spy = "*"
 [feature.dev.pypi-dependencies]
 hls-utilities = { path = "./src/hls-utilities", editable = true, extras = ["dev"] }
 hls-workflows = { path = "./src/hls-workflows", editable = true, extras = ["dev"] }
+hls-metadata-validation = { path = "./src/hls-metadata-validation", editable = true, extras = ["dev"] }
 # Type stubs for boto3 clients (e.g. CloudWatchLogsClient in scripts/plot_metrics.py)
 boto3-stubs = { version = ">=1", extras = ["logs"] }
 
 [feature.benchmark.pypi-dependencies]
 hls-workflows = { path = "./src/hls-workflows", editable = true, extras = ["dev"] }
+hls-metadata-validation = { path = "./src/hls-metadata-validation", editable = true }
 
 
 [environments]
