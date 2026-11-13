@@ -66,6 +66,7 @@ configured in the repository's **Settings → Secrets and variables → Actions*
 | `BENCHMARK_AUX_PREFIX`     | S3 key prefix for LaSRC ancillary data              | `lasrc_aux` |
 | `BENCHMARK_S2_GRANULE_IDS` | Comma-separated Sentinel-2 granule IDs to benchmark | see below   |
 | `BENCHMARK_LS_GRANULE_IDS` | Comma-separated Landsat granule IDs to benchmark    | see below   |
+| `GOLDEN_REFERENCE_PREFIX`  | Key prefix in `hls-validation-datasets` holding golden reference outputs (optional) | `golden/v2.0` |
 
 ### Thread pinning
 
@@ -94,6 +95,37 @@ s3://{BENCHMARK_AUX_BUCKET}/
     LDCMLUT/
     ...
 ```
+
+## Golden metadata comparison
+
+After the benchmarks are published, the workflow compares the metadata of the
+products the S30 benchmark produced against reference production outputs, using
+`hls-validate-metadata golden` (`src/hls-metadata-validation`). The S30
+benchmark keeps its final products (band/Fmask/angle COGs, `.cmr.xml`,
+`_stac.json`, `.jpg`) in `$BENCHMARK_OUTPUT_DIR/products/<granule>/`;
+`scripts/golden` then runs the comparison inside the benchmark image and writes
+`golden-report.json`, uploaded as the `golden-report` workflow artifact. A
+failing comparison fails the workflow after the charts are published.
+
+References are synced from `s3://hls-validation-datasets/{GOLDEN_REFERENCE_PREFIX}/`
+and must use the same layout as the products directory:
+
+```
+s3://hls-validation-datasets/{GOLDEN_REFERENCE_PREFIX}/
+  HLS.S30.T18UYA.2026027T160429.v2.0/
+    HLS.S30.T18UYA.2026027T160429.v2.0.B01.tif
+    ...
+    HLS.S30.T18UYA.2026027T160429.v2.0.cmr.xml
+    HLS.S30.T18UYA.2026027T160429.v2.0_stac.json
+```
+
+`hls-validate-metadata dump` output (`.tif.json` metadata instead of full COGs)
+is also accepted as a reference. Granules without a reference are reported as
+`reference.skipped` warnings, so the step passes until references are uploaded.
+The OIDC role needs `s3:ListBucket` and `s3:GetObject` on `hls-validation-datasets`.
+
+L30 products are not compared yet: the Landsat benchmark stops after
+atmospheric correction and does not run the tiling pipeline.
 
 ### One-time repo setup
 
