@@ -14,6 +14,7 @@ ignore = ["E501", "E731"]
 known-first-party = [
   "hls_utilities",
   "hls_browse_imagery",
+  "hls_metadata_validation",
 ]
 
 [tool.mypy]
