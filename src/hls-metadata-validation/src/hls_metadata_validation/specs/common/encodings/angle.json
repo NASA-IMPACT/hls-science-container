@@ -1,0 +1,7 @@
+{
+  "dtype": "uint16",
+  "nodata": 40000,
+  "scale_factor": 0.01,
+  "add_offset": 0.0,
+  "granule_tags": false
+}

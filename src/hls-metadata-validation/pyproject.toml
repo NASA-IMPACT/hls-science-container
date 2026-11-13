@@ -1,0 +1,61 @@
+[project]
+name = "hls-metadata-validation"
+version = "0.1.0"
+description = "Validate HLS product metadata (COG tags, CMR XML, STAC) against a data-driven spec"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "click>=8.1",
+    "jsonschema>=4.20",
+    "lxml",
+    "metadata-creator @ git+https://github.com/NASA-IMPACT/hls-metadata@v2.9",
+    "pystac[validation]>=1.10,<1.12",
+    "rasterio",
+    "rio-cogeo",
+]
+
+[project.scripts]
+hls-validate-metadata = "hls_metadata_validation.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hls_metadata_validation"]
+
+[project.optional-dependencies]
+dev = [
+    "lxml-stubs>=0.5.1",
+    "mypy>=1.14.0",
+    "pytest>=9.0.2",
+    "ruff>=0.9.0",
+    "types-jsonschema",
+]
+
+[dependency-groups]
+dev = [
+    "hls-metadata-validation[dev]",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "UP"]
+ignore = ["E501", "E731"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["hls_metadata_validation"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["metadata_creator", "metadata_creator.*", "rasterio", "rasterio.*", "rio_cogeo", "rio_cogeo.*"]
+ignore_missing_imports = true

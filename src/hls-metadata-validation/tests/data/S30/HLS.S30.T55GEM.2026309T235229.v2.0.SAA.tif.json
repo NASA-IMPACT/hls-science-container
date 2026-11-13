@@ -1,0 +1,39 @@
+{
+  "band_tags": [
+    {}
+  ],
+  "count": 1,
+  "crs": "EPSG:32655",
+  "descriptions": [
+    null
+  ],
+  "dtype": "uint16",
+  "height": 3660,
+  "is_cog": true,
+  "nodata": 40000.0,
+  "offsets": [
+    0.0
+  ],
+  "scales": [
+    0.01
+  ],
+  "tags": {
+    "AREA_OR_POINT": "Area",
+    "OVERVIEW_RESAMPLING": "NEAREST",
+    "ULX": "499980",
+    "ULY": "5200000",
+    "UTM_ZONE_HEMISPHERE": "55S",
+    "_FillValue": "40000",
+    "add_offset": "0.0",
+    "scale_factor": "0.01"
+  },
+  "transform": [
+    30.0,
+    0.0,
+    499980.0,
+    0.0,
+    -30.0,
+    -4800000.0
+  ],
+  "width": 3660
+}

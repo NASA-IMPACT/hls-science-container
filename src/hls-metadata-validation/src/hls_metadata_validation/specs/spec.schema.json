@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HLS product metadata spec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "product",
+    "version",
+    "default_tolerance",
+    "attributes",
+    "assets",
+    "known_gaps"
+  ],
+  "properties": {
+    "product": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "default_tolerance": {
+      "type": "number",
+      "minimum": 0
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/attribute"
+      }
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/asset"
+      }
+    },
+    "known_gaps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/known_gap"
+      }
+    }
+  },
+  "$defs": {
+    "nullable_string": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "attribute": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "enum": [
+            "string",
+            "number",
+            "integer",
+            "datetime"
+          ]
+        },
+        "cog_tag": {
+          "$ref": "#/$defs/nullable_string"
+        },
+        "cmr_additional_attribute": {
+          "$ref": "#/$defs/nullable_string"
+        },
+        "stac_property": {
+          "$ref": "#/$defs/nullable_string"
+        },
+        "value_from": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[^.]+\\.[a-z_]+$"
+        },
+        "golden": {
+          "enum": [
+            "exact",
+            "approx",
+            "volatile"
+          ]
+        },
+        "tolerance": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dtype",
+        "nodata"
+      ],
+      "properties": {
+        "file_suffix": {
+          "type": "string"
+        },
+        "dtype": {
+          "enum": [
+            "uint8",
+            "int8",
+            "uint16",
+            "int16",
+            "uint32",
+            "int32",
+            "float32",
+            "float64"
+          ]
+        },
+        "nodata": {
+          "type": "number"
+        },
+        "scale_factor": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "add_offset": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "stac_asset": {
+          "$ref": "#/$defs/nullable_string"
+        },
+        "granule_tags": {
+          "type": "boolean"
+        }
+      }
+    },
+    "known_gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "surface",
+        "check",
+        "reason"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "surface": {
+          "enum": [
+            "cog",
+            "cmr",
+            "stac",
+            "golden",
+            "spec"
+          ]
+        },
+        "check": {
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/nullable_string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
