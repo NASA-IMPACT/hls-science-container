@@ -1,0 +1,45 @@
+[project]
+name = "hls-submit"
+version = "0.1.0"
+description = "Submit and manage HLS science experiment jobs on AWS Batch"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "boto3>=1.42.34",
+    "click>=8.1",
+]
+
+[project.scripts]
+hls-submit = "hls_submit.cli:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.optional-dependencies]
+dev = [
+    "boto3-stubs[batch,cloudformation]>=1.36.0",
+    "mypy>=1.14.0",
+    "pytest>=9.0.2",
+    "ruff>=0.9.0",
+]
+
+[dependency-groups]
+dev = [
+    "hls-submit[dev]",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "UP"]
+ignore = ["E501", "E731"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["hls_submit"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
