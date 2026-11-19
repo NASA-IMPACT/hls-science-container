@@ -36,6 +36,9 @@ jobs:
               - *shared
               - "src/hls-workflows/**"
               - "src/hls-utilities/**"
+            hls-submit:
+              - *shared
+              - "src/hls-submit/**"
 
       - name: List changed packages
         id: packages

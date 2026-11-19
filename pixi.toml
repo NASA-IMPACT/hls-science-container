@@ -67,6 +67,8 @@ py-spy = "*"
 [feature.dev.pypi-dependencies]
 hls-utilities = { path = "./src/hls-utilities", editable = true, extras = ["dev"] }
 hls-workflows = { path = "./src/hls-workflows", editable = true, extras = ["dev"] }
+# Operator tooling for submitting experiment jobs; not installed in the image.
+hls-submit = { path = "./src/hls-submit", editable = true, extras = ["dev"] }
 # Type stubs for boto3 clients (e.g. CloudWatchLogsClient in scripts/plot_metrics.py)
 boto3-stubs = { version = ">=1", extras = ["logs"] }
 
