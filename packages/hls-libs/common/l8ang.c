@@ -39,6 +39,10 @@ int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz)
 	int nrow, ncol, i;
 	int16 tmp;
 
+	/* Indeed header files do not have the mapinfo.   Nov 5, 2020 */
+	char lines_found = 0;
+	char samples_found = 0;
+	char mapinfo_found = 0;
 
 	/* Read the header file of the solar zneith angle image */
 	strcpy(header, fname_sz);
@@ -58,10 +62,12 @@ int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz)
 		if (strstr(line, "lines")) {
 			cp = strrchr(line, '=');
 			l8ang->nrow = atoi(cp+1);
+			lines_found = 1;
 		}
 		if (strstr(line, "samples")) {
 			cp = strrchr(line, '=');
 			l8ang->ncol = atoi(cp+1);
+			samples_found = 1;
 		}
 		if (strstr(line, "map info")) {
 			int zone;
@@ -85,10 +91,18 @@ int read_l8ang_inpathrow(l8ang_t  *l8ang, char *fname_sz)
 			else
 				sprintf(l8ang->zonehem, "%dS", zone);
 
-			break;
+
+			mapinfo_found = 1;
 		}
 	}
 	fclose(fhdr);
+
+	if ( ! lines_found || ! samples_found || ! mapinfo_found ) {
+		sprintf(message, "Image dimension or mapinfo not found in %s", header);
+		Error(message);
+		return(1);
+	}
+
 	nrow = l8ang->nrow;
 	ncol = l8ang->ncol;
 
@@ -404,6 +418,9 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		PutSDSDimInfo(l8ang->sds_id_sz, dimnames[0], 0);
 		PutSDSDimInfo(l8ang->sds_id_sz, dimnames[1], 1);
 		SDsetcompress(l8ang->sds_id_sz, comp_type, &c_info);	
+		SDsetattr(l8ang->sds_id_sz,  "_FillValue", DFNT_CHAR8, strlen(ang_fillval), (VOIDP)ang_fillval);
+		SDsetattr(l8ang->sds_id_sz,  "scale_factor", DFNT_CHAR8, strlen(ang_scale_factor), (VOIDP)ang_scale_factor);
+		SDsetattr(l8ang->sds_id_sz,  "add_offset", DFNT_CHAR8, strlen(ang_add_offset), (VOIDP)ang_add_offset);
 		if ((l8ang->sz = (uint16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(uint16))) == NULL) {
 			fprintf(stderr, "Cannot allocate memory\n");
 			exit(1);
@@ -421,6 +438,9 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		PutSDSDimInfo(l8ang->sds_id_sa, dimnames[0], 0);
 		PutSDSDimInfo(l8ang->sds_id_sa, dimnames[1], 1);
 		SDsetcompress(l8ang->sds_id_sa, comp_type, &c_info);	
+		SDsetattr(l8ang->sds_id_sa,  "_FillValue", DFNT_CHAR8, strlen(ang_fillval), (VOIDP)ang_fillval);
+		SDsetattr(l8ang->sds_id_sa,  "scale_factor", DFNT_CHAR8, strlen(ang_scale_factor), (VOIDP)ang_scale_factor);
+		SDsetattr(l8ang->sds_id_sa,  "add_offset", DFNT_CHAR8, strlen(ang_add_offset), (VOIDP)ang_add_offset);
 		if ((l8ang->sa = (uint16*)calloc(l8ang->nrow * l8ang->ncol, sizeof(uint16))) == NULL) {
 			fprintf(stderr, "Cannot allocate memory\n");
 			exit(1);
@@ -438,6 +458,9 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		PutSDSDimInfo(l8ang->sds_id_vz, dimnames[0], 0);
 		PutSDSDimInfo(l8ang->sds_id_vz, dimnames[1], 1);
 		SDsetcompress(l8ang->sds_id_vz, comp_type, &c_info);	
+		SDsetattr(l8ang->sds_id_vz,  "_FillValue", DFNT_CHAR8, strlen(ang_fillval), (VOIDP)ang_fillval);
+		SDsetattr(l8ang->sds_id_vz,  "scale_factor", DFNT_CHAR8, strlen(ang_scale_factor), (VOIDP)ang_scale_factor);
+		SDsetattr(l8ang->sds_id_vz,  "add_offset", DFNT_CHAR8, strlen(ang_add_offset), (VOIDP)ang_add_offset);
 		/* SDS attribute not complete. OK */
 
 		/* memory */
@@ -458,6 +481,9 @@ int open_l8ang(l8ang_t  *l8ang, intn access_mode)
 		PutSDSDimInfo(l8ang->sds_id_va, dimnames[0], 0);
 		PutSDSDimInfo(l8ang->sds_id_va, dimnames[1], 1);
 		SDsetcompress(l8ang->sds_id_va, comp_type, &c_info);	
+		SDsetattr(l8ang->sds_id_va,  "_FillValue", DFNT_CHAR8, strlen(ang_fillval), (VOIDP)ang_fillval);
+		SDsetattr(l8ang->sds_id_va,  "scale_factor", DFNT_CHAR8, strlen(ang_scale_factor), (VOIDP)ang_scale_factor);
+		SDsetattr(l8ang->sds_id_va,  "add_offset", DFNT_CHAR8, strlen(ang_add_offset), (VOIDP)ang_add_offset);
 		/* SDS attribute not complete. OK */
 
 		/* memory */
