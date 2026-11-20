@@ -2,4 +2,13 @@
 
 export PIXI_FROZEN=true
 
-pixi run -e dev mypy src/
+# Packages are checked one at a time: their tests/ dirs map to the same
+# top-level module names (conftest, tests.conftest), which mypy rejects as
+# duplicates in a single run over src/.
+status=0
+for pkg in src/*/; do
+    [ -f "${pkg}pyproject.toml" ] || continue
+    echo "mypy ${pkg}"
+    pixi run -e dev mypy "$pkg" || status=1
+done
+exit $status

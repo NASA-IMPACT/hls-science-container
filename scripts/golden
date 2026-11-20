@@ -1,0 +1,18 @@
+#!/bin/bash
+# Compare benchmark products against golden reference outputs, inside the
+# benchmark image. Expects scripts/benchmark to have written
+# $OUTPUT_DIR/products/<granule>/ and references in $REFERENCE_DIR/<granule>/.
+set -euo pipefail
+
+IMAGE="${IMAGE:-hls-science-container:benchmark}"
+OUTPUT_DIR="${OUTPUT_DIR:-benchmark-output}"
+REFERENCE_DIR="${REFERENCE_DIR:-golden-reference}"
+
+mkdir -p "$OUTPUT_DIR/products" "$REFERENCE_DIR"
+
+docker run --rm \
+    -v "$(realpath "$OUTPUT_DIR"):/output" \
+    -v "$(realpath "$REFERENCE_DIR"):/reference:ro" \
+    -e PIXI_FROZEN=true \
+    "$IMAGE" \
+    "pixi run -e benchmark hls-validate-metadata golden /output/products /reference --json /output/golden-report.json"

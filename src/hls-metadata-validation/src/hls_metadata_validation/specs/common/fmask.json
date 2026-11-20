@@ -1,0 +1,6 @@
+{
+  "Fmask": {
+    "$include": "encodings/fmask.json",
+    "stac_asset": "Fmask"
+  }
+}
