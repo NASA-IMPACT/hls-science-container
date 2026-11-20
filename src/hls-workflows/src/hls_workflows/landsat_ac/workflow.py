@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from hls_workflows.constants import FMASK_VERSION
+from hls_workflows.constants import FMASK_VERSION, LASRC_VERSION
 from hls_workflows.metrics import MetricsCollector, MetricSink
 from hls_workflows.pipeline import Pipeline, PipelineBuilder
 
+from .lasrc_rs import RegisterLaSRC, RunLaSRCRust
 from .tasks import (
     AddFmaskSds,
     CheckSolarZenith,
@@ -30,6 +31,7 @@ def construct_pipeline(
     granule_dir: Path | None = None,
     local_granule_dir: Path | None = None,
     fmask_version: FMASK_VERSION = "v5",
+    lasrc_version: LASRC_VERSION = "c",
     upload: bool = True,
     cleanup_working_dir: bool = True,
     metric_sink: MetricSink | None = None,
@@ -49,6 +51,9 @@ def construct_pipeline(
         to process in this directory.
     fmask_version
         Fmask version to use. Only "v5" is supported.
+    lasrc_version
+        LaSRC implementation, "c" (default) or "rust" (lasrc-rs). Selects the
+        LaSRC steps of the pipeline and, with them, the recorded AC code.
     upload
         If True (default), upload to output bucket.
     cleanup_working_dir
@@ -76,6 +81,7 @@ def construct_pipeline(
                 granule_id=granule_id,
                 working_dir=working_dir,
                 granule_dir=granule_dir,
+                lasrc_version=lasrc_version,
             )
         )
         .add(granule_task)
@@ -84,8 +90,15 @@ def construct_pipeline(
         .add(fmask_task)
         .add(ConvertScanline("Scanline"))
         .add(ConvertToEspa("EspaConv"))
-        .add(RunLaSRC("LaSRC"))
-        .add(RenameAngleBands("RenameAngles"))
+    )
+
+    if lasrc_version == "rust":
+        builder = builder.add(RunLaSRCRust("LaSRC")).add(RegisterLaSRC("RegisterLaSRC"))
+    else:
+        builder = builder.add(RunLaSRC("LaSRC"))
+
+    builder = (
+        builder.add(RenameAngleBands("RenameAngles"))
         .add(CreateHlsXml("HlsXml"))
         .add(ConvertToHdf("HdfConv"))
         .add(AddFmaskSds("AddFmask"))
@@ -96,7 +109,10 @@ def construct_pipeline(
 
     return builder.build(
         metrics=MetricsCollector(
-            pipeline_dims={"workflow": "landsat-ac"},
+            pipeline_dims={
+                "workflow": "landsat-ac",
+                "lasrc_version": lasrc_version,
+            },
             pipeline_props={"input_granule_id": granule_id},
             sink=metric_sink,
         ),

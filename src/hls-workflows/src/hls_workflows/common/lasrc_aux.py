@@ -30,9 +30,25 @@ import logging
 import os
 from pathlib import Path
 
+from hls_workflows.base import TaskFailure
+
 logger = logging.getLogger(__name__)
 
 _LADS_AUX_SOURCES = ("VIIRS", "MODIS")
+
+
+def require_viirs_era(acquisition: dt.datetime) -> None:
+    """Raise ``TaskFailure`` if ``acquisition`` predates VIIRS aux data.
+
+    C LaSRC uses MODIS aux before ``VIIRS_AUX_STARTING_DATE`` (YYYYMMDD,
+    default 20231001). The Rust path only resolves VIIRS aux.
+    """
+    start = os.environ.get("VIIRS_AUX_STARTING_DATE", "20231001")
+    if acquisition.strftime("%Y%m%d") < start:
+        raise TaskFailure(
+            f"Acquisition {acquisition:%Y-%m-%d} is before VIIRS_AUX_STARTING_DATE "
+            f"({start}); the Rust LaSRC path does not support pre-VIIRS (MODIS) aux."
+        )
 
 
 def _require(path: Path, description: str) -> Path:
