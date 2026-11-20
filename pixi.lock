@@ -2,13 +2,13 @@ version: 7
 platforms:
 - name: linux-64
   virtual-packages:
-  - __unix=0
+  - __unix=0=0
   - __linux=4.18
   - __glibc=2.28
   - __archspec=0=x86_64
 - name: osx-arm64
   virtual-packages:
-  - __unix=0
+  - __unix=0=0
   - __osx=13.0
   - __archspec=0=m1
 environments:
@@ -326,7 +326,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?rev=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
@@ -626,7 +626,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?rev=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
@@ -1068,7 +1068,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?rev=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
       - pypi: https://files.pythonhosted.org/packages/02/72/3bb3a3ea84d5715f4830203bdd91c23531de1b19527bf3000051413c543f/mypy_boto3_batch-1.44.0-py3-none-any.whl
@@ -1429,7 +1429,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?rev=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
       - pypi: https://files.pythonhosted.org/packages/02/72/3bb3a3ea84d5715f4830203bdd91c23531de1b19527bf3000051413c543f/mypy_boto3_batch-1.44.0-py3-none-any.whl
@@ -1776,7 +1776,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?rev=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
@@ -2053,7 +2053,7 @@ environments:
       - pypi: git+https://github.com/NASA-IMPACT/hls-cmr_stac?tag=v1.9#efa3a87de84a868e5787cc79ba7806ec57ad731f
       - pypi: git+https://github.com/NASA-IMPACT/hls-hdf_to_cog?tag=v2.2#b93540050eae773cf994ad776ddeebc0c145d841
       - pypi: git+https://github.com/NASA-IMPACT/hls-manifest?tag=v2.2#cbea4fd8277fa9bf1769a1babff93be483da37de
-      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
+      - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?rev=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
       - pypi: git+https://github.com/NASA-IMPACT/hls-thumbnails?tag=v1.3#bbe6371a687cbcf52524770275a0d39ee7f5338f
       - pypi: git+https://github.com/USGS-EROS/espa-python-library.git?rev=v2.0.0#476a1c9d9ab52dea13629e8f236fd6604125282b
       - pypi: https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl
@@ -13789,26 +13789,6 @@ packages:
   - flake8 ; extra == 'test'
   - pytest ; extra == 'test'
 - pypi: git+https://github.com/NASA-IMPACT/hls-metadata?rev=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
-  name: metadata-creator
-  version: '2.9'
-  requires_dist:
-  - click
-  - numpy
-  - pyproj
-  - rasterio
-  - shapely
-  - lxml
-  - pytest ; extra == 'test'
-  - pytest-cov ; extra == 'test'
-  - flake8 ; extra == 'test'
-  - isort ; extra == 'test'
-  - pytest ; extra == 'dev'
-  - black==20.8b1 ; extra == 'dev'
-  - flake8 ; extra == 'dev'
-  - isort ; extra == 'dev'
-  - pre-commit ; extra == 'dev'
-  - pre-commit-hooks ; extra == 'dev'
-- pypi: git+https://github.com/NASA-IMPACT/hls-metadata?tag=v2.9#001441ca78cb54cdbd56a16b3ebcb75db6f67103
   name: metadata-creator
   version: '2.9'
   requires_dist:
