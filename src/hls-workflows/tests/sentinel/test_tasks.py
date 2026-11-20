@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from hls_workflows.base import AssetBundle
 from hls_workflows.common.utils import run_command
 from hls_workflows.granules import Sentinel2Granule
@@ -29,6 +31,7 @@ from hls_workflows.sentinel.tasks import (
     ConvertToCogs,
     CreateManifest,
     CreateMetadata,
+    EnvSource,
     ProcessGibs,
     ProcessVi,
     RenameOutputs,
@@ -242,3 +245,20 @@ def test_ProcessVi_manifest_passes_full_s3_uri(
     assert keys, "create_manifest was never called for the VI product"
     for key in keys:
         assert key.startswith(f"s3://{sentinel_config.output_bucket}/"), key
+
+
+def test_env_source_rust_ac_code_from_algorithm_version(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    lasrc = pytest.importorskip("lasrc")
+    monkeypatch.setenv("GRANULE_LIST", "S2A_A,S2B_B")
+    monkeypatch.setenv("INPUT_BUCKET", "in")
+    monkeypatch.setenv("OUTPUT_BUCKET", "out")
+    monkeypatch.setenv("GIBS_OUTPUT_BUCKET", "gibs")
+    monkeypatch.delenv("ACCODE", raising=False)
+
+    source = EnvSource("test_source", scratch_dir=tmp_path, lasrc_version="rust")
+    cfg = source.fetch()[CONFIG]
+
+    assert cfg.ac_code == f"LaSRC v{lasrc.ALGORITHM_VERSION}"
+    assert cfg.ac_code == "LaSRC v3.5.1.0"

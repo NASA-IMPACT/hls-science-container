@@ -21,8 +21,9 @@ from hls_workflows.base import (
     Task,
     TaskFailure,
 )
+from hls_workflows.common.lasrc_version import ac_code
 from hls_workflows.common.utils import run_command
-from hls_workflows.constants import FMASK_VERSION_STRINGS
+from hls_workflows.constants import FMASK_VERSION_STRINGS, LASRC_VERSION
 from hls_workflows.utils import validate_command
 
 from .assets import (
@@ -63,6 +64,7 @@ class EnvSource(DataSource):
     working_dir: Path | None = None
     granule_dir: Path | None = None
     purge_granule_dir: bool = True
+    lasrc_version: LASRC_VERSION = "c"
 
     def fetch(self) -> dict[Asset[EnvConfig], EnvConfig]:
         job_id = os.environ.get("AWS_BATCH_JOB_ID", "local_job")
@@ -75,7 +77,7 @@ class EnvSource(DataSource):
             granule=self.granule_id,
             input_bucket=os.environ["INPUT_BUCKET"],
             output_bucket=os.environ["OUTPUT_BUCKET"],
-            ac_code=os.environ["ACCODE"],
+            ac_code=ac_code(self.lasrc_version),
             cloud_masking_code=FMASK_VERSION_STRINGS["v5"],
             working_dir=working_dir,
             granule_dir=granule_dir,

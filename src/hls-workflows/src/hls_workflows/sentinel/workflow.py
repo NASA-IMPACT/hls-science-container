@@ -4,10 +4,11 @@ import logging
 import os
 from pathlib import Path
 
-from hls_workflows.constants import FMASK_VERSION
+from hls_workflows.constants import FMASK_VERSION, LASRC_VERSION
 from hls_workflows.metrics import MetricsCollector, MetricSink
 from hls_workflows.pipeline import Pipeline, PipelineBuilder
 
+from .lasrc_rs import PrepareEspaInputAfterRust, RegisterLaSRC, RunLaSRCRust
 from .mapped_tasks import (
     AddFmaskSds,
     ApplyQualityMask,
@@ -48,6 +49,7 @@ def construct_pipeline(
     working_dir: Path | None = None,
     local_granule_zips: list[Path] | None = None,
     fmask_version: FMASK_VERSION = "v5",
+    lasrc_version: LASRC_VERSION = "c",
     upload: bool = True,
     cleanup_working_dir: bool = True,
     metric_sink: MetricSink | None = None,
@@ -68,6 +70,9 @@ def construct_pipeline(
         to process in this directory.
     fmask_version
         Fmask version to use. Only "v5" is supported.
+    lasrc_version
+        LaSRC implementation, "c" (default) or "rust" (lasrc-rs). Selects the
+        LaSRC steps of the pipeline and, with them, the recorded AC code.
     upload
         If True (default), upload to output bucket.
     cleanup_working_dir
@@ -92,7 +97,9 @@ def construct_pipeline(
         local_granule_ids_to_zips = {}
 
     # Build pipeline based on granules
-    builder = PipelineBuilder().add(EnvSource("EnvConfig", working_dir=working_dir))
+    builder = PipelineBuilder().add(
+        EnvSource("EnvConfig", working_dir=working_dir, lasrc_version=lasrc_version)
+    )
 
     # Map each granule to all steps in sub-workflow sequentially
     for granule_id in granule_ids:
@@ -116,9 +123,23 @@ def construct_pipeline(
             .add(ApplyQualityMask.map(granule_id)(name="ApplyMask"))
             .add(DeriveAngles.map(granule_id)(name="DeriveAngles"))
             .add(RunFmaskV5.map(granule_id)("Fmask"))
-            .add(PrepareEspaInput.map(granule_id)("PrepareEspa"))
-            .add(RunLaSRC.map(granule_id)("LaSRC"))
-            .add(ProcessHdfParts.map(granule_id)("ProcessHdfParts"))
+        )
+
+        if lasrc_version == "rust":
+            # Rust LaSRC reads the SAFE, so it must run before PrepareEspaInput
+            # repackages it.
+            builder = (
+                builder.add(RunLaSRCRust.map(granule_id)("LaSRC"))
+                .add(PrepareEspaInputAfterRust.map(granule_id)("PrepareEspa"))
+                .add(RegisterLaSRC.map(granule_id)("RegisterLaSRC"))
+            )
+        else:
+            builder = builder.add(PrepareEspaInput.map(granule_id)("PrepareEspa")).add(
+                RunLaSRC.map(granule_id)("LaSRC")
+            )
+
+        builder = (
+            builder.add(ProcessHdfParts.map(granule_id)("ProcessHdfParts"))
             .add(CombineHdf.map(granule_id)("CombineParts"))
             .add(AddFmaskSds.map(granule_id)("AddFmaskSds"))
             .add(TrimHdf.map(granule_id)("Trim"))
@@ -144,7 +165,11 @@ def construct_pipeline(
 
     return builder.build(
         metrics=MetricsCollector(
-            pipeline_dims={"workflow": "sentinel-ac"}, sink=metric_sink
+            pipeline_dims={
+                "workflow": "sentinel-ac",
+                "lasrc_version": lasrc_version,
+            },
+            sink=metric_sink,
         ),
         cleanup_working_dir=cleanup_working_dir,
     )

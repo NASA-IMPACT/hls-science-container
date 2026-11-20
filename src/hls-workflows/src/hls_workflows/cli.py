@@ -129,11 +129,13 @@ def cli() -> None:
     help="Comma-separated local granule zip paths (env: LOCAL_GRANULE_ZIPS).",
 )
 @_fmask_option
+@_lasrc_option
 @_cleanup_option
 def sentinel(
     granule_list: str | None,
     local_granule_zips: str | None,
     fmask_version: FMASK_VERSION,
+    lasrc_version: LASRC_VERSION,
     cleanup_working_dir: bool,
 ) -> None:
     """Run the Sentinel-2 (S30) preprocessing pipeline."""
@@ -152,6 +154,7 @@ def sentinel(
             granule_ids=granule_ids,
             local_granule_zips=zips,
             fmask_version=fmask_version,
+            lasrc_version=lasrc_version,
             cleanup_working_dir=cleanup_working_dir,
         ),
         "sentinel-ac",
@@ -173,11 +176,13 @@ def sentinel(
     help="Pre-downloaded Landsat granule directory (env: LOCAL_GRANULE_DIR).",
 )
 @_fmask_option
+@_lasrc_option
 @_cleanup_option
 def landsat_ac(
     granule: str,
     local_granule_dir: Path | None,
     fmask_version: FMASK_VERSION,
+    lasrc_version: LASRC_VERSION,
     cleanup_working_dir: bool,
 ) -> None:
     """Run the Landsat atmospheric correction (L30-AC) pipeline."""
@@ -188,6 +193,7 @@ def landsat_ac(
             granule_id=granule,
             local_granule_dir=local_granule_dir,
             fmask_version=fmask_version,
+            lasrc_version=lasrc_version,
             cleanup_working_dir=cleanup_working_dir,
         ),
         "landsat-ac",

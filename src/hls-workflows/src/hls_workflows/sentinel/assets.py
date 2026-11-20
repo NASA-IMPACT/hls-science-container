@@ -139,6 +139,10 @@ def espa_xml_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"espa_xml_{granule_id}", Path)
 
 
+def rust_lasrc_dir_asset(granule_id: str) -> Asset[Path]:
+    return Asset(f"rust_lasrc_dir_{granule_id}", Path)
+
+
 def lasrc_aerosol_qa_asset(granule_id: str) -> Asset[Path]:
     return Asset(f"lasrc_aerosol_qa_{granule_id}", Path)
 

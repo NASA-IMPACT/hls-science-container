@@ -31,6 +31,8 @@ hls-libs C utilities  →  HDF global attribute  (SDsetattr)
 | LaSRC version  | `ACCODE`        | `ACCODE`        | *(not mapped)*         |
 | Fmask version  | `FMASK_VERSION` | `FMASK_VERSION` | `fmask_version`        |
 
+The LaSRC version value is read from `ACCODE` (C) / `lasrc.ALGORITHM_VERSION` (Rust), for both the Landsat and Sentinel-2 workflows.
+
 ## How to add a new global metadata attribute
 
 ### 1. Define the value in the container

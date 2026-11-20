@@ -23,10 +23,12 @@ from hls_workflows.base import (
 )
 from hls_workflows.common import Paths
 from hls_workflows.common.commands import run_hdf_to_cog
+from hls_workflows.common.lasrc_version import ac_code
 from hls_workflows.common.utils import run_command
 from hls_workflows.constants import (
     FMASK_VERSION_STRINGS,
     HLS_VERSION,
+    LASRC_VERSION,
     HlsVersion,
 )
 from hls_workflows.granules import HlsGranule, Sentinel2Granule
@@ -101,6 +103,7 @@ class EnvSource(DataSource):
     )
     working_dir: Path | None = None
     purge_working_dir: bool = True
+    lasrc_version: LASRC_VERSION = "c"
 
     def fetch(self) -> dict[Asset[EnvConfig], EnvConfig]:
         job_id = os.getenv("AWS_BATCH_JOB_ID", "local_job")
@@ -112,7 +115,7 @@ class EnvSource(DataSource):
             input_bucket=os.environ["INPUT_BUCKET"],
             output_bucket=os.environ["OUTPUT_BUCKET"],
             gibs_bucket=os.environ["GIBS_OUTPUT_BUCKET"],
-            ac_code=os.environ["ACCODE"],
+            ac_code=ac_code(self.lasrc_version),
             cloud_masking_code=FMASK_VERSION_STRINGS["v5"],
             working_dir=working_dir,
             debug_bucket=os.getenv("DEBUG_BUCKET"),
