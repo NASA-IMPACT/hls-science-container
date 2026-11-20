@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<espa_metadata version="2.3"
+xmlns="http://espa.cr.usgs.gov/v2"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://espa.cr.usgs.gov/v2 http://espa.cr.usgs.gov/schema/espa_internal_metadata_v2_3.xsd">
+
+    <global_metadata>
+        <data_provider>USGS/EROS</data_provider>
+        <satellite>Sentinel-2B</satellite>
+        <instrument>MSI</instrument>
+        <acquisition_date>2026-01-24</acquisition_date>
+        <level1_production_date>2026-01-24T09:22:41.000000Z</level1_production_date>
+        <solar_angles zenith="40.687698" azimuth="148.471451" units="degrees"/>
+        <view_angles zenith="11.621243" azimuth="292.698517" units="degrees"/>
+        <product_id>S2B_MSI_L1C_T38PNC_20260124_20260124</product_id>
+        <corner location="UL" latitude="16.280833" longitude="44.999813"/>
+        <corner location="LR" latitude="15.285932" longitude="46.022370"/>
+        <bounding_coordinates>
+            <west>44.999813</west>
+            <east>45.103614</east>
+            <north>16.280833</north>
+            <south>15.844540</south>
+        </bounding_coordinates>
+        <projection_information projection="UTM" datum="WGS84" units="meters">
+            <corner_point location="UL" x="499980.000000" y="1800000.000000"/>
+            <corner_point location="LR" x="609780.000000" y="1690200.000000"/>
+            <grid_origin>UL</grid_origin>
+            <utm_proj_params>
+                <zone_code>38</zone_code>
+            </utm_proj_params>
+        </projection_information>
+        <orientation_angle>0.000000</orientation_angle>
+    </global_metadata>
+
+    <bands>
+        <band product="MSIL1C" name="B01" category="image" data_type="UINT16" nlines="1830" nsamps="1830" fill_value="0" saturate_value="65535" scale_factor="0.00010000" add_offset="-1000.000000">
+            <short_name>S2MSI1C</short_name>
+            <long_name>band 1 top-of-atmosphere reflectance</long_name>
+            <file_name>S2B_MSI_L1C_T38PNC_20260124_20260124_B01.img</file_name>
+            <pixel_size x="60" y="60" units="meters"/>
+            <resample_method>none</resample_method>
+            <data_units>reflectance</data_units>
+            <valid_range min="0.000000" max="65534.000000"/>
+            <app_version>ESA Payload Data Ground Segment v05.11</app_version>
+            <level1_filename>GRANULE/L1C_T38PNC_A046407_20260124T074022/IMG_DATA/T38PNC_20260124T073109_B01</level1_filename>
+            <production_date>2026-01-24T09:22:41.000000Z</production_date>
+        </band>
+        <band product="MSIL1C" name="B02" category="image" data_type="UINT16" nlines="10980" nsamps="10980" fill_value="0" saturate_value="65535" scale_factor="0.00010000" add_offset="-1000.000000">
+            <short_name>S2MSI1C</short_name>
+            <long_name>band 2 top-of-atmosphere reflectance</long_name>
+            <file_name>S2B_MSI_L1C_T38PNC_20260124_20260124_B02.img</file_name>
+            <pixel_size x="10" y="10" units="meters"/>
+            <resample_method>none</resample_method>
+            <data_units>reflectance</data_units>
+            <valid_range min="0.000000" max="65534.000000"/>
+            <app_version>ESA Payload Data Ground Segment v05.11</app_version>
+            <level1_filename>GRANULE/L1C_T38PNC_A046407_20260124T074022/IMG_DATA/T38PNC_20260124T073109_B02</level1_filename>
+            <production_date>2026-01-24T09:22:41.000000Z</production_date>
+        </band>
+        <band product="MSIL1C" name="B03" category="image" data_type="UINT16" nlines="10980" nsamps="10980" fill_value="0" saturate_value="65535" scale_factor="0.00010000" add_offset="-1000.000000">
+            <short_name>S2MSI1C</short_name>
+            <long_name>band 3 top-of-atmosphere reflectance</long_name>
+            <file_name>S2B_MSI_L1C_T38PNC_20260124_20260124_B03.img</file_name>
+            <pixel_size x="10" y="10" units="meters"/>
+            <resample_method>none</resample_method>
+            <data_units>reflectance</data_units>
+            <valid_range min="0.000000" max="65534.000000"/>
+            <app_version>ESA Payload Data Ground Segment v05.11</app_version>
+            <level1_filename>GRANULE/L1C_T38PNC_A046407_20260124T074022/IMG_DATA/T38PNC_20260124T073109_B03</level1_filename>
+            <production_date>2026-01-24T09:22:41.000000Z</production_date>
+        </band>
+        <band product="MSIL1C" name="B04" category="image" data_type="UINT16" nlines="10980" nsamps="10980" fill_value="0" saturate_value="65535" scale_factor="0.00010000" add_offset="-1000.000000">
+            <short_name>S2MSI1C</short_name>
+            <long_name>band 4 top-of-atmosphere reflectance</long_name>
+            <file_name>S2B_MSI_L1C_T38PNC_20260124_20260124_B04.img</file_name>
+            <pixel_size x="10" y="10" units="meters"/>
+            <resample_method>none</resample_method>
+            <data_units>reflectance</data_units>
+            <valid_range min="0.000000" max="65534.000000"/>
+            <app_version>ESA Payload Data Ground Segment v05.11</app_version>
+            <level1_filename>GRANULE/L1C_T38PNC_A046407_20260124T074022/IMG_DATA/T38PNC_20260124T073109_B04</level1_filename>
+            <production_date>2026-01-24T09:22:41.000000Z</production_date>
+        </band>
+        <band product="MSIL1C" name="B05" category="image" data_type="UINT16" nlines="5490" nsamps="5490" fill_value="0" saturate_value="65535" scale_factor="0.00010000" add_offset="-1000.000000">
+            <short_name>S2MSI1C</short_name>
+            <long_name>band 5 top-of-atmosphere reflectance</long_name>
+            <file_name>S2B_MSI_L1C_T38PNC_20260124_20260124_B05.img</file_name>
+            <pixel_size x="20" y="20" units="meters"/>
+            <resample_method>none</resample_method>
+            <data_units>reflectance</data_units>
+            <valid_range min="0.000000" max="65534.000000"/>
+            <app_version>ESA Payload Data Ground Segment v05.11</app_version>
+            <level1_filename>GRANULE/L1C_T38PNC_A046407_20260124T074022/IMG_DATA/T38PNC_20260124T073109_B05</level1_filename>
+            <production_date>2026-01-24T09:22:41.000000Z</production_date>
+        </band>
+        <band product="MSIL1C" name="B06" category="image" data_type="UINT16" nlines="5490" nsamps="5490" fill_value="0" saturate_value="65535" scale_factor="0.00010000" add_offset="-1000.000000">
+            <short_name>S2MSI1C</short_name>
+            <long_name>band 6 top-of-atmosphere reflectance</long_name>
+            <file_name>S2B_MSI_L1C_T38PNC_20260124_20260124_B06.img</file_name>
+            <pixel_size x="20" y="20" units="meters"/>
+            <resample_method>none</resample_method>
+            <data_units>reflectance</data_units>
+            <valid_range min="0.000000" max="65534.000000"/>
+            <app_version>ESA Payload Data Ground Segment v05.11</app_version>
+            <level1_filename>GRANULE/L1C_T38PNC_A046407_20260124T074022/IMG_DATA/T38PNC_20260124T073109_B06</level1_filename>
+            <production_date>2026-01-24T09:22:41.000000Z</production_date>
+        </band>
+        <band product="MSIL1C" name="B07" category="image" data_type="UINT16" nlines="5490" nsamps="5490" fill_value="0" saturate_value="65535" scale_factor="0.00010000" add_offset="-1000.000000">
+            <short_name>S2MSI1C</short_name>
+            <long_name>band 7 top-of-atmosphere reflectance</long_name>
+            <file_name>S2B_MSI_L1C_T38PNC_20260124_20260124_B07.img</file_name>
+            <pixel_size x="20" y="20" units="meters"/>
+            <resample_method>none</resample_method>
+            <data_units>reflectance</data_units>
+            <valid_range min="0.000000" max="65534.000000"/>
+            <app_version>ESA Payload Data Ground Segment v05.11</app_version>
+            <level1_filename>GRANULE/L1C_T38PNC_A046407_20260124T074022/IMG_DATA/T38PNC_20260124T073109_B07</level1_filename>
+            <production_date>2026-01-24T09:22:41.000000Z</production_date>
+        </band>
+        <band product="MSIL1C" name="B08" category="image" data_type="UINT16" nlines="10980" nsamps="10980" fill_value="0" saturate_value="65535" scale_factor="0.00010000" add_offset="-1000.000000">
+            <short_name>S2MSI1C</short_name>
+            <long_name>band 8 top-of-atmosphere reflectance</long_name>
+            <file_name>S2B_MSI_L1C_T38PNC_20260124_20260124_B08.img</file_name>
+            <pixel_size x="10" y="10" units="meters"/>
+            <resample_method>none</resample_method>
+            <data_units>reflectance</data_units>
+            <valid_range min="0.000000" max="65534.000000"/>
+            <app_version>ESA Payload Data Ground Segment v05.11</app_version>
+            <level1_filename>GRANULE/L1C_T38PNC_A046407_20260124T074022/IMG_DATA/T38PNC_20260124T073109_B08</level1_filename>
+            <production_date>2026-01-24T09:22:41.000000Z</production_date>
+        </band>
+        <band product="MSIL1C" name="B8A" category="image" data_type="UINT16" nlines="5490" nsamps="5490" fill_value="0" saturate_value="65535" scale_factor="0.00010000" add_offset="-1000.000000">
+            <short_name>S2MSI1C</short_name>
+            <long_name>band 8A top-of-atmosphere reflectance</long_name>
+            <file_name>S2B_MSI_L1C_T38PNC_20260124_20260124_B8A.img</file_name>
+            <pixel_size x="20" y="20" units="meters"/>
+            <resample_method>none</resample_method>
+            <data_units>reflectance</data_units>
+            <valid_range min="0.000000" max="65534.000000"/>
+            <app_version>ESA Payload Data Ground Segment v05.11</app_version>
+            <level1_filename>GRANULE/L1C_T38PNC_A046407_20260124T074022/IMG_DATA/T38PNC_20260124T073109_B8A</level1_filename>
+            <production_date>2026-01-24T09:22:41.000000Z</production_date>
+        </band>
+        <band product="MSIL1C" name="B09" category="image" data_type="UINT16" nlines="1830" nsamps="1830" fill_value="0" saturate_value="65535" scale_factor="0.00010000" add_offset="-1000.000000">
+            <short_name>S2MSI1C</short_name>
+            <long_name>band 9 top-of-atmosphere reflectance</long_name>
+            <file_name>S2B_MSI_L1C_T38PNC_20260124_20260124_B09.img</file_name>
+            <pixel_size x="60" y="60" units="meters"/>
+            <resample_method>none</resample_method>
+            <data_units>reflectance</data_units>
+            <valid_range min="0.000000" max="65534.000000"/>
+            <app_version>ESA Payload Data Ground Segment v05.11</app_version>
+            <level1_filename>GRANULE/L1C_T38PNC_A046407_20260124T074022/IMG_DATA/T38PNC_20260124T073109_B09</level1_filename>
+            <production_date>2026-01-24T09:22:41.000000Z</production_date>
+        </band>
+        <band product="MSIL1C" name="B10" category="image" data_type="UINT16" nlines="1830" nsamps="1830" fill_value="0" saturate_value="65535" scale_factor="0.00010000" add_offset="-1000.000000">
+            <short_name>S2MSI1C</short_name>
+            <long_name>band 10 top-of-atmosphere reflectance</long_name>
+            <file_name>S2B_MSI_L1C_T38PNC_20260124_20260124_B10.img</file_name>
+            <pixel_size x="60" y="60" units="meters"/>
+            <resample_method>none</resample_method>
+            <data_units>reflectance</data_units>
+            <valid_range min="0.000000" max="65534.000000"/>
+            <app_version>ESA Payload Data Ground Segment v05.11</app_version>
+            <level1_filename>GRANULE/L1C_T38PNC_A046407_20260124T074022/IMG_DATA/T38PNC_20260124T073109_B10</level1_filename>
+            <production_date>2026-01-24T09:22:41.000000Z</production_date>
+        </band>
+        <band product="MSIL1C" name="B11" category="image" data_type="UINT16" nlines="5490" nsamps="5490" fill_value="0" saturate_value="65535" scale_factor="0.00010000" add_offset="-1000.000000">
+            <short_name>S2MSI1C</short_name>
+            <long_name>band 11 top-of-atmosphere reflectance</long_name>
+            <file_name>S2B_MSI_L1C_T38PNC_20260124_20260124_B11.img</file_name>
+            <pixel_size x="20" y="20" units="meters"/>
+            <resample_method>none</resample_method>
+            <data_units>reflectance</data_units>
+            <valid_range min="0.000000" max="65534.000000"/>
+            <app_version>ESA Payload Data Ground Segment v05.11</app_version>
+            <level1_filename>GRANULE/L1C_T38PNC_A046407_20260124T074022/IMG_DATA/T38PNC_20260124T073109_B11</level1_filename>
+            <production_date>2026-01-24T09:22:41.000000Z</production_date>
+        </band>
+        <band product="MSIL1C" name="B12" category="image" data_type="UINT16" nlines="5490" nsamps="5490" fill_value="0" saturate_value="65535" scale_factor="0.00010000" add_offset="-1000.000000">
+            <short_name>S2MSI1C</short_name>
+            <long_name>band 12 top-of-atmosphere reflectance</long_name>
+            <file_name>S2B_MSI_L1C_T38PNC_20260124_20260124_B12.img</file_name>
+            <pixel_size x="20" y="20" units="meters"/>
+            <resample_method>none</resample_method>
+            <data_units>reflectance</data_units>
+            <valid_range min="0.000000" max="65534.000000"/>
+            <app_version>ESA Payload Data Ground Segment v05.11</app_version>
+            <level1_filename>GRANULE/L1C_T38PNC_A046407_20260124T074022/IMG_DATA/T38PNC_20260124T073109_B12</level1_filename>
+            <production_date>2026-01-24T09:22:41.000000Z</production_date>
+        </band>
+    </bands>
+</espa_metadata>

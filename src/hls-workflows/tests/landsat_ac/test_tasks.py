@@ -304,3 +304,20 @@ def test_upload_results(mocked_aws: None, mock_config) -> None:
     objs = s3.list_objects(Bucket=BUCKET_OUT)
     keys = [o["Key"] for o in objs.get("Contents", [])]
     assert "2020/001/output.hdf" in keys
+
+
+def test_env_source_rust_ac_code_from_algorithm_version(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    lasrc = pytest.importorskip("lasrc")
+    monkeypatch.setenv("INPUT_BUCKET", BUCKET_IN)
+    monkeypatch.setenv("OUTPUT_BUCKET", BUCKET_OUT)
+    monkeypatch.delenv("ACCODE", raising=False)
+
+    source = EnvSource(
+        "test_source", granule_id=GRANULE, scratch_dir=tmp_path, lasrc_version="rust"
+    )
+    cfg = source.fetch()[CONFIG]
+
+    assert cfg.ac_code == f"LaSRC v{lasrc.ALGORITHM_VERSION}"
+    assert cfg.ac_code == "LaSRC v3.5.1.0"

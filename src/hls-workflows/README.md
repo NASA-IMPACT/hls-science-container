@@ -44,6 +44,17 @@ stages:
 4. **Post-processing** — COG conversion, metadata (CMR XML, STAC JSON), thumbnails, GIBS browse tiles, VI products, S3
    upload
 
+### LaSRC implementation
+
+The `landsat-ac` and `sentinel` workflows run the C LaSRC by default. Set `LASRC_VERSION=rust` (or `rs`), or pass
+`--lasrc-version rust`, to run the Rust port (lasrc-rs) instead; any other value selects C.
+
+- Only the LaSRC step changes. Downstream products keep the same format, and the recorded AC code is the lasrc-rs
+  algorithm version (`lasrc.ALGORITHM_VERSION`).
+- Metrics gain a `lasrc_version` dimension, which changes the CloudWatch metric identity for these workflows.
+- The Rust path requires VIIRS aux data, so acquisitions must be on or after `VIIRS_AUX_STARTING_DATE` (default
+  `20231001`).
+
 ## Framework Architecture
 
 The core of `hls-workflows` is built around a declarative and modular design, enabling flexible and robust
