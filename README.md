@@ -61,3 +61,9 @@ Run linting,
 ```plain
 scripts/lint
 ```
+
+Run type checking,
+
+```plain
+scripts/typecheck
+```

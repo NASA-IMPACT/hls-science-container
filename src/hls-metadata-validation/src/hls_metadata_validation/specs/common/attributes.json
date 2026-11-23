@@ -1,0 +1,209 @@
+{
+  "ACCODE": {
+    "required": true,
+    "type": "string",
+    "cog_tag": "ACCODE",
+    "cmr_additional_attribute": "ACCODE",
+    "stac_property": "processing:software.Atmospheric Correction",
+    "golden": "volatile"
+  },
+  "ADD_OFFSET": {
+    "required": true,
+    "type": "number",
+    "cog_tag": null,
+    "cmr_additional_attribute": "ADD_OFFSET",
+    "stac_property": null,
+    "value_from": "B01.add_offset",
+    "golden": "exact"
+  },
+  "ANG_SCALE_FACTOR": {
+    "required": true,
+    "type": "number",
+    "cog_tag": null,
+    "cmr_additional_attribute": "ANG_SCALE_FACTOR",
+    "stac_property": null,
+    "value_from": "SZA.scale_factor",
+    "golden": "exact"
+  },
+  "CLOUD_COVERAGE": {
+    "required": true,
+    "type": "number",
+    "cog_tag": "cloud_coverage",
+    "cmr_additional_attribute": "CLOUD_COVERAGE",
+    "stac_property": "eo:cloud_cover",
+    "golden": "approx",
+    "tolerance": 1.0
+  },
+  "CLOUD_MASKING_CODE": {
+    "required": true,
+    "type": "string",
+    "cog_tag": "CLOUD_MASKING_CODE",
+    "cmr_additional_attribute": "CLOUD_MASKING_CODE",
+    "stac_property": "processing:software.Cloud Masking",
+    "golden": "volatile"
+  },
+  "FILLVALUE": {
+    "required": true,
+    "type": "number",
+    "cog_tag": null,
+    "cmr_additional_attribute": "FILLVALUE",
+    "stac_property": null,
+    "value_from": "B01.nodata",
+    "golden": "exact"
+  },
+  "HLS_PROCESSING_TIME": {
+    "required": true,
+    "type": "datetime",
+    "cog_tag": "HLS_PROCESSING_TIME",
+    "cmr_additional_attribute": "HLS_PROCESSING_TIME",
+    "stac_property": null,
+    "golden": "volatile"
+  },
+  "HORIZONTAL_CS_NAME": {
+    "required": true,
+    "type": "string",
+    "cog_tag": "HORIZONTAL_CS_NAME",
+    "cmr_additional_attribute": "HORIZONTAL_CS_NAME",
+    "stac_property": null,
+    "golden": "exact"
+  },
+  "IDENTIFIER_PRODUCT_DOI": {
+    "required": true,
+    "type": "string",
+    "cog_tag": null,
+    "cmr_additional_attribute": "IDENTIFIER_PRODUCT_DOI",
+    "stac_property": "sci:doi",
+    "golden": "exact"
+  },
+  "IDENTIFIER_PRODUCT_DOI_AUTHORITY": {
+    "required": true,
+    "type": "string",
+    "cog_tag": null,
+    "cmr_additional_attribute": "IDENTIFIER_PRODUCT_DOI_AUTHORITY",
+    "stac_property": null,
+    "golden": "exact"
+  },
+  "MEAN_SUN_AZIMUTH_ANGLE": {
+    "required": true,
+    "type": "number",
+    "cog_tag": "MEAN_SUN_AZIMUTH_ANGLE",
+    "cmr_additional_attribute": "MEAN_SUN_AZIMUTH_ANGLE",
+    "stac_property": "view:sun_azimuth",
+    "golden": "approx"
+  },
+  "MEAN_SUN_ZENITH_ANGLE": {
+    "required": true,
+    "type": "number",
+    "cog_tag": "MEAN_SUN_ZENITH_ANGLE",
+    "cmr_additional_attribute": "MEAN_SUN_ZENITH_ANGLE",
+    "stac_property": null,
+    "golden": "approx"
+  },
+  "MEAN_VIEW_AZIMUTH_ANGLE": {
+    "required": true,
+    "type": "number",
+    "cog_tag": "MEAN_VIEW_AZIMUTH_ANGLE",
+    "cmr_additional_attribute": "MEAN_VIEW_AZIMUTH_ANGLE",
+    "stac_property": "view:azimuth",
+    "golden": "approx"
+  },
+  "MEAN_VIEW_ZENITH_ANGLE": {
+    "required": true,
+    "type": "number",
+    "cog_tag": "MEAN_VIEW_ZENITH_ANGLE",
+    "cmr_additional_attribute": "MEAN_VIEW_ZENITH_ANGLE",
+    "stac_property": null,
+    "golden": "approx"
+  },
+  "NBAR_SOLAR_ZENITH": {
+    "required": true,
+    "type": "number",
+    "cog_tag": "NBAR_SOLAR_ZENITH",
+    "cmr_additional_attribute": "NBAR_SOLAR_ZENITH",
+    "stac_property": null,
+    "golden": "approx"
+  },
+  "NCOLS": {
+    "required": true,
+    "type": "integer",
+    "cog_tag": "NCOLS",
+    "cmr_additional_attribute": "NCOLS",
+    "stac_property": null,
+    "golden": "exact"
+  },
+  "NROWS": {
+    "required": true,
+    "type": "integer",
+    "cog_tag": "NROWS",
+    "cmr_additional_attribute": "NROWS",
+    "stac_property": null,
+    "golden": "exact"
+  },
+  "QA_FILLVALUE": {
+    "required": true,
+    "type": "number",
+    "cog_tag": null,
+    "cmr_additional_attribute": "QA_FILLVALUE",
+    "stac_property": null,
+    "value_from": "Fmask.nodata",
+    "golden": "exact"
+  },
+  "REF_SCALE_FACTOR": {
+    "required": true,
+    "type": "number",
+    "cog_tag": null,
+    "cmr_additional_attribute": "REF_SCALE_FACTOR",
+    "stac_property": null,
+    "value_from": "B01.scale_factor",
+    "golden": "exact"
+  },
+  "SENSING_TIME": {
+    "required": true,
+    "type": "datetime",
+    "cog_tag": "SENSING_TIME",
+    "cmr_additional_attribute": "SENSING_TIME",
+    "stac_property": null,
+    "golden": "exact"
+  },
+  "SPATIAL_COVERAGE": {
+    "required": true,
+    "type": "number",
+    "cog_tag": "spatial_coverage",
+    "cmr_additional_attribute": "SPATIAL_COVERAGE",
+    "stac_property": null,
+    "golden": "approx",
+    "tolerance": 1.0
+  },
+  "SPATIAL_RESAMPLING_ALG": {
+    "required": true,
+    "type": "string",
+    "cog_tag": null,
+    "cmr_additional_attribute": "SPATIAL_RESAMPLING_ALG",
+    "stac_property": null,
+    "golden": "exact"
+  },
+  "SPATIAL_RESOLUTION": {
+    "required": true,
+    "type": "number",
+    "cog_tag": "SPATIAL_RESOLUTION",
+    "cmr_additional_attribute": "SPATIAL_RESOLUTION",
+    "stac_property": null,
+    "golden": "exact"
+  },
+  "ULX": {
+    "required": true,
+    "type": "number",
+    "cog_tag": "ULX",
+    "cmr_additional_attribute": "ULX",
+    "stac_property": null,
+    "golden": "approx"
+  },
+  "ULY": {
+    "required": true,
+    "type": "number",
+    "cog_tag": "ULY",
+    "cmr_additional_attribute": "ULY",
+    "stac_property": null,
+    "golden": "approx"
+  }
+}

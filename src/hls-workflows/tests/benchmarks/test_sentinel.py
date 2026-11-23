@@ -8,7 +8,13 @@ import pytest
 from hls_workflows.metrics import InMemorySink
 from hls_workflows.sentinel.workflow import construct_pipeline
 
-from .conftest import BenchmarkConfig, ResourceMetrics, granule_params
+from .conftest import (
+    BenchmarkConfig,
+    ResourceMetrics,
+    benchmark_output_dir,
+    granule_params,
+    keep_products,
+)
 
 
 @pytest.mark.parametrize(
@@ -34,6 +40,7 @@ def test_s30(
         local_granule_zips=[s2_local_zips[granule_id]],
         upload=False,
         metric_sink=sink,
+        cleanup_working_dir=False,
     )
 
     # Runtime/memory/CPU come from the pipeline's own sampler (the InMemorySink).
@@ -41,7 +48,12 @@ def test_s30(
     with pipeline.metrics.collect_pipeline(
         pipeline_class="Pipeline", pipeline_name="sentinel-ac"
     ):
-        pipeline.run()
+        context = pipeline.run()
 
     # "(v5)" suffix kept literal to preserve the benchmark chart series key.
     resource_metrics.add(f"{granule_id} (v5)", sink.records)
+    products = keep_products(work_dir, benchmark_output_dir() / "products")
+    assert products, (
+        f"no final products for {granule_id} (exit_code={context.exit_code}); "
+        "the golden comparison would silently miss this granule"
+    )

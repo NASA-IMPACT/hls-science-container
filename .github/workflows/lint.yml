@@ -20,7 +20,8 @@ jobs:
           frozen: true
           environments: dev
 
-      - name: Lint code
-        run: |
-          scripts/lint
-          scripts/typecheck
+      - name: Lint
+        run: scripts/lint
+
+      - name: Type check
+        run: scripts/typecheck

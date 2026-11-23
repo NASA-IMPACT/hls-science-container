@@ -1,0 +1,5 @@
+{
+  "$include": "int16_fill.json",
+  "scale_factor": 0.01,
+  "add_offset": 0.0
+}
