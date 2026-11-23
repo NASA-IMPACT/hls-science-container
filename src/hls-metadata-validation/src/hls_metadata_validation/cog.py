@@ -14,11 +14,6 @@ from hls_metadata_validation.findings import Finding
 from hls_metadata_validation.spec import AssetSpec, AttributeType
 from hls_metadata_validation.valuetypes import matches_type
 
-# Granules built from >1 input scene (Landsat WRS-2 mosaics, Sentinel-2 twin granules)
-# join per-scene values into one tag, e.g. "2026-11-19T17:24:19Z; 2026-11-19T17:24:43Z".
-# CMR splits the same values into separate <Value> elements instead.
-MULTI_VALUE_SEP = ";"
-
 COG_DOC_KEYS = (
     "tags",
     "band_tags",
@@ -112,9 +107,7 @@ def check_cog(
                 )
             )
     for tag, type_ in (tag_types or {}).items():
-        if tag in tags and not all(
-            matches_type(part, type_) for part in str(tags[tag]).split(MULTI_VALUE_SEP)
-        ):
+        if tag in tags and not matches_type(str(tags[tag]), type_):
             findings.append(
                 err(
                     "tag.type",

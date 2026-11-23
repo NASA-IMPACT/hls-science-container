@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 from fixtures import DATA, L30_GRANULE, S30_GRANULE
 
@@ -48,16 +49,31 @@ def test_cli_spec_exit_codes_and_json(s30_dir: Path, tmp_path: Path) -> None:
     assert json.loads(report.read_text())["ok"] is False
 
 
-def test_multi_scene_tag_values_type_checked_per_value(s30_dir: Path) -> None:
-    b01 = s30_dir / S30_GRANULE / f"{S30_GRANULE}.B01.tif.json"
+@pytest.mark.parametrize("sep", ["; ", " + "])
+def test_multi_scene_values_type_checked_per_value(s30_dir: Path, sep: str) -> None:
+    granule = s30_dir / S30_GRANULE
+    b01 = granule / f"{S30_GRANULE}.B01.tif.json"
+    cmr = granule / f"{S30_GRANULE}.cmr.xml"
     doc = json.loads(b01.read_text())
     time = doc["tags"]["SENSING_TIME"]
-    doc["tags"]["SENSING_TIME"] = f"{time}; {time}"
-    b01.write_text(json.dumps(doc))
-    assert validate_dir(s30_dir).ok
+    cmr_text = cmr.read_text()
+    assert cmr_text.count(f"<Value>{time}</Value>") == 1
 
-    doc["tags"]["SENSING_TIME"] = f"{time}; not-a-time"
-    b01.write_text(json.dumps(doc))
+    def write(second: str) -> None:
+        doc["tags"]["SENSING_TIME"] = f"{time}{sep}{second}"
+        b01.write_text(json.dumps(doc))
+        # metadata_creator leaves "+"-joined values as one <Value>
+        cmr.write_text(
+            cmr_text.replace(
+                f"<Value>{time}</Value>", f"<Value>{time}{sep}{second}</Value>"
+            )
+        )
+
+    write(time)
+    r = validate_dir(s30_dir)
+    assert r.ok, r.to_text()
+
+    write("not-a-time")
     r = validate_dir(s30_dir)
     errs = {(f.check, f.target) for f in r.findings if f.severity == "error"}
-    assert errs == {("tag.type", "B01:SENSING_TIME")}
+    assert errs == {("tag.type", "B01:SENSING_TIME"), ("attr.type", "SENSING_TIME")}
