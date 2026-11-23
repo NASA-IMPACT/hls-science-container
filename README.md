@@ -3,10 +3,10 @@
 > [!NOTE]
 > The code in this repository has been consolidated from other codebases including:
 >
-> - https://github.com/NASA-IMPACT/espa-dockerfiles
-> - https://github.com/NASA-IMPACT/hls-base
-> - https://github.com/NASA-IMPACT/hls-sentinel
-> - https://github.com/NASA-IMPACT/hls-landsat
+> - <https://github.com/NASA-IMPACT/espa-dockerfiles>
+> - <https://github.com/NASA-IMPACT/hls-base>
+> - <https://github.com/NASA-IMPACT/hls-sentinel>
+> - <https://github.com/NASA-IMPACT/hls-landsat>
 
 ## Description
 

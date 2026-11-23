@@ -14,7 +14,7 @@ Each benchmark test is parametrized over a list of granule IDs, so each granule 
 published as a `customSmallerIsBetter` series keyed by `{task} {metric} [{granule}]`, so each granule (and each
 instrumented pipeline stage) is tracked independently across commits:
 
-```
+```text
 sentinel-ac runtime_seconds [S2B_MSIL1C_20260127T160429_N0511_R097_T18UYA_20260127T193526]
 sentinel-ac peak_memory_mb  [S2B_MSIL1C_20260127T160429_N0511_R097_T18UYA_20260127T193526]
 LaSRC avg_cpu_percent       [S2B_MSIL1C_20260127T160429_N0511_R097_T18UYA_20260127T193526]
@@ -80,7 +80,7 @@ consistently across runs. It is also a `workflow_dispatch` input. The benchmark 
 
 #### Expected S3 layout
 
-```
+```text
 s3://{BENCHMARK_INPUT_BUCKET}/
   {BENCHMARK_INPUT_PREFIX}/
     {s2_granule_id}.zip          # one zip per S2 granule
@@ -110,7 +110,7 @@ failing comparison fails the workflow after the charts are published.
 References are synced from `s3://hls-validation-datasets/{GOLDEN_REFERENCE_PREFIX}/`
 and must use the same layout as the products directory:
 
-```
+```text
 s3://hls-validation-datasets/{GOLDEN_REFERENCE_PREFIX}/
   HLS.S30.T18UYA.2026027T160429.v2.0/
     HLS.S30.T18UYA.2026027T160429.v2.0.B01.tif

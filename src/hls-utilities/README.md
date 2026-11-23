@@ -19,11 +19,11 @@ Python utilities for HLS data processing, used as a library by `hls-workflows`.
 From the repository root, using the pixi `dev` environment:
 
 ```bash
-$ scripts/test src/hls-utilities
+scripts/test src/hls-utilities
 ```
 
 Or standalone with `uv` from this directory:
 
 ```bash
-$ uv run pytest
+uv run pytest
 ```

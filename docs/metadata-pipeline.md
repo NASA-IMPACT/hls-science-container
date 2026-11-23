@@ -5,7 +5,7 @@ and how to add a new attribute.
 
 ## Pipeline stages
 
-```
+```text
 Dockerfile ENV
     ↓
 Shell scripts (src/scripts/)
@@ -56,9 +56,13 @@ whichever `hls-libs` C utility is responsible for writing the HDF file at that s
 In the relevant C file under **`packages/hls-libs/`**:
 
 1. Add a `char my_attribute[LINELEN];` variable.
+
 2. Increment the `argc` check by 1 and update the usage string.
+
 3. `strcpy(my_attribute, argv[N]);` (adjust index to match new position).
+
 4. Write to HDF:
+
    ```c
    SDsetattr(output.sd_id, "MY_ATTRIBUTE", DFNT_CHAR8,
              strlen(my_attribute), (VOIDP)my_attribute);

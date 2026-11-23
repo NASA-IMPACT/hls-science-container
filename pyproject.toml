@@ -17,6 +17,13 @@ known-first-party = [
   "hls_metadata_validation",
 ]
 
+[tool.rumdl]
+line-length = 120
+
+[tool.rumdl.per-file-ignores]
+# Becomes a PR body, which already sits under the PR title
+".github/pull_request_template.md" = ["MD041"]
+
 [tool.mypy]
 strict = true
 python_version = "3.13"
