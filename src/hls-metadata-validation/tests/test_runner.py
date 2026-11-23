@@ -46,3 +46,18 @@ def test_cli_spec_exit_codes_and_json(s30_dir: Path, tmp_path: Path) -> None:
     res = runner.invoke(main, ["spec", str(DATA / "L30"), "--json", str(report)])
     assert res.exit_code == 1
     assert json.loads(report.read_text())["ok"] is False
+
+
+def test_multi_scene_tag_values_type_checked_per_value(s30_dir: Path) -> None:
+    b01 = s30_dir / S30_GRANULE / f"{S30_GRANULE}.B01.tif.json"
+    doc = json.loads(b01.read_text())
+    time = doc["tags"]["SENSING_TIME"]
+    doc["tags"]["SENSING_TIME"] = f"{time}; {time}"
+    b01.write_text(json.dumps(doc))
+    assert validate_dir(s30_dir).ok
+
+    doc["tags"]["SENSING_TIME"] = f"{time}; not-a-time"
+    b01.write_text(json.dumps(doc))
+    r = validate_dir(s30_dir)
+    errs = {(f.check, f.target) for f in r.findings if f.severity == "error"}
+    assert errs == {("tag.type", "B01:SENSING_TIME")}
