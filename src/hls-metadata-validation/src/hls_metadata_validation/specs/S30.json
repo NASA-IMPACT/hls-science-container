@@ -191,13 +191,5 @@
       "stac_asset": "B12"
     }
   },
-  "known_gaps": [
-    {
-      "id": "stac-no-raster-ext",
-      "surface": "stac",
-      "check": "asset.raster",
-      "target": null,
-      "reason": "hls-cmr_stac does not add the raster extension, so STAC assets carry no nodata/scale/offset."
-    }
-  ]
+  "known_gaps": []
 }
