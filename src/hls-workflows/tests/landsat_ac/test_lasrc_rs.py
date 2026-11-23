@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import replace
 from pathlib import Path
+from typing import cast
 
 import pytest
 from lxml import etree
@@ -32,9 +33,8 @@ RUST_OUTPUTS = (
 
 def _band_names(xml: Path) -> list[str]:
     ns = {"e": "http://espa.cr.usgs.gov/v2"}
-    return [
-        str(n) for n in etree.parse(str(xml)).xpath("//e:band/@name", namespaces=ns)
-    ]
+    names = etree.parse(str(xml)).xpath("//e:band/@name", namespaces=ns)
+    return [str(n) for n in cast(list[str], names)]
 
 
 @pytest.fixture
@@ -42,9 +42,10 @@ def granule(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, EnvC
     """A granule dir holding Rust LaSRC output and an ESPA XML without LaSRC bands."""
     monkeypatch.setenv("ESPA_SCHEMA", str(SCHEMA))
     tree = etree.parse(str(FIXTURE))
-    for band in tree.xpath("//*[local-name()='band']"):
-        if band.get("product") in STRIPPED:
-            band.getparent().remove(band)
+    for band in cast(list[etree._Element], tree.xpath("//*[local-name()='band']")):
+        parent = band.getparent()
+        if band.get("product") in STRIPPED and parent is not None:
+            parent.remove(band)
     xml = tmp_path / f"{PRODUCT_ID}.xml"
     tree.write(str(xml), xml_declaration=True, encoding="UTF-8")
 
@@ -60,6 +61,7 @@ def granule(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, EnvC
         return names
 
     monkeypatch.setattr(lasrc_rs, "write_landsat_toa_bt", fake_toa_bt)
+    monkeypatch.setattr(lasrc_rs, "espa_app_version", lambda: "LaSRC_test")
     monkeypatch.setattr(
         lasrc_rs,
         "resolve_lasrc_aux_paths",
@@ -115,6 +117,7 @@ def test_register_fails_when_band_file_missing(
 def test_run_rejects_pre_viirs_acquisition(
     granule: tuple[Path, EnvConfig], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    pytest.importorskip("lasrc")
     xml, config = granule
     old = replace(config, granule="LC08_L1TP_184033_20200103_20200107_02_T1")
 

@@ -31,8 +31,13 @@ def _oli_only_xml(tmp_path: Path) -> Path:
     tree = etree.parse(out)
     root = tree.getroot()
     for el in root.iter():
-        if etree.QName(el).localname == "band" and el.get("name") in ("b10", "b11"):
-            el.getparent().remove(el)
+        parent = el.getparent()
+        if (
+            etree.QName(el).localname == "band"
+            and el.get("name") in ("b10", "b11")
+            and parent is not None
+        ):
+            parent.remove(el)
     for el in root.iter():
         if etree.QName(el).localname == "instrument":
             el.text = "OLI"

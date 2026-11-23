@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 from pathlib import Path
+from typing import cast
 
 import pytest
 from lxml import etree
@@ -36,6 +37,7 @@ def test_register_s2_renames_outputs(
         "resolve_lasrc_aux_paths",
         lambda **_: {"wv_oz_hdf": tmp_path / AUX_NAME},
     )
+    monkeypatch.setattr(lasrc_rs, "espa_app_version", lambda: "LaSRC_test")
     safe_dir = tmp_path / GRANULE_ID / f"{GRANULE_ID}.SAFE"
     safe_dir.mkdir(parents=True)
     # The ESPA XML stem need not equal global_metadata/product_id
@@ -75,7 +77,7 @@ def test_register_s2_renames_outputs(
     file_names = etree.parse(str(xml)).xpath(
         "//e:band/e:file_name/text()", namespaces=ns
     )
-    registered = [str(f) for f in file_names if "_sr_" in str(f)]
+    registered = [str(f) for f in cast(list[str], file_names) if "_sr_" in str(f)]
     assert len(registered) == len(RUST_OUTPUTS)
     for name in registered:
         assert (safe_dir / name).exists()

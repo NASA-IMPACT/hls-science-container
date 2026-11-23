@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import shutil
 from pathlib import Path
+from typing import Any
 
 import click
 import numpy as np
@@ -43,14 +44,17 @@ from rasterio.windows import Window
 ESPA_NS = {"e": "http://espa.cr.usgs.gov/v2"}
 SIZE = 256
 
-LANDSAT_INPUTS = {
+# output key -> (candidate ESPA band names, dtype)
+BandSpec = dict[str, tuple[tuple[str, ...], str]]
+
+LANDSAT_INPUTS: BandSpec = {
     "b9": (("b9",), "uint16"),
     "b10": (("b10",), "uint16"),
     "b11": (("b11",), "uint16"),
     "qa_pixel": (("qa_pixel",), "uint16"),
     "sza": (("sza",), "int16"),
 }
-LANDSAT_C_OUTPUTS = {
+LANDSAT_C_OUTPUTS: BandSpec = {
     "c_toa_band9": (("toa_band9",), "uint16"),
     "c_bt_band10": (("bt_band10",), "uint16"),
     "c_bt_band11": (("bt_band11",), "uint16"),
@@ -101,10 +105,11 @@ def read_window(path: Path, row: int, col: int, dtype: str) -> np.ndarray:
         raise click.ClickException(
             f"Window at row={row} col={col} runs off {path} (got {data.shape})"
         )
-    return data.astype(dtype)
+    out: np.ndarray = data.astype(dtype)
+    return out
 
 
-def read_bands(xml: Path, spec: dict, row: int, col: int) -> dict[str, np.ndarray]:
+def read_bands(xml: Path, spec: BandSpec, row: int, col: int) -> dict[str, np.ndarray]:
     files = band_files(xml)
     out = {}
     for key, (names, dtype) in spec.items():
@@ -145,7 +150,14 @@ def read_bands(xml: Path, spec: dict, row: int, col: int) -> dict[str, np.ndarra
     type=click.Path(file_okay=False, path_type=Path),
     required=True,
 )
-def main(c_landsat_dir, c_sentinel_dir, rust_landsat_dir, row, col, out):
+def main(
+    c_landsat_dir: Path,
+    c_sentinel_dir: Path | None,
+    rust_landsat_dir: Path,
+    row: int,
+    col: int,
+    out: Path,
+) -> None:
     """Cut LaSRC C/Rust reference fixtures."""
     out.mkdir(parents=True, exist_ok=True)
 
@@ -154,7 +166,7 @@ def main(c_landsat_dir, c_sentinel_dir, rust_landsat_dir, row, col, out):
     if c_sentinel_dir is not None:
         shutil.copyfile(find_espa_xml(c_sentinel_dir), out / "sentinel_c_lasrc.xml")
 
-    arrays = read_bands(ls_xml, LANDSAT_INPUTS, row, col)
+    arrays: dict[str, Any] = read_bands(ls_xml, LANDSAT_INPUTS, row, col)
     arrays.update(read_bands(ls_xml, LANDSAT_C_OUTPUTS, row, col))
     fill = (arrays["qa_pixel"] & 1) != 0
     if not fill.any() or fill.all():

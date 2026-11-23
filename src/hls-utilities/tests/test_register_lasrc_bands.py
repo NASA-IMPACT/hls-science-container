@@ -35,7 +35,19 @@ def _touch_outputs(xml: Path, names: Sequence[str]) -> None:
         (xml.parent / f"{product_id}_{name}.img").touch()
 
 
-def _tree(el: etree._Element) -> tuple:
+def _find(el: etree._Element, path: str) -> etree._Element:
+    found = el.find(path, NS)
+    assert found is not None, path
+    return found
+
+
+def _attr(el: etree._Element, name: str) -> str:
+    value = el.get(name)
+    assert value is not None, name
+    return value
+
+
+def _tree(el: etree._Element) -> tuple[object, ...]:
     return (
         el.tag,
         sorted(el.attrib.items()),
@@ -46,12 +58,12 @@ def _tree(el: etree._Element) -> tuple:
 
 def _bands(xml: Path) -> list[etree._Element]:
     root = etree.parse(str(xml)).getroot()
-    return list(root.find("e:bands", NS))
+    return list(_find(root, "e:bands"))
 
 
 def _strip_lasrc_bands(src: Path, dst: Path) -> list[etree._Element]:
     tree = etree.parse(str(src))
-    bands = tree.getroot().find("e:bands", NS)
+    bands = _find(tree.getroot(), "e:bands")
     removed = [b for b in bands if b.get("product") in LASRC_PRODUCTS]
     for band in removed:
         bands.remove(band)
@@ -125,22 +137,20 @@ def test_sentinel_registration_structure(tmp_path: Path) -> None:
         name = str(band.get("name"))
         assert band.get("nlines") == b02.get("nlines") == "10980"
         assert band.get("nsamps") == b02.get("nsamps")
-        assert (
-            band.find("e:pixel_size", NS).attrib == b02.find("e:pixel_size", NS).attrib
-        )
+        assert _find(band, "e:pixel_size").attrib == _find(b02, "e:pixel_size").attrib
         prefix = str(b01.findtext("e:short_name", namespaces=NS))[:7]
         suffix = {"sr_aerosol": "AERO", "sr_aerosol_qa": "AEROQA"}.get(name, "SR")
         assert band.findtext("e:short_name", namespaces=NS) == prefix + suffix
         assert band.findtext("e:file_name", namespaces=NS) == f"{product_id}_{name}.img"
         if name == "sr_aerosol":
-            assert float(band.get("scale_factor")) == enc.SCALE_FACTOR_AERO
-            assert int(band.get("fill_value")) == enc.FILL_VALUE_AERO
+            assert float(_attr(band, "scale_factor")) == enc.SCALE_FACTOR_AERO
+            assert int(_attr(band, "fill_value")) == enc.FILL_VALUE_AERO
         elif name == "sr_aerosol_qa":
             assert band.get("fill_value") == "1"
         else:
-            assert float(band.get("scale_factor")) == enc.SCALE_FACTOR_REFL
-            assert float(band.get("add_offset")) == enc.OFFSET_REFL
-            assert int(band.get("fill_value")) == enc.FILL_VALUE
+            assert float(_attr(band, "scale_factor")) == enc.SCALE_FACTOR_REFL
+            assert float(_attr(band, "add_offset")) == enc.OFFSET_REFL
+            assert int(_attr(band, "fill_value")) == enc.FILL_VALUE
             assert band.get("source") == aux
             assert band.findtext("e:level1_filename", namespaces=NS) == b01.findtext(
                 "e:level1_filename", namespaces=NS
