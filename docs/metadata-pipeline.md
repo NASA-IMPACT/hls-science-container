@@ -1,6 +1,7 @@
 # HLS Metadata Pipeline
 
-This document describes how global metadata attributes flow from the Docker container definition through to STAC items, and how to add a new attribute.
+This document describes how global metadata attributes flow from the Docker container definition through to STAC items,
+and how to add a new attribute.
 
 ## Pipeline stages
 
@@ -26,12 +27,13 @@ hls-libs C utilities  →  HDF global attribute  (SDsetattr)
 
 ## Existing attributes
 
-| Attribute      | HDF name        | CMR name        | STAC property          |
-|----------------|-----------------|-----------------|------------------------|
-| LaSRC version  | `ACCODE`        | `ACCODE`        | *(not mapped)*         |
-| Fmask version  | `FMASK_VERSION` | `FMASK_VERSION` | `fmask_version`        |
+| Attribute     | HDF name        | CMR name        | STAC property   |
+| ------------- | --------------- | --------------- | --------------- |
+| LaSRC version | `ACCODE`        | `ACCODE`        | _(not mapped)_  |
+| Fmask version | `FMASK_VERSION` | `FMASK_VERSION` | `fmask_version` |
 
-The LaSRC version value is read from `ACCODE` (C) / `lasrc.ALGORITHM_VERSION` (Rust), for both the Landsat and Sentinel-2 workflows.
+The LaSRC version value is read from `ACCODE` (C) / `lasrc.ALGORITHM_VERSION` (Rust), for both the Landsat and
+Sentinel-2 workflows.
 
 ## How to add a new global metadata attribute
 
@@ -45,7 +47,9 @@ ENV MY_ATTRIBUTE="value"
 
 ### 2. Pass it through the processing scripts
 
-In **`src/scripts/sentinel.sh`** and **`src/scripts/landsat.sh`**, add `"$MY_ATTRIBUTE"` as a positional argument to whichever `hls-libs` C utility is responsible for writing the HDF file at that stage. Follow the existing `$ACCODE` / `$FMASK_VERSION` examples.
+In **`src/scripts/sentinel.sh`** and **`src/scripts/landsat.sh`**, add `"$MY_ATTRIBUTE"` as a positional argument to
+whichever `hls-libs` C utility is responsible for writing the HDF file at that stage. Follow the existing `$ACCODE` /
+`$FMASK_VERSION` examples.
 
 ### 3. Write it as an HDF global attribute in C
 
@@ -60,11 +64,13 @@ In the relevant C file under **`packages/hls-libs/`**:
              strlen(my_attribute), (VOIDP)my_attribute);
    ```
 
-If the attribute is invariant between twin S2 granules, also propagate it in **`sentinel-consolidate/consolidate.c`** using `SDfindattr` / `SDreadattr` / `SDsetattr` (see the `FMASK_VERSION` block for the pattern).
+If the attribute is invariant between twin S2 granules, also propagate it in **`sentinel-consolidate/consolidate.c`**
+using `SDfindattr` / `SDreadattr` / `SDsetattr` (see the `FMASK_VERSION` block for the pattern).
 
 ### 4. No change needed for HDF → COG
 
-`hls-hdf_to_cog` calls `rasterio`'s `update_tags(**sub_dst.tags())` which automatically copies **all** HDF global attributes into COG tags.
+`hls-hdf_to_cog` calls `rasterio`'s `update_tags(**sub_dst.tags())` which automatically copies **all** HDF global
+attributes into COG tags.
 
 ### 5. Add to CMR XML templates (hls-metadata)
 
@@ -72,9 +78,9 @@ In **`metadata_creator/templates/S30.json`** and **`L30.json`**, add an entry to
 
 ```json
 {
-    "Name": "MY_ATTRIBUTE",
-    "DataType": "STRING",
-    "Description": "Human-readable description"
+  "Name": "MY_ATTRIBUTE",
+  "DataType": "STRING",
+  "Description": "Human-readable description"
 }
 ```
 
@@ -84,7 +90,8 @@ In **`metadata_creator/templates/S30_attribute_mapping.json`** and **`L30_attrib
 "MY_ATTRIBUTE": "MY_ATTRIBUTE"
 ```
 
-The key is the CMR template field name; the value is the HDF attribute name. Use `"NOT_IN_HDF"` if the value is hardcoded in the template's `Values` field rather than read from the file.
+The key is the CMR template field name; the value is the HDF attribute name. Use `"NOT_IN_HDF"` if the value is
+hardcoded in the template's `Values` field rather than read from the file.
 
 No changes to `metadata_creator.py` are needed — `attribute_handler()` already handles any mapped attribute generically.
 
@@ -105,10 +112,8 @@ After merging, tag a new release and update the `hls-cmr_stac` tag in **`pixi.to
 
 ### 7. Declare it in the validation spec
 
-Add the attribute to the product specs in
-**`src/hls-metadata-validation/src/hls_metadata_validation/specs/`**: in
-`common/attributes.json` if it is identical for L30 and S30, otherwise in
-`L30.json` / `S30.json`:
+Add the attribute to the product specs in **`src/hls-metadata-validation/src/hls_metadata_validation/specs/`**: in
+`common/attributes.json` if it is identical for L30 and S30, otherwise in `L30.json` / `S30.json`:
 
 ```json
 "MY_ATTRIBUTE": {
@@ -121,7 +126,6 @@ Add the attribute to the product specs in
 }
 ```
 
-Use `null` for a surface the attribute does not appear in. Use
-`"golden": "volatile"` for values expected to change between runs (versions,
-timestamps) and `"approx"` with an absolute `"tolerance"` for floats. Then run
+Use `null` for a surface the attribute does not appear in. Use `"golden": "volatile"` for values expected to change
+between runs (versions, timestamps) and `"approx"` with an absolute `"tolerance"` for floats. Then run
 `scripts/test src/hls-metadata-validation`.
