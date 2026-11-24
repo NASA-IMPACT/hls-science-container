@@ -51,7 +51,7 @@ The `landsat-ac` and `sentinel` workflows run the C LaSRC by default. Set `LASRC
 
 - Only the LaSRC step changes. Downstream products keep the same format, and the recorded AC code is the lasrc-rs
   algorithm version (`lasrc.ALGORITHM_VERSION`).
-- Metrics gain a `lasrc_version` dimension, which changes the CloudWatch metric identity for these workflows.
+- Metrics record the selected implementation as a `lasrc_version` property.
 - The Rust path requires VIIRS aux data, so acquisitions must be on or after `VIIRS_AUX_STARTING_DATE` (default
   `20231001`).
 

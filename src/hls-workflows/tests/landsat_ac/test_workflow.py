@@ -113,8 +113,9 @@ def test_rust_path_swaps_only_lasrc(mock_binaries: Path, ac_env: None) -> None:
     assert order == C_ORDER[:i] + ["RunLaSRCRust", "RegisterLaSRC"] + C_ORDER[i + 1 :]
 
 
-def test_metrics_dim_lasrc_version(mock_binaries: Path, ac_env: None) -> None:
+def test_metrics_prop_lasrc_version(mock_binaries: Path, ac_env: None) -> None:
     pipeline = construct_pipeline(granule_id=GRANULE, lasrc_version="rust")
 
     assert pipeline.metrics is not None
-    assert pipeline.metrics.pipeline_dims["lasrc_version"] == "rust"
+    assert pipeline.metrics.pipeline_props["lasrc_version"] == "rust"
+    assert "lasrc_version" not in pipeline.metrics.pipeline_dims

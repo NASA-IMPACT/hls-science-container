@@ -165,10 +165,8 @@ def construct_pipeline(
 
     return builder.build(
         metrics=MetricsCollector(
-            pipeline_dims={
-                "workflow": "sentinel-ac",
-                "lasrc_version": lasrc_version,
-            },
+            pipeline_dims={"workflow": "sentinel-ac"},
+            pipeline_props={"lasrc_version": lasrc_version},
             sink=metric_sink,
         ),
         cleanup_working_dir=cleanup_working_dir,

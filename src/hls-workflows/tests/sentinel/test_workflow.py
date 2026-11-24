@@ -223,8 +223,9 @@ def test_rust_path_swaps_only_lasrc_block(two_granules: None) -> None:
         assert order.index("DeriveAngles") < order.index("PrepareEspaInputAfterRust")
 
 
-def test_metrics_dim_lasrc_version(two_granules: None) -> None:
+def test_metrics_prop_lasrc_version(two_granules: None) -> None:
     pipeline = construct_pipeline(lasrc_version="rust")
 
     assert pipeline.metrics is not None
-    assert pipeline.metrics.pipeline_dims["lasrc_version"] == "rust"
+    assert pipeline.metrics.pipeline_props["lasrc_version"] == "rust"
+    assert "lasrc_version" not in pipeline.metrics.pipeline_dims
