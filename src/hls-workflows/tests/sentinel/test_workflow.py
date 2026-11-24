@@ -7,6 +7,7 @@ import pytest
 from mypy_boto3_s3 import S3Client
 
 from hls_workflows.granules import Sentinel2Granule
+from hls_workflows.pipeline import Pipeline
 from hls_workflows.sentinel.assets import RENAMED_HDF
 from hls_workflows.sentinel.mapped_tasks import RunFmaskV5
 from hls_workflows.sentinel.tasks import EnvSource, UploadAll
@@ -162,3 +163,69 @@ def test_cleanup_defaults_on(
     monkeypatch.setenv("GRANULE_LIST", GRANULE_ID_1)
 
     assert construct_pipeline().cleanup_working_dir is True
+
+
+PER_GRANULE_C = [
+    "DownloadSentinelGranule",
+    "GetGranuleDir",
+    "CheckSolarZenith",
+    "ApplyQualityMask",
+    "RunFmaskV5",
+    "FindFootprint",
+    "DeriveAngles",
+    "PrepareEspaInput",
+    "RunLaSRC",
+    "ProcessHdfParts",
+    "CombineHdf",
+    "AddFmaskSds",
+    "TrimHdf",
+]
+RUST_BLOCK = ["RunLaSRCRust", "PrepareEspaInputAfterRust", "RegisterLaSRC"]
+
+
+def _granule_order(pipeline: Pipeline, granule_id: str) -> list[str]:
+    suffix = f"-{granule_id}"
+    return [
+        type(t).__name__.removesuffix(suffix)
+        for t in pipeline.execution_order
+        if type(t).__name__.endswith(suffix)
+    ]
+
+
+@pytest.fixture
+def two_granules(
+    mock_binaries: Path, container_setup: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("GRANULE_LIST", ",".join(GRANULE_IDS))
+
+
+def test_c_path_unchanged(two_granules: None) -> None:
+    pipeline = construct_pipeline()
+
+    for gid in GRANULE_IDS:
+        assert _granule_order(pipeline, gid) == PER_GRANULE_C
+
+
+def test_rust_path_swaps_only_lasrc_block(two_granules: None) -> None:
+    pipeline = construct_pipeline(lasrc_version="rust")
+
+    c_without_lasrc = [
+        n for n in PER_GRANULE_C if n not in ("PrepareEspaInput", "RunLaSRC")
+    ]
+    for gid in GRANULE_IDS:
+        order = _granule_order(pipeline, gid)
+        assert [n for n in order if n not in RUST_BLOCK] == c_without_lasrc
+        assert sorted(n for n in order if n in RUST_BLOCK) == sorted(RUST_BLOCK)
+        # Fmask before the Rust run, which precedes the SAFE repackaging
+        chain = ["RunFmaskV5", *RUST_BLOCK, "ProcessHdfParts"]
+        positions = [order.index(n) for n in chain]
+        assert positions == sorted(positions)
+        assert order.index("DeriveAngles") < order.index("PrepareEspaInputAfterRust")
+
+
+def test_metrics_prop_lasrc_version(two_granules: None) -> None:
+    pipeline = construct_pipeline(lasrc_version="rust")
+
+    assert pipeline.metrics is not None
+    assert pipeline.metrics.pipeline_props["lasrc_version"] == "rust"
+    assert "lasrc_version" not in pipeline.metrics.pipeline_dims

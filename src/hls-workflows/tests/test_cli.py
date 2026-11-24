@@ -165,3 +165,18 @@ def test_sigterm_cleans_up_working_dir(
 
     assert result.exit_code == 143
     assert not working_dir.exists()
+
+
+@pytest.mark.parametrize("captured_kwargs", ["sentinel", "landsat-ac"], indirect=True)
+def test_cli_passes_lasrc_version(
+    captured_kwargs: dict[str, Any],
+    request: pytest.FixtureRequest,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("LASRC_VERSION", "rs")
+    _, args = COMMANDS[request.node.callspec.params["captured_kwargs"]]
+
+    result = CliRunner().invoke(cli, args)
+
+    assert result.exit_code == 0, result.output
+    assert captured_kwargs["lasrc_version"] == "rust"

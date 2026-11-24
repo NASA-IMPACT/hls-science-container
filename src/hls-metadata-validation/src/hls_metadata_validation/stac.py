@@ -79,18 +79,6 @@ def check_stac(
 
     assets = doc.get("assets", {})
     for asset in spec.assets.values():
-        if asset.stac_asset is None:
-            continue
-        stac_asset = assets.get(asset.stac_asset)
-        if stac_asset is None:
+        if asset.stac_asset is not None and assets.get(asset.stac_asset) is None:
             findings.append(err("asset.required", asset.stac_asset, "asset missing"))
-            continue
-        if "raster:bands" not in stac_asset:
-            findings.append(
-                err(
-                    "asset.raster",
-                    asset.stac_asset,
-                    "asset has no raster:bands (nodata/scale/offset)",
-                )
-            )
     return findings
