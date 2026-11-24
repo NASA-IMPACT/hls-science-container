@@ -27,13 +27,16 @@ hls-libs C utilities  →  HDF global attribute  (SDsetattr)
 
 ## Existing attributes
 
-| Attribute     | HDF name        | CMR name        | STAC property   |
-| ------------- | --------------- | --------------- | --------------- |
-| LaSRC version | `ACCODE`        | `ACCODE`        | _(not mapped)_  |
-| Fmask version | `FMASK_VERSION` | `FMASK_VERSION` | `fmask_version` |
+| Attribute     | HDF / COG name       | CMR name             | STAC property                                   |
+| ------------- | -------------------- | -------------------- | ----------------------------------------------- |
+| LaSRC version | `ACCODE`             | `ACCODE`             | `processing:software["Atmospheric Correction"]` |
+| Fmask version | `CLOUD_MASKING_CODE` | `CLOUD_MASKING_CODE` | `processing:software["Cloud Masking"]`          |
 
-The LaSRC version value is read from `ACCODE` (C) / `lasrc.ALGORITHM_VERSION` (Rust), for both the Landsat and
-Sentinel-2 workflows.
+Both STAC values are set by `process_software_versions()` in `hls-cmr_stac`, which also adds the `processing`
+extension to the item.
+
+The LaSRC version value is read from `ACCODE` (C) / `lasrc.ALGORITHM_VERSION` (Rust), and the Fmask version from
+`FMASK_VERSION_STRINGS` in `hls_workflows.constants`, for both the Landsat and Sentinel-2 workflows.
 
 ## How to add a new global metadata attribute
 
@@ -48,8 +51,8 @@ ENV MY_ATTRIBUTE="value"
 ### 2. Pass it through the processing scripts
 
 In **`src/scripts/sentinel.sh`** and **`src/scripts/landsat.sh`**, add `"$MY_ATTRIBUTE"` as a positional argument to
-whichever `hls-libs` C utility is responsible for writing the HDF file at that stage. Follow the existing `$ACCODE` /
-`$FMASK_VERSION` examples.
+whichever `hls-libs` C utility is responsible for writing the HDF file at that stage. Follow the existing `$ACCODE`
+example.
 
 ### 3. Write it as an HDF global attribute in C
 
@@ -69,7 +72,7 @@ In the relevant C file under **`packages/hls-libs/`**:
    ```
 
 If the attribute is invariant between twin S2 granules, also propagate it in **`sentinel-consolidate/consolidate.c`**
-using `SDfindattr` / `SDreadattr` / `SDsetattr` (see the `FMASK_VERSION` block for the pattern).
+using `SDfindattr` / `SDreadattr` / `SDsetattr` (see the `CLOUD_MASKING_CODE` block for the pattern).
 
 ### 4. No change needed for HDF → COG
 
