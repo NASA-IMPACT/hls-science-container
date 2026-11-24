@@ -4,6 +4,6 @@ export PIXI_FROZEN=true
 
 pixi run -e dev ruff check --fix
 pixi run -e dev ruff format
+pixi run -e dev rumdl fmt .
 
-# pixi run mdformat ./**/*.md
 # FIXME: mbake for Makefile formatting

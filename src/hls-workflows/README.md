@@ -122,7 +122,7 @@ stream is created automatically by the framework on startup.
 **Experiment dimensions** — any environment variable prefixed with `HLS_EXPERIMENT_` is added as a CloudWatch dimension,
 enabling side-by-side comparisons in dashboards. For example:
 
-```
+```text
 HLS_EXPERIMENT_FMASK_VERSION=v5
 ```
 
@@ -135,7 +135,7 @@ CloudWatch dimensions. Unbounded identifiers (`job_id`, `git_sha`, `input_granul
 still queryable in Logs Insights, but they generate no metrics. Workflows attach per-run values via
 `MetricsCollector(pipeline_props=...)`; never put them in `pipeline_dims`.
 
-```
+```text
 fields @timestamp, task_name, runtime_seconds, peak_memory_mb
 | filter input_granule_id = "HLS.S30.T11SLU.2020001T183751.v2.0"
 ```

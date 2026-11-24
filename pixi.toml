@@ -51,6 +51,7 @@ lasrc-rs = { git = "https://github.com/NASA-IMPACT/lasrc-rs", rev = "2c5a859d71b
 
 [feature.dev.dependencies]
 ruff = "*"
+rumdl = "*"
 mypy = "*"
 pytest = "*"
 # dev env is no-default-feature, so core deps (incl. click) aren't inherited;

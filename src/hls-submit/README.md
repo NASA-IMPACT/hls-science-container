@@ -13,7 +13,7 @@ skip the lookup.
 
 ## Usage
 
-```
+```text
 pixi run -e dev hls-submit --help
 # or, outside of pixi
 uv run --project src/hls-submit hls-submit --help
@@ -21,7 +21,7 @@ uv run --project src/hls-submit hls-submit --help
 
 Every submit command is a dry run unless `--submit` is given:
 
-```
+```text
 export HLS_STACK_NAME=hls-mcp-development-viirs
 
 # A CSV with several columns: name the one holding L1 input granule IDs

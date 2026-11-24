@@ -893,6 +893,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/readline-8.3-hd6e31c0_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/rpds-py-2026.9.1-py313ha296275_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ruff-0.17.4-hf19af3b_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/rumdl-0.3.5-hf19af3b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/s2n-1.7.7-ha5dc4ae_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/safetensors-0.8.0-py313ha296275_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/scalene-1.5.51-py313h7033f15_1.conda
@@ -1393,6 +1394,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/readline-8.3-h8b90a29_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/rpds-py-2026.9.1-py313h680bcb3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ruff-0.17.4-ha19a7bb_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/rumdl-0.3.5-ha19a7bb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/s2n-1.7.7-h430f396_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/safetensors-0.8.0-py313h680bcb3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/scalene-1.5.51-py313h0e822ff_1.conda
@@ -2103,6 +2105,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/python-3.15.2-h6e52b48_100_cp315.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/python-librt-0.16.0-py315hd4e796c_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/ruff-0.17.4-hf19af3b_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/rumdl-0.3.5-hf19af3b_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/tk-8.6.13-noxft_h1df4ec4_4.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb78ec9c_7.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_3.conda
@@ -2214,6 +2217,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-3.15.2-h2e4dbab_100_cp315.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-librt-0.16.0-py315hc6682d9_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/ruff-0.17.4-ha19a7bb_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/rumdl-0.3.5-ha19a7bb_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/tk-8.6.13-hbeba79b_4.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/zstd-1.5.7-hf451053_7.conda
       - pypi: ./src/hls-metadata-validation
@@ -6784,6 +6788,21 @@ packages:
   run_exports: {}
   size: 8964923
   timestamp: 1793942550249
+- conda: https://conda.anaconda.org/conda-forge/linux-64/rumdl-0.3.5-hf19af3b_0.conda
+  sha256: 27c5bcbf10b7c1ff479be73a8dd7a72a815678571d768f5755d46f57e9787153
+  md5: 0c1555dfd0794f27ef37f54e3f4af5cb
+  depends:
+  - __glibc >=2.17,<3.0.a0
+  - libgcc >=15
+  constrains:
+  - __glibc >=2.17
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/rumdl
+  run_exports: {}
+  size: 7552437
+  timestamp: 1795108710180
 - conda: https://conda.anaconda.org/conda-forge/linux-64/rust-1.99.1-h6344a40_1.conda
   sha256: 3b21c9a87004a5664c6543fec63e1b4e4c3449cd68eae058733d338c6defc392
   md5: f8d087d4d2231118fb169bbb53dea669
@@ -12954,6 +12973,20 @@ packages:
   run_exports: {}
   size: 8160218
   timestamp: 1793942670923
+- conda: https://conda.anaconda.org/conda-forge/osx-arm64/rumdl-0.3.5-ha19a7bb_0.conda
+  sha256: 81f501ea8a7a211a996b666d12738983f3b2970bfa5e8000f25fecd6496daccd
+  md5: 5b7785ff92ab877eece5a33896dcd79e
+  depends:
+  - __osx >=11.0
+  constrains:
+  - __osx >=11.0
+  license: MIT
+  license_family: MIT
+  purls:
+  - pkg:pypi/rumdl
+  run_exports: {}
+  size: 6775910
+  timestamp: 1795108718784
 - conda: https://conda.anaconda.org/conda-forge/osx-arm64/rust-1.99.1-hc99db57_1.conda
   sha256: f2a01b92da14691abd962b4be1fa0240d55fa820343da49436092bb2c6b1ccf6
   md5: 5e308a15aae2fa0eb96ae9cfe93fd5a7
