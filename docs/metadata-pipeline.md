@@ -48,11 +48,26 @@ Add an `ENV` in **`Dockerfile`** (prod stage, near the other metadata ENV vars):
 ENV MY_ATTRIBUTE="value"
 ```
 
-### 2. Pass it through the processing scripts
+### 2. Pass it through the workflows
 
-In **`src/scripts/sentinel.sh`** and **`src/scripts/landsat.sh`**, add `"$MY_ATTRIBUTE"` as a positional argument to
-whichever `hls-libs` C utility is responsible for writing the HDF file at that stage. Follow the existing `$ACCODE`
-example.
+The `hls-workflows` pipelines read their configuration once, in each workflow's `EnvSource` task, into an `EnvConfig`.
+Tasks then pass values to the `hls-libs` utilities as positional arguments. Follow `ac_code` / `cloud_masking_code`:
+
+1. Add a `my_attribute: str` field to `EnvConfig` in **`src/hls-workflows/src/hls_workflows/landsat_ac/assets.py`** and
+   **`sentinel/assets.py`**.
+
+2. Set it in `EnvSource.fetch()` in **`landsat_ac/tasks.py`** and **`sentinel/tasks.py`**:
+
+   ```python
+   my_attribute=os.environ["MY_ATTRIBUTE"],
+   ```
+
+3. Add `config.my_attribute` to the command of the task that runs the `hls-libs` utility writing the HDF attribute,
+   at the argument position that utility expects (step 3):
+
+   - Landsat: `AddFmaskSds` in **`landsat_ac/tasks.py`** (`landsat-add-fmask-sds`)
+   - Sentinel-2: `CombineHdf` (`sentinel-twohdf2one`) and `AddFmaskSds` (`sentinel-add-fmask-sds`) in
+     **`sentinel/mapped_tasks.py`**
 
 ### 3. Write it as an HDF global attribute in C
 
